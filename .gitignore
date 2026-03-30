@@ -1,0 +1,6 @@
+.env
+teamintel_raw.json
+teamintel_parsed.json
+__pycache__/
+parse_and_build.py
+dashboard.html
