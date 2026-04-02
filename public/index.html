@@ -122,6 +122,32 @@ body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; b
 .score-n2 { background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }
 td.score-cell { position: relative; }
 td.score-cell.clickable:hover { outline: 2px solid #2d5016; outline-offset: -2px; }
+td.overridden { position: relative; }
+td.overridden::after { content: '*'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(0,0,0,0.4); }
+
+#scorePopup {
+    display: none; position: fixed; z-index: 9000;
+    background: white; border-radius: 10px; padding: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25); min-width: 220px;
+}
+#scorePopup .popup-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 10px; }
+#scorePopup .popup-scores { display: flex; gap: 6px; margin-bottom: 10px; }
+#scorePopup .popup-scores button {
+    flex: 1; padding: 8px 0; font-size: 14px; font-weight: 700; border: 2px solid #ddd;
+    border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+#scorePopup .popup-scores button:hover { transform: scale(1.1); }
+#scorePopup .popup-scores button.ps2 { background: #c6efce; color: #1a5e1a; border-color: #a3d9a5; }
+#scorePopup .popup-scores button.ps1 { background: #e2efda; color: #3a6b30; border-color: #c5deb8; }
+#scorePopup .popup-scores button.ps0 { background: #fff2cc; color: #7a6b00; border-color: #e6d98a; }
+#scorePopup .popup-scores button.psn1 { background: #fce4ec; color: #9a2020; border-color: #f5c6cb; }
+#scorePopup .popup-scores button.psn2 { background: #f4c7c3; color: #8b1a1a; border-color: #e8a8a3; }
+#scorePopup .popup-reset {
+    font-size: 11px; color: #888; cursor: pointer; text-decoration: underline;
+    text-align: center; display: block;
+}
+#scorePopup .popup-reset:hover { color: #c0392b; }
+#scoreOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 8999; }
 
 .detail-container { padding: 20px 30px; display: none; }
 .player-select-wrapper { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
@@ -286,7 +312,7 @@ function checkPw() {
     <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec"></div>-1 (Red / Cool/No Contact)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#f4c7c3"></div>-2 (Dark Red / Negative)</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:11px;color:#999;">Tap any score to see details</span>
+        <span style="font-size:11px;color:#999;">Tap any cell to edit score</span>
     </div>
 </div>
 
@@ -304,11 +330,14 @@ function checkPw() {
 </div>
 
 <div id="detailView" class="detail-container">
-    <div class="player-select-wrapper">
-        <label>Select Player:</label>
-        <select class="player-select" id="playerSelect" onchange="renderDetail()">
-            <option value="">-- Choose a player --</option>
-        </select>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+        <button onclick="showView('matrix')" style="padding:6px 14px;font-size:13px;font-weight:600;background:#2d5016;color:white;border:none;border-radius:6px;cursor:pointer;">&#8592; Back</button>
+        <div class="player-select-wrapper" style="margin-bottom:0;">
+            <label>Select Player:</label>
+            <select class="player-select" id="playerSelect" onchange="renderDetail()">
+                <option value="">-- Choose a player --</option>
+            </select>
+        </div>
     </div>
     <div id="playerSummary" class="player-summary"></div>
     <table class="detail-table" id="detailTable"></table>
@@ -321,10 +350,56 @@ const RECORDS = [{"player": "Joe Tiroly", "team": "WSH", "date": "2025-12-06", "
 const ALL_TEAMS = ["ARI", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE", "COL", "DET", "HOU", "KC", "LAA", "LAD", "MIA", "MIL", "MIN", "NYM", "NYY", "OAK", "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH"];
 const ALL_2026_PLAYERS = ["Aiden Robbins", "Alex Kranzler", "Ben Tryon", "Bo Lowrance", "Boston Torres", "Brady Neal", "Brooks Wright", "Bryce Fowler", "Cameron Flukey", "Cole Cleveland", "Devin Diaz", "Dominic Woodward", "Duke McCarron", "Easton Viveros", "Griffin Loy", "Joe Tiroly", "Kyle Jones", "Lee Ellis", "Lucas Lawrence", "Lucas Steele", "Mason Eckelman", "Michael Gillen", "Myles Bailey", "Phinn Beaird", "Taj Marchand", "Trevor Condon", "Will Myhand"];
 
-function showScoreDetail(player) {
-    document.getElementById('playerSelect').value = player;
-    renderDetail();
-    showView('detail');
+// --- Override system (Vercel KV) ---
+var scoreOverrides = {};
+var _popupPlayer = '', _popupTeam = '';
+
+async function loadOverrides() {
+    try {
+        const res = await fetch('/api/overrides');
+        if (res.ok) scoreOverrides = await res.json();
+    } catch(e) { /* offline / local dev */ }
+}
+
+async function saveScore(score) {
+    const player = _popupPlayer, team = _popupTeam;
+    closeScorePopup();
+    try {
+        await fetch('/api/overrides', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, team, score })
+        });
+        if (score === null) {
+            delete scoreOverrides[player + '|' + team];
+        } else {
+            scoreOverrides[player + '|' + team] = score;
+        }
+    } catch(e) { alert('Failed to save override'); }
+    renderMatrix();
+}
+
+function openScorePopup(player, team, event) {
+    _popupPlayer = player;
+    _popupTeam = team;
+    document.getElementById('popupTitle').textContent = player + ' \u2014 ' + team;
+    var popup = document.getElementById('scorePopup');
+    var overlay = document.getElementById('scoreOverlay');
+    popup.style.display = 'block';
+    overlay.style.display = 'block';
+    var rect = event.target.getBoundingClientRect();
+    var x = rect.left + rect.width / 2 - 110;
+    var y = rect.bottom + 6;
+    if (x < 8) x = 8;
+    if (x + 220 > window.innerWidth) x = window.innerWidth - 228;
+    if (y + 120 > window.innerHeight) y = rect.top - 120;
+    popup.style.left = x + 'px';
+    popup.style.top = y + 'px';
+}
+
+function closeScorePopup() {
+    document.getElementById('scorePopup').style.display = 'none';
+    document.getElementById('scoreOverlay').style.display = 'none';
 }
 
 function buildMatrix() {
@@ -336,9 +411,11 @@ function buildMatrix() {
     const playerTeams = {}, playerAllScores = {};
     Object.values(latest).forEach(r => {
         if (!playerTeams[r.player]) playerTeams[r.player] = {};
-        playerTeams[r.player][r.team] = r.score;
+        const ok = r.player + '|' + r.team;
+        const score = scoreOverrides.hasOwnProperty(ok) ? scoreOverrides[ok] : r.score;
+        playerTeams[r.player][r.team] = score;
         if (!playerAllScores[r.player]) playerAllScores[r.player] = [];
-        playerAllScores[r.player].push(r.score);
+        playerAllScores[r.player].push(score);
     });
     ALL_2026_PLAYERS.forEach(p => {
         if (!playerTeams[p]) playerTeams[p] = {};
@@ -393,10 +470,12 @@ function renderMatrix() {
         const esc = player.replace(/'/g, "\\'");
         ALL_TEAMS.forEach(team => {
             const s = playerTeams[player] && playerTeams[player][team];
+            const ok = player + '|' + team;
+            const isOverridden = scoreOverrides.hasOwnProperty(ok);
             if (s !== undefined && s !== null) {
-                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable" onclick="showScoreDetail(\'' + esc + '\')">' + s + '</td>';
+                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (isOverridden ? ' overridden' : '') + '" onclick="openScorePopup(\'' + esc + '\', \'' + team + '\', event)">' + s + '</td>';
             } else {
-                sHtml += '<td></td>';
+                sHtml += '<td class="score-cell clickable" onclick="openScorePopup(\'' + esc + '\', \'' + team + '\', event)"></td>';
             }
         });
         sHtml += '</tr>';
@@ -462,7 +541,8 @@ function showView(view) {
     }
 }
 
-function init() {
+async function init() {
+    await loadOverrides();
     renderMatrix();
     const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
     const sel = document.getElementById('playerSelect');
@@ -480,5 +560,17 @@ if (sessionStorage.getItem('sv_auth') === '1') {
     document.getElementById('appContent').classList.add('visible');
 }
 </script>
+<div id="scoreOverlay" onclick="closeScorePopup()"></div>
+<div id="scorePopup">
+    <div class="popup-title" id="popupTitle"></div>
+    <div class="popup-scores">
+        <button class="ps2" onclick="saveScore(2)">2</button>
+        <button class="ps1" onclick="saveScore(1)">1</button>
+        <button class="ps0" onclick="saveScore(0)">0</button>
+        <button class="psn1" onclick="saveScore(-1)">-1</button>
+        <button class="psn2" onclick="saveScore(-2)">-2</button>
+    </div>
+    <span class="popup-reset" onclick="saveScore(null)">Reset to original</span>
+</div>
 </body>
 </html>
