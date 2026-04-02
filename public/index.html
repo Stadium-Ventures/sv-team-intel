@@ -312,7 +312,7 @@ function checkPw() {
     <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec"></div>-1 (Red / Cool/No Contact)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#f4c7c3"></div>-2 (Dark Red / Negative)</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:11px;color:#999;">Tap any cell to edit score</span>
+        <span style="font-size:11px;color:#999;">Tap a score to view details, then click any score badge to edit</span>
     </div>
 </div>
 
@@ -351,8 +351,9 @@ const ALL_TEAMS = ["ARI", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE", "COL"
 const ALL_2026_PLAYERS = ["Aiden Robbins", "Alex Kranzler", "Ben Tryon", "Bo Lowrance", "Boston Torres", "Brady Neal", "Brooks Wright", "Bryce Fowler", "Cameron Flukey", "Cole Cleveland", "Devin Diaz", "Dominic Woodward", "Duke McCarron", "Easton Viveros", "Griffin Loy", "Joe Tiroly", "Kyle Jones", "Lee Ellis", "Lucas Lawrence", "Lucas Steele", "Mason Eckelman", "Michael Gillen", "Myles Bailey", "Phinn Beaird", "Taj Marchand", "Trevor Condon", "Will Myhand"];
 
 // --- Override system (Vercel KV) ---
+// --- Override system (Vercel KV) — per-record overrides ---
 var scoreOverrides = {};
-var _popupPlayer = '', _popupTeam = '';
+var _popupPlayer = '', _popupTeam = '', _popupDate = '';
 
 async function loadOverrides() {
     try {
@@ -361,28 +362,36 @@ async function loadOverrides() {
     } catch(e) { /* offline / local dev */ }
 }
 
+function getScore(r) {
+    const ok = r.player + '|' + r.team + '|' + r.date;
+    return scoreOverrides.hasOwnProperty(ok) ? scoreOverrides[ok] : r.score;
+}
+
 async function saveScore(score) {
-    const player = _popupPlayer, team = _popupTeam;
+    const player = _popupPlayer, team = _popupTeam, date = _popupDate;
+    const key = player + '|' + team + '|' + date;
     closeScorePopup();
     try {
         await fetch('/api/overrides', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player, team, score })
+            body: JSON.stringify({ player, team, date, score })
         });
         if (score === null) {
-            delete scoreOverrides[player + '|' + team];
+            delete scoreOverrides[key];
         } else {
-            scoreOverrides[player + '|' + team] = score;
+            scoreOverrides[key] = score;
         }
     } catch(e) { alert('Failed to save override'); }
     renderMatrix();
+    renderDetail();
 }
 
-function openScorePopup(player, team, event) {
+function openScorePopup(player, team, date, event) {
     _popupPlayer = player;
     _popupTeam = team;
-    document.getElementById('popupTitle').textContent = player + ' \u2014 ' + team;
+    _popupDate = date;
+    document.getElementById('popupTitle').textContent = player + ' \u2014 ' + team + ' (' + date + ')';
     var popup = document.getElementById('scorePopup');
     var overlay = document.getElementById('scoreOverlay');
     popup.style.display = 'block';
@@ -411,8 +420,7 @@ function buildMatrix() {
     const playerTeams = {}, playerAllScores = {};
     Object.values(latest).forEach(r => {
         if (!playerTeams[r.player]) playerTeams[r.player] = {};
-        const ok = r.player + '|' + r.team;
-        const score = scoreOverrides.hasOwnProperty(ok) ? scoreOverrides[ok] : r.score;
+        const score = getScore(r);
         playerTeams[r.player][r.team] = score;
         if (!playerAllScores[r.player]) playerAllScores[r.player] = [];
         playerAllScores[r.player].push(score);
@@ -470,12 +478,10 @@ function renderMatrix() {
         const esc = player.replace(/'/g, "\\'");
         ALL_TEAMS.forEach(team => {
             const s = playerTeams[player] && playerTeams[player][team];
-            const ok = player + '|' + team;
-            const isOverridden = scoreOverrides.hasOwnProperty(ok);
             if (s !== undefined && s !== null) {
-                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (isOverridden ? ' overridden' : '') + '" onclick="openScorePopup(\'' + esc + '\', \'' + team + '\', event)">' + s + '</td>';
+                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable" onclick="jumpToDetail(\'' + esc + '\')">' + s + '</td>';
             } else {
-                sHtml += '<td class="score-cell clickable" onclick="openScorePopup(\'' + esc + '\', \'' + team + '\', event)"></td>';
+                sHtml += '<td></td>';
             }
         });
         sHtml += '</tr>';
@@ -503,7 +509,7 @@ function renderDetail() {
     if (!player) return;
     const pr = RECORDS.filter(r => r.player === player).sort((a,b) => b.date.localeCompare(a.date));
     const teams = new Set(pr.map(r => r.team));
-    const avg = pr.length > 0 ? pr.reduce((a,r) => a + r.score, 0) / pr.length : 0;
+    const avg = pr.length > 0 ? pr.reduce((a,r) => a + getScore(r), 0) / pr.length : 0;
     document.getElementById('playerSummary').innerHTML =
         '<div class="summary-item"><span class="summary-label">Player</span><span class="summary-value">' + player + '</span></div>' +
         '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + pr.length + '</span></div>' +
@@ -515,8 +521,11 @@ function renderDetail() {
     }
     pr.forEach(r => {
         const note = r.note.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>').replace(/&amp;/g,'&');
+        const s = getScore(r);
+        const esc = r.player.replace(/'/g, "\\'");
+        const isOverridden = scoreOverrides.hasOwnProperty(r.player + '|' + r.team + '|' + r.date);
         html += '<tr><td>' + r.date + '</td><td>' + r.team + '</td><td>' + note + '</td>' +
-            '<td><span class="score-badge ' + badgeClass(r.score) + '">' + r.score + '</span></td></tr>';
+            '<td><span class="score-badge ' + badgeClass(s) + '" style="cursor:pointer;" onclick="openScorePopup(\'' + esc + '\', \'' + r.team + '\', \'' + r.date + '\', event)">' + s + (isOverridden ? ' *' : '') + '</span></td></tr>';
     });
     html += '</tbody>';
     document.getElementById('detailTable').innerHTML = html;
