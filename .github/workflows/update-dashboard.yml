@@ -3,7 +3,7 @@ name: Update TeamIntel Dashboard
 on:
   schedule:
     # Run every 4 hours
-    - cron: '0 */4 * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch: # Allow manual trigger
 
 permissions:
@@ -28,15 +28,15 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
-          OUTPUT_DIR: ./docs
+          OUTPUT_DIR: ./public
         run: |
-          mkdir -p docs
+          mkdir -p public
           python fetch_and_build.py
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/index.html
+          git add public/index.html
           git diff --staged --quiet || git commit -m "Auto-update TeamIntel dashboard $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push

@@ -189,7 +189,7 @@ def score_line_for_team(line, full_text=""):
         return 1
     if re.search(r'\bgreen\b', ll):
         return 2
-    if any(w in ll for w in ['love', 'loves', 'absolutely', 'favorites', 'elite', 'really like', 'really likes', 'high on']):
+    if any(w in ll for w in ['love', 'loves', 'absolutely', 'favorites', 'elite', 'really like', 'really likes', 'high on', 'heavy on']):
         return 2
     if 'no communication' in ll or "didn't like" in ll:
         return -1
@@ -330,7 +330,10 @@ def build_html(records, password="SVintel2026"):
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Stadium Ventures - TeamIntel Dashboard</title>
 <style>
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -339,7 +342,7 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 /* --- PASSWORD GATE --- */
 #loginGate {{
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(135deg, #1a3a0a 0%, #2d5016 50%, #3a6b1e 100%);
+    background: linear-gradient(135deg, #4a0a0a 0%, #8b1a1a 50%, #a52222 100%);
     display: flex; align-items: center; justify-content: center; z-index: 9999;
 }}
 #loginGate.hidden {{ display: none; }}
@@ -372,8 +375,8 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 }}
 .shake {{ animation: shake 0.4s ease; }}
 
-#appContent {{ display: none; }}
-#appContent.visible {{ display: block; }}
+#appContent {{ display: none; visibility: hidden; }}
+#appContent.visible {{ display: block; visibility: visible; }}
 
 /* --- DASHBOARD --- */
 .header {{
@@ -416,7 +419,11 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .legend-item {{ display: flex; align-items: center; gap: 5px; }}
 .legend-swatch {{ width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }}
 
-.matrix-container {{ padding: 20px 30px; overflow-x: auto; }}
+.matrix-container {{ padding: 20px 30px; }}
+.matrix-wrapper {{ display: flex; max-height: 75vh; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }}
+.matrix-fixed {{ flex-shrink: 0; overflow: hidden; z-index: 10; box-shadow: 2px 0 4px rgba(0,0,0,0.1); }}
+.matrix-scroll {{ flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: none; }}
+.matrix-wrapper {{ overscroll-behavior: none; }}
 .matrix-table {{
     border-collapse: separate; border-spacing: 0; font-size: 12px;
     width: auto; min-width: 100%; background: white;
@@ -429,26 +436,20 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 }}
 .matrix-table thead th {{
     background: #2d5016; color: white; font-weight: 600; font-size: 11px;
-    letter-spacing: 0.3px; position: sticky; top: 0; z-index: 10;
-    border-right-color: #3a6520; border-bottom: 2px solid #1a3a0a;
+    letter-spacing: 0.3px; border-right-color: #3a6520; border-bottom: 2px solid #1a3a0a;
+    position: sticky; top: 0; z-index: 2;
 }}
-.matrix-table thead th:first-child,
-.matrix-table thead th:nth-child(2) {{ z-index: 20; }}
-.matrix-table thead th:first-child {{ left: 0; min-width: 52px; }}
-.matrix-table thead th:nth-child(2) {{ left: 52px; min-width: 150px; text-align: left; }}
-.matrix-table td:first-child,
-.matrix-table td:nth-child(2) {{ position: sticky; background: white; z-index: 5; font-weight: 600; }}
-.matrix-table td:first-child {{ left: 0; min-width: 52px; background: #f8faf6; color: #2d5016; font-size: 13px; font-weight: 700; }}
-.matrix-table td:nth-child(2) {{ left: 52px; min-width: 150px; text-align: left; padding-left: 10px; font-size: 12px; }}
+.matrix-fixed td:first-child {{ background: #f8faf6; color: #2d5016; font-size: 13px; font-weight: 700; min-width: 50px; }}
+.matrix-fixed td:nth-child(2) {{ background: white; text-align: left; padding-left: 10px; font-size: 12px; font-weight: 600; min-width: 140px; }}
 .matrix-table tbody tr:hover td {{ background-color: #f0f7ec !important; }}
-.matrix-table tbody tr:hover td:first-child {{ background-color: #e8f2e0 !important; }}
-.matrix-table tbody tr:hover td:nth-child(2) {{ background-color: #e8f2e0 !important; }}
 
 .score-2 {{ background-color: #c6efce !important; color: #1a5e1a; font-weight: 700; }}
 .score-1 {{ background-color: #e2efda !important; color: #3a6b30; font-weight: 600; }}
 .score-0 {{ background-color: #fff2cc !important; color: #7a6b00; font-weight: 600; }}
 .score-n1 {{ background-color: #fce4ec !important; color: #9a2020; font-weight: 600; }}
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
+td.score-cell {{ position: relative; }}
+td.score-cell.clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
 
 .detail-container {{ padding: 20px 30px; display: none; }}
 .player-select-wrapper {{ display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }}
@@ -493,6 +494,56 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .clickable {{ cursor: pointer; }}
 .clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
 .last-updated {{ font-size: 11px; opacity: 0.7; margin-top: 2px; }}
+
+/* --- TABLET --- */
+@media (max-width: 1024px) and (min-width: 769px) {{
+    .header {{ padding: 14px 20px; }}
+    .header h1 {{ font-size: 20px; }}
+    .matrix-container {{ padding: 15px 10px; }}
+    .matrix-table {{ font-size: 11px; }}
+    .matrix-table th, .matrix-table td {{ padding: 7px 5px; }}
+    .legend {{ padding: 8px 20px; font-size: 11px; }}
+    .stats-bar {{ padding: 10px 20px; font-size: 12px; }}
+}}
+
+/* --- MOBILE --- */
+@media (max-width: 768px) {{
+    html, body {{ width: 100%; }}
+    .header {{
+        flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 16px;
+    }}
+    .header h1 {{ font-size: 18px; }}
+    .header .subtitle {{ font-size: 11px; }}
+    .nav-tabs {{ align-self: stretch; }}
+    .nav-tab {{ flex: 1; text-align: center; padding: 6px 12px; font-size: 12px; }}
+
+    .legend {{
+        flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px; font-size: 11px;
+    }}
+    .legend-title {{ width: 100%; margin-bottom: 2px; }}
+    .legend-swatch {{ width: 14px; height: 14px; }}
+
+    .stats-bar {{
+        flex-wrap: wrap; gap: 8px 20px; padding: 8px 16px; font-size: 12px;
+    }}
+
+    .matrix-container {{ padding: 10px 0; overflow: auto; -webkit-overflow-scrolling: touch; }}
+    .matrix-table {{ font-size: 11px; }}
+    .matrix-table th, .matrix-table td {{ padding: 6px 4px; }}
+    .matrix-fixed td:first-child {{ min-width: 36px; font-size: 10px; }}
+    .matrix-fixed td:nth-child(2) {{ min-width: 90px; font-size: 10px; padding-left: 4px; }}
+    .matrix-fixed th:first-child {{ min-width: 36px; font-size: 10px; }}
+    .matrix-fixed th:nth-child(2) {{ min-width: 90px; font-size: 10px; }}
+
+    .detail-container {{ padding: 12px 16px; }}
+    .player-select {{ min-width: 200px; font-size: 13px; }}
+    .player-summary {{ flex-wrap: wrap; gap: 12px; padding: 12px 16px; }}
+    .summary-value {{ font-size: 16px; }}
+    .detail-table td {{ padding: 8px 10px; font-size: 12px; }}
+    .detail-table td:nth-child(3) {{ max-width: 250px; }}
+
+    .login-box {{ min-width: 280px; padding: 30px 24px; }}
+}}
 </style>
 </head>
 <body>
@@ -534,10 +585,7 @@ function checkPw() {{
         box.classList.add('shake');
     }}
 }}
-if (sessionStorage.getItem('sv_auth') === '1') {{
-    document.getElementById('loginGate').classList.add('hidden');
-    document.getElementById('appContent').classList.add('visible');
-}}
+// Auto-login from session is handled after full page load
 </script>
 
 <!-- DASHBOARD (hidden until auth) -->
@@ -565,12 +613,22 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
     <div class="legend-item"><div class="legend-swatch" style="background:#fff2cc"></div>0 (Yellow / Neutral)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec"></div>-1 (Red / Cool/No Contact)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#f4c7c3"></div>-2 (Dark Red / Negative)</div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:11px;color:#999;">Tap any score to see details</span>
+    </div>
 </div>
 
 <div id="statsBar" class="stats-bar"></div>
 
 <div id="matrixView" class="matrix-container">
-    <table class="matrix-table" id="matrixTable"></table>
+    <div class="matrix-wrapper">
+        <div class="matrix-fixed" id="matrixFixed">
+            <table class="matrix-table" id="matrixFixedTable"></table>
+        </div>
+        <div class="matrix-scroll" id="matrixScroll">
+            <table class="matrix-table" id="matrixScrollTable"></table>
+        </div>
+    </div>
 </div>
 
 <div id="detailView" class="detail-container">
@@ -590,6 +648,12 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 const RECORDS = {records_js};
 const ALL_TEAMS = {json.dumps(ALL_TEAMS)};
 const ALL_2026_PLAYERS = {all_2026_js};
+
+function showScoreDetail(player) {{
+    document.getElementById('playerSelect').value = player;
+    renderDetail();
+    showView('detail');
+}}
 
 function buildMatrix() {{
     const latest = {{}};
@@ -641,29 +705,38 @@ function badgeClass(s) {{
 
 function renderMatrix() {{
     const {{ playerTeams, playerAvgs, sortedPlayers }} = buildMatrix();
-    const table = document.getElementById('matrixTable');
-    let html = '<thead><tr><th>AVG</th><th>Client</th>';
-    ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
-    html += '</tr></thead><tbody>';
+
+    var fHtml = '<thead><tr><th>AVG</th><th>Client</th></tr></thead><tbody>';
+    var sHtml = '<thead><tr>';
+    ALL_TEAMS.forEach(t => sHtml += '<th>' + t + '</th>');
+    sHtml += '</tr></thead><tbody>';
+
     sortedPlayers.forEach(player => {{
         const avg = playerAvgs[player];
         const avgDisplay = avg !== null ? avg.toFixed(2) : '-';
         const avgClass = avg === null ? '' : avg >= 1.5 ? 'score-2' : avg >= 0.75 ? 'score-1' : avg >= 0 ? 'score-0' : 'score-n1';
-        html += '<tr>';
-        html += '<td class="' + avgClass + '">' + avgDisplay + '</td>';
-        html += '<td class="clickable" onclick="jumpToDetail(\\'' + player.replace(/'/g, "\\\\'") + '\\')">' + player + '</td>';
+        fHtml += '<tr><td class="' + avgClass + '">' + avgDisplay + '</td>';
+        fHtml += '<td class="clickable" onclick="jumpToDetail(\\'' + player.replace(/'/g, "\\\\'") + '\\')">' + player + '</td></tr>';
+        sHtml += '<tr>';
+        const esc = player.replace(/'/g, "\\\\'");
         ALL_TEAMS.forEach(team => {{
             const s = playerTeams[player] && playerTeams[player][team];
             if (s !== undefined && s !== null) {{
-                html += '<td class="' + scoreClass(s) + ' clickable" onclick="jumpToDetail(\\'' + player.replace(/'/g, "\\\\'") + '\\')">' + s + '</td>';
+                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable" onclick="showScoreDetail(\\'' + esc + '\\')">' + s + '</td>';
             }} else {{
-                html += '<td></td>';
+                sHtml += '<td></td>';
             }}
         }});
-        html += '</tr>';
+        sHtml += '</tr>';
     }});
-    html += '</tbody>';
-    table.innerHTML = html;
+    fHtml += '</tbody>';
+    sHtml += '</tbody>';
+    document.getElementById('matrixFixedTable').innerHTML = fHtml;
+    document.getElementById('matrixScrollTable').innerHTML = sHtml;
+
+    var scrollEl = document.getElementById('matrixScroll');
+    var fixedEl = document.getElementById('matrixFixed');
+    scrollEl.onscroll = function() {{ fixedEl.scrollTop = scrollEl.scrollTop; }};
 
     let uniquePairs = 0;
     Object.keys(playerTeams).forEach(p => uniquePairs += Object.keys(playerTeams[p]).length);
@@ -728,6 +801,12 @@ function init() {{
     if (players.length > 0) {{ sel.value = players[0]; renderDetail(); }}
 }}
 init();
+
+// After everything is loaded, auto-login if session exists
+if (sessionStorage.getItem('sv_auth') === '1') {{
+    document.getElementById('loginGate').classList.add('hidden');
+    document.getElementById('appContent').classList.add('visible');
+}}
 </script>
 </body>
 </html>'''
