@@ -181,7 +181,16 @@ def find_players_in_text(text):
 
 def has_workout_invite(text):
     tl = text.lower()
-    return bool(re.search(r'(pre[- ]?draft\s+workout|pdw|invite\w*\s+to\s+\w+\s+workout|workout\s+invite|invite\w*\s.*workout)', tl))
+    # Match pre-draft workout mentions and invite+workout combos
+    if re.search(r'pre[- ]?draft\s+workout', tl):
+        return True
+    if re.search(r'invite\w*\s.*workout', tl):
+        return True
+    if re.search(r'workout\s+invite', tl):
+        return True
+    if re.search(r'\bpdw\b', tl):
+        return True
+    return False
 
 def score_line_for_team(line, full_text=""):
     ll = line.lower()
