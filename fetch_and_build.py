@@ -179,6 +179,10 @@ def find_players_in_text(text):
         found.add('Taj Marchand')
     return found
 
+def has_workout_invite(text):
+    tl = text.lower()
+    return bool(re.search(r'(pre[- ]?draft\s+workout|pdw|invite\w*\s+to\s+\w+\s+workout|workout\s+invite|invite\w*\s.*workout)', tl))
+
 def score_line_for_team(line, full_text=""):
     ll = line.lower()
     if re.search(r'\bred\b', ll) and 'green' not in ll:
@@ -306,6 +310,10 @@ def parse_messages(messages):
                                     'score': score, 'note': text.strip()[:200],
                                     'channel': channel, 'full_text': text[:400],
                                 })
+
+    # Add workout flag based on note/full_text
+    for r in records:
+        r['workout'] = has_workout_invite(r.get('full_text', '') + ' ' + r.get('note', ''))
 
     # Deduplicate
     seen = set()
@@ -450,6 +458,8 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
+td.workout {{ box-shadow: inset 0 0 0 3px #d4a017; }}
+.workout-badge {{ display: inline-block; background: #d4a017; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
 td.overridden {{ position: relative; }}
 td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(0,0,0,0.4); }}
 
@@ -639,6 +649,7 @@ function checkPw() {{
     <div class="legend-item"><div class="legend-swatch" style="background:#fff2cc"></div>0 (Yellow / Neutral)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec"></div>-1 (Red / Cool/No Contact)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#f4c7c3"></div>-2 (Dark Red / Negative)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
         <span style="font-size:11px;color:#999;">Tap a score to view details, then click any score badge to edit</span>
     </div>
@@ -744,6 +755,12 @@ function buildMatrix() {{
         const key = r.player + '|' + r.team;
         if (!latest[key] || r.date > latest[key].date) latest[key] = r;
     }});
+    // Track if any record for a player+team has a workout invite
+    const workoutMap = {{}};
+    RECORDS.forEach(r => {{
+        const key = r.player + '|' + r.team;
+        if (r.workout) workoutMap[key] = true;
+    }});
     const playerTeams = {{}}, playerAllScores = {{}};
     Object.values(latest).forEach(r => {{
         if (!playerTeams[r.player]) playerTeams[r.player] = {{}};
@@ -767,7 +784,7 @@ function buildMatrix() {{
         if (playerAvgs[b] === null) return 1;
         return playerAvgs[b] - playerAvgs[a];
     }});
-    return {{ playerTeams, playerAvgs, sortedPlayers }};
+    return {{ playerTeams, playerAvgs, sortedPlayers, workoutMap }};
 }}
 
 function scoreClass(s) {{
@@ -788,7 +805,7 @@ function badgeClass(s) {{
 }}
 
 function renderMatrix() {{
-    const {{ playerTeams, playerAvgs, sortedPlayers }} = buildMatrix();
+    const {{ playerTeams, playerAvgs, sortedPlayers, workoutMap }} = buildMatrix();
 
     var fHtml = '<thead><tr><th>AVG</th><th>Client</th></tr></thead><tbody>';
     var sHtml = '<thead><tr>';
@@ -805,8 +822,9 @@ function renderMatrix() {{
         const esc = player.replace(/'/g, "\\\\'");
         ALL_TEAMS.forEach(team => {{
             const s = playerTeams[player] && playerTeams[player][team];
+            const wk = workoutMap[player + '|' + team];
             if (s !== undefined && s !== null) {{
-                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + s + '</td>';
+                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\')">' + s + '</td>';
             }} else {{
                 sHtml += '<td></td>';
             }}
@@ -851,7 +869,8 @@ function renderDetail() {{
         const s = getScore(r);
         const esc = r.player.replace(/'/g, "\\\\'");
         const isOverridden = scoreOverrides.hasOwnProperty(r.player + '|' + r.team + '|' + r.date);
-        html += '<tr><td>' + r.date + '</td><td>' + r.team + '</td><td>' + note + '</td>' +
+        const wBadge = r.workout ? '<span class="workout-badge">PDW</span>' : '';
+        html += '<tr><td>' + r.date + '</td><td>' + r.team + wBadge + '</td><td>' + note + '</td>' +
             '<td><span class="score-badge ' + badgeClass(s) + '" style="cursor:pointer;" onclick="openScorePopup(\\'' + esc + '\\', \\'' + r.team + '\\', \\'' + r.date + '\\', event)">' + s + (isOverridden ? ' *' : '') + '</span></td></tr>';
     }});
     html += '</tbody>';
