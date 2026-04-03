@@ -6,7 +6,7 @@ Runs locally or via GitHub Actions.
 
 import json, re, os, time
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from slack_sdk import WebClient
 
 # --- CONFIG ---
@@ -340,7 +340,8 @@ def parse_messages(messages):
 # --- STEP 3: BUILD HTML ---
 def build_html(records, password="SVintel2026"):
     records_js = json.dumps(records)
-    now_str = datetime.now().strftime('%B %d, %Y %I:%M %p')
+    eastern = timezone(timedelta(hours=-4))
+    now_str = datetime.now(eastern).strftime('%B %d, %Y %I:%M %p') + ' ET'
     all_2026_js = json.dumps(ALL_2026_PLAYERS)
 
     html = f'''<!DOCTYPE html>
