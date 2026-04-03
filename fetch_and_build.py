@@ -449,7 +449,7 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .matrix-table th, .matrix-table td {{
     padding: 8px 6px; text-align: center;
     border-right: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8;
-    white-space: nowrap;
+    white-space: nowrap; height: 32px;
 }}
 .matrix-table thead th {{
     background: #2d5016; color: white; font-weight: 600; font-size: 11px;
