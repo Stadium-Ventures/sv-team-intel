@@ -467,7 +467,7 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
-td.workout {{ box-shadow: inset 0 0 0 3px #d4a017; }}
+td.workout {{ outline: 3px solid #d4a017; outline-offset: -3px; }}
 .workout-badge {{ display: inline-block; background: #d4a017; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
 td.overridden {{ position: relative; }}
 td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(0,0,0,0.4); }}
