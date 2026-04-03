@@ -190,6 +190,15 @@ def has_workout_invite(text):
         return True
     if re.search(r'\bpdw\b', tl):
         return True
+    # Team name + workout (e.g. "Jays workout", "Cubs workout")
+    if re.search(r'\b(jays|astros|cubs|tigers|rays|dodgers|yankees|mets|braves|reds|padres|pirates|phillies|nationals|marlins|brewers|cardinals|rockies|diamondbacks|giants|mariners|angels|twins|royals|guardians|orioles|rangers|white sox|red sox|blue jays)\s+workout', tl):
+        return True
+    # "offered" with a date pattern (team offering a workout)
+    if re.search(r'offered\s+.*\b(june|july|may|jan|feb|mar|apr)\b', tl):
+        return True
+    # Tentative workout
+    if re.search(r'tentative\s+.*workout', tl):
+        return True
     return False
 
 def score_line_for_team(line, full_text=""):
