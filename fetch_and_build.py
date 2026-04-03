@@ -493,6 +493,14 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     font-size: 11px; color: #888; cursor: pointer; text-decoration: underline;
     text-align: center; display: block;
 }}
+#scorePopup .popup-pdw {{
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-bottom: 8px; padding: 6px 0; border: 2px solid #d4a017; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 600; color: #d4a017; background: white;
+    transition: all 0.15s;
+}}
+#scorePopup .popup-pdw:hover {{ background: #fdf6e3; }}
+#scorePopup .popup-pdw.active {{ background: #d4a017; color: white; }}
 #scorePopup .popup-reset:hover {{ color: #c0392b; }}
 #scoreOverlay {{ display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 8999; }}
 
@@ -734,11 +742,52 @@ async function saveScore(score) {{
     renderDetail();
 }}
 
+function isPDW(player, team) {{
+    var wk = 'w|' + player + '|' + team;
+    if (scoreOverrides.hasOwnProperty(wk)) return scoreOverrides[wk];
+    var hasAuto = false;
+    RECORDS.forEach(function(r) {{ if (r.player === player && r.team === team && r.workout) hasAuto = true; }});
+    return hasAuto;
+}}
+
+async function togglePDW() {{
+    var wk = 'w|' + _popupPlayer + '|' + _popupTeam;
+    var current = isPDW(_popupPlayer, _popupTeam);
+    var newVal = !current;
+    try {{
+        await fetch('/api/overrides', {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ key: wk, score: newVal ? true : null }})
+        }});
+        if (newVal) {{
+            scoreOverrides[wk] = true;
+        }} else {{
+            delete scoreOverrides[wk];
+        }}
+    }} catch(e) {{ alert('Failed to save'); }}
+    updatePDWButton();
+    renderMatrix();
+    renderDetail();
+}}
+
+function updatePDWButton() {{
+    var btn = document.getElementById('pdwToggle');
+    if (isPDW(_popupPlayer, _popupTeam)) {{
+        btn.classList.add('active');
+        btn.textContent = '\\u2713 Pre-Draft Workout';
+    }} else {{
+        btn.classList.remove('active');
+        btn.textContent = 'Pre-Draft Workout';
+    }}
+}}
+
 function openScorePopup(player, team, date, event) {{
     _popupPlayer = player;
     _popupTeam = team;
     _popupDate = date;
     document.getElementById('popupTitle').textContent = player + ' \\u2014 ' + team + ' (' + date + ')';
+    updatePDWButton();
     var popup = document.getElementById('scorePopup');
     var overlay = document.getElementById('scoreOverlay');
     popup.style.display = 'block';
@@ -769,6 +818,14 @@ function buildMatrix() {{
     RECORDS.forEach(r => {{
         const key = r.player + '|' + r.team;
         if (r.workout) workoutMap[key] = true;
+    }});
+    // Apply manual PDW overrides
+    Object.keys(scoreOverrides).forEach(k => {{
+        if (k.startsWith('w|')) {{
+            const parts = k.substring(2);
+            if (scoreOverrides[k]) workoutMap[parts] = true;
+            else delete workoutMap[parts];
+        }}
     }});
     const playerTeams = {{}}, playerAllScores = {{}};
     Object.values(latest).forEach(r => {{
@@ -934,6 +991,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <button class="psn1" onclick="saveScore(-1)">-1</button>
         <button class="psn2" onclick="saveScore(-2)">-2</button>
     </div>
+    <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
     <span class="popup-reset" onclick="saveScore(null)">Reset to original</span>
 </div>
 </body>

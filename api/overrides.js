@@ -33,10 +33,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { player, team, date, score } = req.body;
-      if (!player || !team || !date) return res.status(400).json({ error: 'player, team, and date required' });
+      const { player, team, date, score, key: rawKey } = req.body;
       const overrides = await kvGet();
-      const key = `${player}|${team}|${date}`;
+      const key = rawKey || `${player}|${team}|${date}`;
+      if (!key || key === 'undefined|undefined|undefined') return res.status(400).json({ error: 'key or player+team+date required' });
       if (score === null || score === undefined) {
         delete overrides[key];
       } else {
