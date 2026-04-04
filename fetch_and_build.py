@@ -124,7 +124,9 @@ def fetch_messages(token):
             for msg in resp['messages']:
                 text = msg.get('text', '')
                 tl = text.lower()
-                if 'teamintel' in tl or 'team intel' in tl:
+                # Include ALL messages from 2026-draft-general (keyword often omitted)
+                # For other channels, require "teamintel" / "team intel" keyword
+                if name == '2026-draft-general' or 'teamintel' in tl or 'team intel' in tl:
                     all_messages.append({
                         'channel': name, 'channel_id': cid,
                         'ts': msg['ts'],
