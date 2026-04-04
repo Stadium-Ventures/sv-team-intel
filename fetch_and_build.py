@@ -160,6 +160,9 @@ def find_teams_in_line(line):
     lu = line.upper().strip()
     for key in sorted(TEAM_ABBR.keys(), key=len, reverse=True):
         if len(key) >= 2 and re.search(r'\b' + re.escape(key) + r'\b', lu):
+            # Skip location references like "Metro Atl.", "Atl. area"
+            if key == 'ATL' and re.search(r'METRO\s+ATL|ATL\.', lu):
+                continue
             found.add(TEAM_ABBR[key])
     if lu in TEAM_ABBR:
         found.add(TEAM_ABBR[lu])
@@ -184,7 +187,7 @@ def find_players_in_text(text):
 def has_workout_invite(text):
     tl = text.lower()
     # Match pre-draft workout mentions and invite+workout combos
-    if re.search(r'pre[- ]?draft\s+workout', tl):
+    if re.search(r'pre[- ]?draft\s+\w*\s*workout', tl):
         return True
     if re.search(r'invite\w*\s.*workout', tl):
         return True
@@ -192,8 +195,8 @@ def has_workout_invite(text):
         return True
     if re.search(r'\bpdw\b', tl):
         return True
-    # Team name + workout (e.g. "Jays workout", "Cubs workout")
-    if re.search(r'\b(jays|astros|cubs|tigers|rays|dodgers|yankees|mets|braves|reds|padres|pirates|phillies|nationals|marlins|brewers|cardinals|rockies|diamondbacks|giants|mariners|angels|twins|royals|guardians|orioles|rangers|white sox|red sox|blue jays)\s+workout', tl):
+    # Team name + workout (e.g. "Jays workout", "Cubs workout", "Rangers pre draft Carolinas workout")
+    if re.search(r'\b(jays|astros|cubs|tigers|rays|dodgers|yankees|mets|braves|reds|padres|pirates|phillies|nationals|marlins|brewers|cardinals|rockies|diamondbacks|giants|mariners|angels|twins|royals|guardians|orioles|rangers|white sox|red sox|blue jays)\s+.*?workout', tl):
         return True
     # "offered" with a date pattern (team offering a workout)
     if re.search(r'offered\s+.*\b(june|july|may|jan|feb|mar|apr)\b', tl):
