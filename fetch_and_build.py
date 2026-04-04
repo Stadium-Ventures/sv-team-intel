@@ -1031,7 +1031,7 @@ if __name__ == '__main__':
     records = parse_messages(messages)
     html = build_html(records, password)
 
-    out_dir = os.environ.get('OUTPUT_DIR', os.path.dirname(__file__))
+    out_dir = os.environ.get('OUTPUT_DIR', os.path.join(os.path.dirname(__file__), 'public'))
     out_path = os.path.join(out_dir, 'index.html')
     with open(out_path, 'w') as f:
         f.write(html)
