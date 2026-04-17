@@ -644,6 +644,15 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup .popup-reset:hover {{ color: #c0392b; }}
 #scoreOverlay {{ display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 8999; }}
 
+#toast {{
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(120%);
+    background: #c0392b; color: white; padding: 10px 18px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    z-index: 10000; transition: transform 0.25s ease; max-width: 90%; text-align: center;
+}}
+#toast.ok {{ background: #2d7a2d; }}
+#toast.visible {{ transform: translateX(-50%) translateY(0); }}
+
 #messageOverlay {{
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5); z-index: 9100;
@@ -906,11 +915,28 @@ var _popupPlayer = '', _popupTeam = '', _popupDate = '';
 var _showHidden = false;
 var _filterTeam = null;
 
+var _toastTimer = null;
+function showToast(msg, ok) {{
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = (ok ? 'ok ' : '') + 'visible';
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function() {{ el.className = ok ? 'ok' : ''; }}, ok ? 2000 : 5000);
+}}
+
 async function loadOverrides() {{
     try {{
         const res = await fetch('/api/overrides');
-        if (res.ok) scoreOverrides = await res.json();
-    }} catch(e) {{ /* offline / local dev */ }}
+        if (!res.ok) {{
+            const body = await res.text();
+            showToast('Could not load overrides (' + res.status + '). Manual edits may not persist. ' + body.slice(0, 120));
+            return;
+        }}
+        scoreOverrides = await res.json();
+    }} catch(e) {{
+        showToast('Could not reach overrides API. Manual edits may not persist.');
+    }}
 }}
 
 function getScore(r) {{
@@ -1010,17 +1036,23 @@ async function saveScore(score) {{
     const key = player + '|' + team + '|' + date;
     closeScorePopup();
     try {{
-        await fetch('/api/overrides', {{
+        const res = await fetch('/api/overrides', {{
             method: 'POST',
             headers: {{ 'Content-Type': 'application/json' }},
             body: JSON.stringify({{ player, team, date, score }})
         }});
+        if (!res.ok) {{
+            const body = await res.text();
+            showToast('Save failed (' + res.status + '). ' + body.slice(0, 120));
+            return;
+        }}
         if (score === null) {{
             delete scoreOverrides[key];
         }} else {{
             scoreOverrides[key] = score;
         }}
-    }} catch(e) {{ alert('Failed to save override'); }}
+        showToast('Saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
     renderMatrix();
     renderDetail();
 }}
@@ -1043,17 +1075,23 @@ async function togglePDW() {{
     // Otherwise persist the explicit true/false so an auto-true flag can be turned off.
     var toStore = (newVal === hasAuto) ? null : newVal;
     try {{
-        await fetch('/api/overrides', {{
+        const res = await fetch('/api/overrides', {{
             method: 'POST',
             headers: {{ 'Content-Type': 'application/json' }},
             body: JSON.stringify({{ key: wk, score: toStore }})
         }});
+        if (!res.ok) {{
+            const body = await res.text();
+            showToast('Save failed (' + res.status + '). ' + body.slice(0, 120));
+            return;
+        }}
         if (toStore === null) {{
             delete scoreOverrides[wk];
         }} else {{
             scoreOverrides[wk] = toStore;
         }}
-    }} catch(e) {{ alert('Failed to save'); }}
+        showToast('Saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
     updatePDWButton();
     renderMatrix();
     renderDetail();
@@ -1344,6 +1382,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         </div>
     </div>
 </div>
+<div id="toast"></div>
 </body>
 </html>'''
     return html
