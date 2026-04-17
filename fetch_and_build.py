@@ -988,18 +988,23 @@ function isPDW(player, team) {{
 
 async function togglePDW() {{
     var wk = 'w|' + _popupPlayer + '|' + _popupTeam;
+    var hasAuto = false;
+    RECORDS.forEach(function(r) {{ if (r.player === _popupPlayer && r.team === _popupTeam && r.workout) hasAuto = true; }});
     var current = isPDW(_popupPlayer, _popupTeam);
     var newVal = !current;
+    // If the new value matches the auto-detected state, clear the override.
+    // Otherwise persist the explicit true/false so an auto-true flag can be turned off.
+    var toStore = (newVal === hasAuto) ? null : newVal;
     try {{
         await fetch('/api/overrides', {{
             method: 'POST',
             headers: {{ 'Content-Type': 'application/json' }},
-            body: JSON.stringify({{ key: wk, score: newVal ? true : null }})
+            body: JSON.stringify({{ key: wk, score: toStore }})
         }});
-        if (newVal) {{
-            scoreOverrides[wk] = true;
-        }} else {{
+        if (toStore === null) {{
             delete scoreOverrides[wk];
+        }} else {{
+            scoreOverrides[wk] = toStore;
         }}
     }} catch(e) {{ alert('Failed to save'); }}
     updatePDWButton();
