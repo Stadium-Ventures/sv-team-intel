@@ -1102,13 +1102,16 @@ function buildMatrix() {{
         const s = playerAllScores[p].filter(v => typeof v === 'number');
         playerAvgs[p] = s.length > 0 ? s.reduce((a,b) => a+b, 0) / s.length : null;
     }});
-    const sortedPlayers = Object.keys(playerAvgs).sort((a,b) => {{
-        if (playerAvgs[a] === null && playerAvgs[b] === null) return a.localeCompare(b);
-        if (playerAvgs[a] === null) return 1;
-        if (playerAvgs[b] === null) return 1;
-        return playerAvgs[b] - playerAvgs[a];
+    const playerTotals = {{}};
+    Object.keys(playerTeamCounts).forEach(p => {{
+        playerTotals[p] = Object.values(playerTeamCounts[p]).reduce((a,b) => a+b, 0);
     }});
-    return {{ playerTeams, playerTeamCounts, playerAvgs, sortedPlayers, workoutMap }};
+    const sortedPlayers = Object.keys(playerTotals).sort((a,b) => {{
+        const ta = playerTotals[a] || 0, tb = playerTotals[b] || 0;
+        if (tb !== ta) return tb - ta;
+        return a.localeCompare(b);
+    }});
+    return {{ playerTeams, playerTeamCounts, playerAvgs, playerTotals, sortedPlayers, workoutMap }};
 }}
 
 function scoreClass(s) {{
@@ -1129,18 +1132,19 @@ function badgeClass(s) {{
 }}
 
 function renderMatrix() {{
-    const {{ playerTeams, playerTeamCounts, playerAvgs, sortedPlayers, workoutMap }} = buildMatrix();
+    const {{ playerTeams, playerTeamCounts, playerAvgs, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
 
-    var fHtml = '<thead><tr><th>AVG</th><th>Client</th></tr></thead><tbody>';
+    var fHtml = '<thead><tr><th>TOTAL</th><th>Client</th></tr></thead><tbody>';
     var sHtml = '<thead><tr>';
     ALL_TEAMS.forEach(t => sHtml += '<th>' + t + '</th>');
     sHtml += '</tr></thead><tbody>';
 
     sortedPlayers.forEach(player => {{
+        const total = playerTotals[player] || 0;
         const avg = playerAvgs[player];
-        const avgDisplay = avg !== null ? avg.toFixed(2) : '-';
         const avgClass = avg === null ? '' : avg >= 1.5 ? 'score-2' : avg >= 0.75 ? 'score-1' : avg >= 0 ? 'score-0' : avg >= -1 ? 'score-n1' : 'score-n2';
-        fHtml += '<tr><td class="' + avgClass + '">' + avgDisplay + '</td>';
+        const titleAttr = avg !== null ? ' title="Avg score: ' + avg.toFixed(2) + '"' : '';
+        fHtml += '<tr><td class="' + avgClass + '"' + titleAttr + '>' + total + '</td>';
         fHtml += '<td class="clickable" onclick="jumpToDetail(\\'' + player.replace(/'/g, "\\\\'") + '\\')">' + player + '</td></tr>';
         sHtml += '<tr>';
         const esc = player.replace(/'/g, "\\\\'");
