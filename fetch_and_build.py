@@ -882,7 +882,7 @@ function checkPw() {{
         <button onclick="showView('matrix')" style="padding:6px 14px;font-size:13px;font-weight:600;background:#2d5016;color:white;border:none;border-radius:6px;cursor:pointer;">&#8592; Back</button>
         <div class="player-select-wrapper" style="margin-bottom:0;">
             <label>Select Player:</label>
-            <select class="player-select" id="playerSelect" onchange="renderDetail()">
+            <select class="player-select" id="playerSelect" onchange="_filterTeam=null; renderDetail()">
                 <option value="">-- Choose a player --</option>
             </select>
         </div>
@@ -904,6 +904,7 @@ const PLAYER_ALIASES = {player_aliases_js};
 var scoreOverrides = {{}};
 var _popupPlayer = '', _popupTeam = '', _popupDate = '';
 var _showHidden = false;
+var _filterTeam = null;
 
 async function loadOverrides() {{
     try {{
@@ -1189,7 +1190,7 @@ function renderMatrix() {{
             const cnt = (playerTeamCounts[player] && playerTeamCounts[player][team]) || 0;
             const wk = workoutMap[player + '|' + team];
             if (s !== undefined && s !== null && typeof s === 'number' && cnt > 0) {{
-                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\')" title="Score: ' + s + ' \\u2022 ' + cnt + ' touch' + (cnt===1?'':'es') + '">' + cnt + '</td>';
+                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + s + ' \\u2022 ' + cnt + ' touch' + (cnt===1?'':'es') + '">' + cnt + '</td>';
             }} else {{
                 sHtml += '<td></td>';
             }}
@@ -1222,7 +1223,8 @@ function toggleHidden() {{
 function renderDetail() {{
     const player = document.getElementById('playerSelect').value;
     if (!player) return;
-    const allPr = RECORDS.filter(r => r.player === player).sort((a,b) => b.date.localeCompare(a.date));
+    let allPr = RECORDS.filter(r => r.player === player).sort((a,b) => b.date.localeCompare(a.date));
+    if (_filterTeam) allPr = allPr.filter(r => r.team === _filterTeam);
     const hiddenCount = allPr.filter(r => isExcluded(r)).length;
     const pr = _showHidden ? allPr : allPr.filter(r => !isExcluded(r));
     const teams = new Set(pr.filter(r => !isExcluded(r)).map(r => r.team));
@@ -1235,9 +1237,14 @@ function renderDetail() {{
         '<div class="summary-item"><span class="summary-label">Avg Score</span><span class="summary-value">' + (numScores.length > 0 ? avg.toFixed(2) : '-') + '</span></div>';
 
     let hiddenBar = '';
+    if (_filterTeam) {{
+        hiddenBar += '<div style="padding:6px 10px;font-size:12px;color:#555;margin-bottom:6px;">' +
+            'Filtered to <strong>' + _filterTeam + '</strong> \\u00b7 ' +
+            '<span style="text-decoration:underline;cursor:pointer;color:#2d5016;" onclick="clearTeamFilter()">show all teams</span></div>';
+    }}
     if (hiddenCount > 0) {{
         const label = _showHidden ? 'hide' : 'show';
-        hiddenBar = '<div style="padding:6px 10px;font-size:12px;color:#888;margin-bottom:6px;">' +
+        hiddenBar += '<div style="padding:6px 10px;font-size:12px;color:#888;margin-bottom:6px;">' +
             hiddenCount + ' record' + (hiddenCount===1?'':'s') + ' hidden (marked NA) \\u00b7 ' +
             '<span style="text-decoration:underline;cursor:pointer;color:#2d5016;" onclick="toggleHidden()">' + label + '</span></div>';
     }}
@@ -1267,10 +1274,16 @@ function renderDetail() {{
     document.getElementById('detailTable').innerHTML = html;
 }}
 
-function jumpToDetail(player) {{
+function jumpToDetail(player, team) {{
     document.getElementById('playerSelect').value = player;
+    _filterTeam = team || null;
     renderDetail();
     showView('detail');
+}}
+
+function clearTeamFilter() {{
+    _filterTeam = null;
+    renderDetail();
 }}
 
 function showView(view) {{
