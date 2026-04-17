@@ -126,13 +126,44 @@ def fetch_messages(token):
                 tl = text.lower()
                 # Include ALL messages from 2026-draft-general (keyword often omitted)
                 # For other channels, require "teamintel" / "team intel" keyword
-                if name == '2026-draft-general' or 'teamintel' in tl or 'team intel' in tl:
+                is_teamintel = (
+                    name == '2026-draft-general'
+                    or 'teamintel' in tl
+                    or 'team intel' in tl
+                )
+                if is_teamintel:
                     all_messages.append({
                         'channel': name, 'channel_id': cid,
                         'ts': msg['ts'],
                         'date': datetime.fromtimestamp(float(msg['ts'])).strftime('%Y-%m-%d'),
                         'text': text, 'user': msg.get('user', ''),
                     })
+
+                # Fetch thread replies when the parent is a team-intel post.
+                # Replies get their own records and inherit the parent's first line
+                # (usually the team header) so "Bo and Taj workout" in a reply
+                # under "HOU - Cam Pendino" gets attributed to HOU.
+                if is_teamintel and msg.get('reply_count', 0) > 0 and msg.get('thread_ts') == msg['ts']:
+                    try:
+                        rep_resp = client.conversations_replies(channel=cid, ts=msg['ts'])
+                    except Exception as e:
+                        print(f"  Error fetching replies in #{name}: {e}")
+                        rep_resp = None
+                    if rep_resp:
+                        parent_header = text.split('\n')[0] if text else ''
+                        for reply in rep_resp.get('messages', []):
+                            if reply.get('ts') == msg['ts']:
+                                continue  # skip the parent itself
+                            r_text = reply.get('text', '')
+                            combined = (parent_header + '\n\n' + r_text) if parent_header else r_text
+                            all_messages.append({
+                                'channel': name, 'channel_id': cid,
+                                'ts': reply['ts'],
+                                'date': datetime.fromtimestamp(float(reply['ts'])).strftime('%Y-%m-%d'),
+                                'text': combined, 'user': reply.get('user', ''),
+                                'is_reply': True, 'parent_ts': msg['ts'],
+                            })
+                    time.sleep(0.3)
 
             if not resp.get('has_more'):
                 break
@@ -222,6 +253,8 @@ _WORKOUT_TARGETED_PATTERNS = [
     r'\bworkout\s+(?:in|at|on|for|during)\s+(?:\w+\s+){0,4}(?:jan|feb|mar|apr|may|june|july|aug|sep|oct|nov|dec)\w*\s+\d',
     r'\bworkout\s+\w*\s*@\s+\w',                                             # "workout @ Port St Lucie"
     r'\bworkout\s+important\b',                                              # "Condon — workout important"
+    r'\bworkouts?\s+for\s+\w',                                               # "workouts for Bo and Taj"
+    r'\breach(?:ed|ing)?\s+out\s+(?:on|about|for)\s+.*?workouts?',           # "reached out on workouts"
     # Team-name + workout proximity: only flag players co-mentioned in the same line.
     # Keeps single-player channels covered (all targeted fire there), but group-intel
     # messages won't blanket-flag everyone just because "BAL ... Workout" appears.
