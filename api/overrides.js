@@ -1,23 +1,22 @@
-const KV_URL = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const Redis = require('ioredis');
+
+let client = null;
+function getClient() {
+  if (!client) {
+    const url = process.env.REDIS_URL;
+    if (!url) throw new Error('REDIS_URL not set');
+    client = new Redis(url, { lazyConnect: false, maxRetriesPerRequest: 2 });
+  }
+  return client;
+}
 
 async function kvGet() {
-  const res = await fetch(`${KV_URL}/get/score_overrides`, {
-    headers: { Authorization: `Bearer ${KV_TOKEN}` },
-  });
-  const data = await res.json();
-  return data.result ? JSON.parse(data.result) : {};
+  const raw = await getClient().get('score_overrides');
+  return raw ? JSON.parse(raw) : {};
 }
 
 async function kvSet(value) {
-  await fetch(KV_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${KV_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(['SET', 'score_overrides', JSON.stringify(value)]),
-  });
+  await getClient().set('score_overrides', JSON.stringify(value));
 }
 
 module.exports = async function handler(req, res) {
