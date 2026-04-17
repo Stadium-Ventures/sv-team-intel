@@ -605,6 +605,12 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-na {{ background-color: #e0e0e0 !important; color: #666; font-weight: 600; font-style: italic; }}
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
+/* Matrix cells show touch counts — soften the number so color dominates */
+td.score-cell.score-2 {{ color: rgba(26, 94, 26, 0.5); font-weight: 500; }}
+td.score-cell.score-1 {{ color: rgba(58, 107, 48, 0.5); font-weight: 500; }}
+td.score-cell.score-0 {{ color: rgba(122, 107, 0, 0.5); font-weight: 500; }}
+td.score-cell.score-n1 {{ color: rgba(138, 69, 0, 0.5); font-weight: 500; }}
+td.score-cell.score-n2 {{ color: rgba(139, 26, 26, 0.5); font-weight: 500; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
 td.workout {{ outline: 3px solid #d4a017; outline-offset: -3px; }}
 .workout-badge {{ display: inline-block; background: #d4a017; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
