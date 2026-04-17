@@ -182,6 +182,8 @@ def find_players_in_text(text):
         found.add('Bo Lowrance')
     if re.search(r'\btaj\b', tl) and 'Taj Marchand' not in found:
         found.add('Taj Marchand')
+    if re.search(r'\bphinn\b', tl) and 'Phinn Beaird' not in found:
+        found.add('Phinn Beaird')
     return found
 
 # Single-player Slack channels — every message in these is already scoped to one player,
@@ -195,7 +197,7 @@ for _last_lc, _full in PLAYERS_2026.items():
     PLAYER_ALIASES[_full] = {_last_lc, _first}
 PLAYER_ALIASES['Cameron Flukey'].update({'cam'})
 PLAYER_ALIASES['Trevor Condon'].update({'trev'})
-# 'bo' and 'taj' already first names
+# 'bo', 'taj', 'phinn' already first names
 
 # Broad patterns — team-level workout facts that apply to every player named in the message.
 _WORKOUT_BROAD_PATTERNS = [
