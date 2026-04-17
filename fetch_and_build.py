@@ -440,6 +440,8 @@ def build_html(records, password="SVintel2026"):
     eastern = timezone(timedelta(hours=-4))
     now_str = datetime.now(eastern).strftime('%B %d, %Y %I:%M %p') + ' ET'
     all_2026_js = json.dumps(ALL_2026_PLAYERS)
+    # Serialize alias map (sets aren't JSON-safe — convert to lists)
+    player_aliases_js = json.dumps({name: sorted(aliases) for name, aliases in PLAYER_ALIASES.items()})
 
     html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -637,12 +639,19 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     background: #fdf6c7; border-bottom: 2px solid #d4a017;
     padding: 1px 2px; border-radius: 2px; color: #6a4c00; font-weight: 600;
 }}
+#messageModal mark.mm-hl-player {{
+    background: #d6e7f7; border-bottom: 2px solid #1f6bb8;
+    padding: 1px 2px; border-radius: 2px; color: #0d3b6a; font-weight: 700;
+}}
 #messageModal .mm-legend {{
     font-size: 11px; color: #888; margin-top: 10px;
 }}
 #messageModal .mm-legend .pill {{
     display: inline-block; background: #fdf6c7; border-bottom: 2px solid #d4a017;
     padding: 1px 6px; border-radius: 2px; margin-right: 4px; color: #6a4c00; font-weight: 600;
+}}
+#messageModal .mm-legend .pill-player {{
+    background: #d6e7f7; border-bottom-color: #1f6bb8; color: #0d3b6a;
 }}
 .detail-table td.note-cell {{ cursor: pointer; }}
 .detail-table tr:hover td.note-cell {{ background: #f0f7ec; }}
@@ -848,6 +857,7 @@ function checkPw() {{
 const RECORDS = {records_js};
 const ALL_TEAMS = {json.dumps(ALL_TEAMS)};
 const ALL_2026_PLAYERS = {all_2026_js};
+const PLAYER_ALIASES = {player_aliases_js};
 
 // --- Override system (Vercel KV) — per-record overrides ---
 var scoreOverrides = {{}};
@@ -872,35 +882,45 @@ function _escapeHtml(s) {{
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }}
 
-function _highlightMatches(text, matches) {{
-    // matches is an array of substrings to highlight (case-insensitive, first-occurrence each).
-    if (!matches || !matches.length) return _escapeHtml(text);
-    // Find character ranges for each match (case-insensitive). Take longest-first to avoid nesting.
+function _highlightMatches(text, phraseGroups) {{
+    // phraseGroups: list of groups — each has phrases[], cls, wholeWord
+    if (!phraseGroups || !phraseGroups.length) return _escapeHtml(text);
     const lc = text.toLowerCase();
     const ranges = [];
-    matches.slice().sort((a,b) => b.length - a.length).forEach(function(m) {{
-        if (!m) return;
-        var idx = 0;
-        var needle = m.toLowerCase();
-        while ((idx = lc.indexOf(needle, idx)) !== -1) {{
-            ranges.push([idx, idx + m.length]);
-            idx += m.length;
-        }}
+    phraseGroups.forEach(function(g) {{
+        (g.phrases || []).slice().sort((a,b) => b.length - a.length).forEach(function(p) {{
+            if (!p) return;
+            var needle = p.toLowerCase();
+            var idx = 0;
+            while ((idx = lc.indexOf(needle, idx)) !== -1) {{
+                if (g.wholeWord) {{
+                    var before = idx === 0 ? '' : lc[idx-1];
+                    var after = (idx + needle.length) >= lc.length ? '' : lc[idx + needle.length];
+                    var isBoundary = function(c) {{ return !c || !/[a-z0-9]/.test(c); }};
+                    if (!isBoundary(before) || !isBoundary(after)) {{ idx += 1; continue; }}
+                }}
+                ranges.push({{start: idx, end: idx + needle.length, cls: g.cls}});
+                idx += needle.length;
+            }}
+        }});
     }});
     if (!ranges.length) return _escapeHtml(text);
-    ranges.sort(function(a,b){{ return a[0]-b[0]; }});
-    // Merge overlapping
-    const merged = [ranges[0]];
-    for (var k = 1; k < ranges.length; k++) {{
-        var last = merged[merged.length-1];
-        if (ranges[k][0] <= last[1]) {{ last[1] = Math.max(last[1], ranges[k][1]); }}
-        else merged.push(ranges[k]);
-    }}
+    // Sort by start; for overlaps, keep PDW highlight (mm-hl) over player (mm-hl-player) when tied.
+    ranges.sort(function(a,b){{
+        if (a.start !== b.start) return a.start - b.start;
+        return (b.end - b.start) - (a.end - a.start);
+    }});
+    // Drop ranges overlapped by earlier kept range.
+    const kept = [];
+    ranges.forEach(function(r) {{
+        if (kept.length && r.start < kept[kept.length-1].end) return;
+        kept.push(r);
+    }});
     var out = '', cursor = 0;
-    merged.forEach(function(r) {{
-        out += _escapeHtml(text.slice(cursor, r[0]));
-        out += '<mark class="mm-hl">' + _escapeHtml(text.slice(r[0], r[1])) + '</mark>';
-        cursor = r[1];
+    kept.forEach(function(r) {{
+        out += _escapeHtml(text.slice(cursor, r.start));
+        out += '<mark class="' + r.cls + '">' + _escapeHtml(text.slice(r.start, r.end)) + '</mark>';
+        cursor = r.end;
     }});
     out += _escapeHtml(text.slice(cursor));
     return out;
@@ -911,11 +931,22 @@ function openMessageModal(rowKey) {{
     if (!r) return;
     const body = (r.full_text && r.full_text.length > r.note.length) ? r.full_text : r.note;
     const isPDWrow = !!r.workout;
+    const playerAliases = (PLAYER_ALIASES[r.player] || []).concat([r.player]);
     document.getElementById('mmTitle').textContent = r.player + ' · ' + r.team;
     document.getElementById('mmMeta').textContent = r.date + ' · #' + (r.channel || 'unknown') +
         (isPDWrow ? ' · PDW flagged' : '');
-    document.getElementById('mmBody').innerHTML = _highlightMatches(body, r.workout_matches || []);
-    document.getElementById('mmLegend').style.display = (isPDWrow && (r.workout_matches || []).length) ? 'block' : 'none';
+    const groups = [
+        // Draw PDW highlight first (it takes priority on overlap).
+        {{ phrases: r.workout_matches || [], cls: 'mm-hl', wholeWord: false }},
+        {{ phrases: playerAliases, cls: 'mm-hl-player', wholeWord: true }},
+    ];
+    document.getElementById('mmBody').innerHTML = _highlightMatches(body, groups);
+    document.getElementById('mmLegend').innerHTML =
+        '<span class="pill pill-player">' + r.player.split(' ')[0] + '</span> = player mentions' +
+        (isPDWrow && (r.workout_matches || []).length
+            ? ' &nbsp;·&nbsp; <span class="pill">highlighted</span> = text that triggered the PDW flag'
+            : '');
+    document.getElementById('mmLegend').style.display = 'block';
     document.getElementById('messageOverlay').classList.add('visible');
 }}
 
