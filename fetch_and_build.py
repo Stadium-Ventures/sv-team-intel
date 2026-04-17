@@ -1176,7 +1176,7 @@ function renderDetail() {{
         const s = getScore(r);
         const esc = r.player.replace(/'/g, "\\\\'");
         const isOverridden = scoreOverrides.hasOwnProperty(r.player + '|' + r.team + '|' + r.date);
-        const wBadge = r.workout ? '<span class="workout-badge">PDW</span>' : '';
+        const wBadge = isPDW(r.player, r.team) ? '<span class="workout-badge">PDW</span>' : '';
         const rowKey = r.player + '|' + r.team + '|' + r.date + '|' + i;
         html += '<tr><td>' + r.date + '</td><td>' + r.team + wBadge + '</td>' +
             '<td class="note-cell" onclick="openMessageModal(\\'' + rowKey + '\\')">' + note + '</td>' +
