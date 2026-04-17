@@ -1,7 +1,7 @@
 [
   {
     "player": "Cameron Flukey",
-    "team": "KC",
+    "team": "MIN",
     "date": "2025-08-20",
     "score": 2,
     "note": "20 min call with KC scouting director. Loves our class for this year, will be on Cam, Kyle and Myles plus Condon.",
@@ -12,17 +12,6 @@
   },
   {
     "player": "Cameron Flukey",
-    "team": "MIN",
-    "date": "2025-08-20",
-    "score": 2,
-    "note": "20 min call with KC scouting director. Loves our class for this year, will be on Cam, Kyle and Myles plus Condon.",
-    "channel": "2026-draft-general",
-    "full_text": "20 min call with KC scouting director. Loves our class for this year, will be on Cam, Kyle and Myles plus Condon. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
     "team": "KC",
     "date": "2025-08-20",
     "score": 2,
@@ -44,10 +33,21 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "KC",
+    "date": "2025-08-20",
+    "score": 2,
+    "note": "20 min call with KC scouting director. Loves our class for this year, will be on Cam, Kyle and Myles plus Condon.",
+    "channel": "2026-draft-general",
+    "full_text": "20 min call with KC scouting director. Loves our class for this year, will be on Cam, Kyle and Myles plus Condon. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Joe Tiroly",
-    "team": "BAL",
+    "team": "LAA",
     "date": "2025-12-06",
-    "score": -1,
+    "score": 1,
     "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
     "channel": "joe-tiroly",
     "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
@@ -67,42 +67,9 @@
   },
   {
     "player": "Joe Tiroly",
-    "team": "MIA",
+    "team": "CLE",
     "date": "2025-12-06",
     "score": -2,
-    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
-    "channel": "joe-tiroly",
-    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
-    "team": "SD",
-    "date": "2025-12-06",
-    "score": 1,
-    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
-    "channel": "joe-tiroly",
-    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
-    "team": "WSH",
-    "date": "2025-12-06",
-    "score": 1,
-    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
-    "channel": "joe-tiroly",
-    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
-    "team": "KC",
-    "date": "2025-12-06",
-    "score": 1,
     "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
     "channel": "joe-tiroly",
     "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
@@ -133,6 +100,83 @@
   },
   {
     "player": "Joe Tiroly",
+    "team": "BAL",
+    "date": "2025-12-06",
+    "score": -1,
+    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
+    "channel": "joe-tiroly",
+    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
+    "team": "PHI",
+    "date": "2025-12-06",
+    "score": 1,
+    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
+    "channel": "joe-tiroly",
+    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
+    "team": "CHW",
+    "date": "2025-12-06",
+    "score": -2,
+    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
+    "channel": "joe-tiroly",
+    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
+    "team": "NYM",
+    "date": "2025-12-06",
+    "score": -2,
+    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
+    "channel": "joe-tiroly",
+    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
+    "team": "MIA",
+    "date": "2025-12-06",
+    "score": -2,
+    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
+    "channel": "joe-tiroly",
+    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
+    "team": "KC",
+    "date": "2025-12-06",
+    "score": 1,
+    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
+    "channel": "joe-tiroly",
+    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
+    "team": "SD",
+    "date": "2025-12-06",
+    "score": 1,
+    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
+    "channel": "joe-tiroly",
+    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
     "team": "TEX",
     "date": "2025-12-06",
     "score": 1,
@@ -155,50 +199,6 @@
   },
   {
     "player": "Joe Tiroly",
-    "team": "PHI",
-    "date": "2025-12-06",
-    "score": 1,
-    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
-    "channel": "joe-tiroly",
-    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
-    "team": "LAA",
-    "date": "2025-12-06",
-    "score": 1,
-    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
-    "channel": "joe-tiroly",
-    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
-    "team": "NYM",
-    "date": "2025-12-06",
-    "score": -2,
-    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
-    "channel": "joe-tiroly",
-    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
-    "team": "CHW",
-    "date": "2025-12-06",
-    "score": -2,
-    "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
-    "channel": "joe-tiroly",
-    "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
     "team": "BOS",
     "date": "2025-12-06",
     "score": -2,
@@ -210,9 +210,9 @@
   },
   {
     "player": "Joe Tiroly",
-    "team": "CLE",
+    "team": "WSH",
     "date": "2025-12-06",
-    "score": -2,
+    "score": 1,
     "note": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamI",
     "channel": "joe-tiroly",
     "full_text": "TeamIntel- He\u2019s met with 22 teams in person. Really enjoyed the Pirates, Padres (Danny), Rangers, Royals, Yankees, Phillies, and Nationals meetings. Only meeting he didn\u2019t like was with Angels.\n\nTeamIntel - Right now the Rays, Guardians, Mets, White Sox, Red Sox, and Marlins have said they will do a zoom at some point.\n\nTeamIntel - no communication with Orioles and Giants. ",
@@ -242,17 +242,6 @@
     "workout_matches": []
   },
   {
-    "player": "Bo Lowrance",
-    "team": "NYY",
-    "date": "2025-12-08",
-    "score": 2,
-    "note": "Flukey, Lowrance, Robbins, Condon - green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - NYY: \nFlukey, Lowrance, Robbins, Condon - green \n\nTiroly, Jones - light green\n\nMarchand, Bailey, Loy, Kranzler, Diaz - yellow\n\nPushed Loy, Lawrence as fits",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Trevor Condon",
     "team": "NYY",
     "date": "2025-12-08",
@@ -264,7 +253,18 @@
     "workout_matches": []
   },
   {
-    "player": "Joe Tiroly",
+    "player": "Bo Lowrance",
+    "team": "NYY",
+    "date": "2025-12-08",
+    "score": 2,
+    "note": "Flukey, Lowrance, Robbins, Condon - green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - NYY: \nFlukey, Lowrance, Robbins, Condon - green \n\nTiroly, Jones - light green\n\nMarchand, Bailey, Loy, Kranzler, Diaz - yellow\n\nPushed Loy, Lawrence as fits",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Kyle Jones",
     "team": "NYY",
     "date": "2025-12-08",
     "score": 1,
@@ -275,7 +275,7 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Joe Tiroly",
     "team": "NYY",
     "date": "2025-12-08",
     "score": 1,
@@ -297,18 +297,7 @@
     "workout_matches": []
   },
   {
-    "player": "Griffin Loy",
-    "team": "NYY",
-    "date": "2025-12-08",
-    "score": 0,
-    "note": "Marchand, Bailey, Loy, Kranzler, Diaz - yellow",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - NYY: \nFlukey, Lowrance, Robbins, Condon - green \n\nTiroly, Jones - light green\n\nMarchand, Bailey, Loy, Kranzler, Diaz - yellow\n\nPushed Loy, Lawrence as fits",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Alex Kranzler",
+    "player": "Myles Bailey",
     "team": "NYY",
     "date": "2025-12-08",
     "score": 0,
@@ -330,11 +319,33 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Alex Kranzler",
     "team": "NYY",
     "date": "2025-12-08",
     "score": 0,
     "note": "Marchand, Bailey, Loy, Kranzler, Diaz - yellow",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - NYY: \nFlukey, Lowrance, Robbins, Condon - green \n\nTiroly, Jones - light green\n\nMarchand, Bailey, Loy, Kranzler, Diaz - yellow\n\nPushed Loy, Lawrence as fits",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Griffin Loy",
+    "team": "NYY",
+    "date": "2025-12-08",
+    "score": 0,
+    "note": "Marchand, Bailey, Loy, Kranzler, Diaz - yellow",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - NYY: \nFlukey, Lowrance, Robbins, Condon - green \n\nTiroly, Jones - light green\n\nMarchand, Bailey, Loy, Kranzler, Diaz - yellow\n\nPushed Loy, Lawrence as fits",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Griffin Loy",
+    "team": "NYY",
+    "date": "2025-12-08",
+    "score": 1,
+    "note": "Pushed Loy, Lawrence as fits",
     "channel": "winter-meetings-2026",
     "full_text": "TeamIntel - NYY: \nFlukey, Lowrance, Robbins, Condon - green \n\nTiroly, Jones - light green\n\nMarchand, Bailey, Loy, Kranzler, Diaz - yellow\n\nPushed Loy, Lawrence as fits",
     "workout": false,
@@ -352,17 +363,6 @@
     "workout_matches": []
   },
   {
-    "player": "Griffin Loy",
-    "team": "NYY",
-    "date": "2025-12-08",
-    "score": 1,
-    "note": "Pushed Loy, Lawrence as fits",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - NYY: \nFlukey, Lowrance, Robbins, Condon - green \n\nTiroly, Jones - light green\n\nMarchand, Bailey, Loy, Kranzler, Diaz - yellow\n\nPushed Loy, Lawrence as fits",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Cameron Flukey",
     "team": "BOS",
     "date": "2025-12-08",
@@ -385,7 +385,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Aiden Robbins",
     "team": "BOS",
     "date": "2025-12-08",
     "score": 2,
@@ -396,7 +396,7 @@
     "workout_matches": []
   },
   {
-    "player": "Aiden Robbins",
+    "player": "Trevor Condon",
     "team": "BOS",
     "date": "2025-12-08",
     "score": 2,
@@ -495,7 +495,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Aiden Robbins",
     "team": "HOU",
     "date": "2025-12-08",
     "score": 2,
@@ -506,7 +506,7 @@
     "workout_matches": []
   },
   {
-    "player": "Aiden Robbins",
+    "player": "Trevor Condon",
     "team": "HOU",
     "date": "2025-12-08",
     "score": 2,
@@ -522,17 +522,6 @@
     "date": "2025-12-08",
     "score": 2,
     "note": "Flukey, Lowrance, Condon, Marchand, Robbins - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - HOU:\nFlukey, Lowrance, Condon, Marchand, Robbins - Green\n\nJones, Tiroly, Loy, Beaird, Bailey, Kranzler - Light Green\n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Griffin Loy",
-    "team": "HOU",
-    "date": "2025-12-08",
-    "score": 1,
-    "note": "Jones, Tiroly, Loy, Beaird, Bailey, Kranzler - Light Green",
     "channel": "winter-meetings-2026",
     "full_text": "TeamIntel - HOU:\nFlukey, Lowrance, Condon, Marchand, Robbins - Green\n\nJones, Tiroly, Loy, Beaird, Bailey, Kranzler - Light Green\n",
     "workout": false,
@@ -550,7 +539,7 @@
     "workout_matches": []
   },
   {
-    "player": "Joe Tiroly",
+    "player": "Myles Bailey",
     "team": "HOU",
     "date": "2025-12-08",
     "score": 1,
@@ -572,7 +561,7 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Joe Tiroly",
     "team": "HOU",
     "date": "2025-12-08",
     "score": 1,
@@ -583,7 +572,18 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Griffin Loy",
+    "team": "HOU",
+    "date": "2025-12-08",
+    "score": 1,
+    "note": "Jones, Tiroly, Loy, Beaird, Bailey, Kranzler - Light Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - HOU:\nFlukey, Lowrance, Condon, Marchand, Robbins - Green\n\nJones, Tiroly, Loy, Beaird, Bailey, Kranzler - Light Green\n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Kyle Jones",
     "team": "HOU",
     "date": "2025-12-08",
     "score": 1,
@@ -605,6 +605,17 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "TOR",
+    "date": "2025-12-08",
+    "score": 2,
+    "note": "Condon, Lowrance, Robbins - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - TOR:\nCondon, Lowrance, Robbins - Green\n\nJones, Marchand, Bailey  - light green\n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Bo Lowrance",
     "team": "TOR",
     "date": "2025-12-08",
@@ -616,11 +627,11 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Kyle Jones",
     "team": "TOR",
     "date": "2025-12-08",
-    "score": 2,
-    "note": "Condon, Lowrance, Robbins - Green",
+    "score": 1,
+    "note": "Jones, Marchand, Bailey  - light green",
     "channel": "winter-meetings-2026",
     "full_text": "TeamIntel - TOR:\nCondon, Lowrance, Robbins - Green\n\nJones, Marchand, Bailey  - light green\n",
     "workout": false,
@@ -639,17 +650,6 @@
   },
   {
     "player": "Myles Bailey",
-    "team": "TOR",
-    "date": "2025-12-08",
-    "score": 1,
-    "note": "Jones, Marchand, Bailey  - light green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - TOR:\nCondon, Lowrance, Robbins - Green\n\nJones, Marchand, Bailey  - light green\n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Kyle Jones",
     "team": "TOR",
     "date": "2025-12-08",
     "score": 1,
@@ -693,17 +693,6 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
-    "team": "KC",
-    "date": "2025-12-08",
-    "score": 2,
-    "note": "Flukey, Bailey, Condon - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - KC: \nFlukey, Bailey, Condon - Green\n\nWright, Lawrence - light green\n\nDid not know anyone else",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Trevor Condon",
     "team": "KC",
     "date": "2025-12-08",
@@ -715,7 +704,18 @@
     "workout_matches": []
   },
   {
-    "player": "Lucas Lawrence",
+    "player": "Myles Bailey",
+    "team": "KC",
+    "date": "2025-12-08",
+    "score": 2,
+    "note": "Flukey, Bailey, Condon - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - KC: \nFlukey, Bailey, Condon - Green\n\nWright, Lawrence - light green\n\nDid not know anyone else",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Brooks Wright",
     "team": "KC",
     "date": "2025-12-08",
     "score": 1,
@@ -726,7 +726,7 @@
     "workout_matches": []
   },
   {
-    "player": "Brooks Wright",
+    "player": "Lucas Lawrence",
     "team": "KC",
     "date": "2025-12-08",
     "score": 1,
@@ -781,7 +781,7 @@
     "workout_matches": []
   },
   {
-    "player": "Joe Tiroly",
+    "player": "Aiden Robbins",
     "team": "LAD",
     "date": "2025-12-09",
     "score": 1,
@@ -792,7 +792,7 @@
     "workout_matches": []
   },
   {
-    "player": "Aiden Robbins",
+    "player": "Joe Tiroly",
     "team": "LAD",
     "date": "2025-12-09",
     "score": 1,
@@ -847,17 +847,6 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "TB",
-    "date": "2025-12-09",
-    "score": 2,
-    "note": "Flukey, Marchand, Condon, Jones - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - TB:\nFlukey, Marchand, Condon, Jones - Green\n\nRobbins, Lowrance, Bailey, Loy - Light Green\n\nBailey's K-Rate looking to be below 25%, will look at peripherals as well ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Cameron Flukey",
     "team": "TB",
     "date": "2025-12-09",
@@ -869,7 +858,7 @@
     "workout_matches": []
   },
   {
-    "player": "Taj Marchand",
+    "player": "Trevor Condon",
     "team": "TB",
     "date": "2025-12-09",
     "score": 2,
@@ -881,6 +870,17 @@
   },
   {
     "player": "Kyle Jones",
+    "team": "TB",
+    "date": "2025-12-09",
+    "score": 2,
+    "note": "Flukey, Marchand, Condon, Jones - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - TB:\nFlukey, Marchand, Condon, Jones - Green\n\nRobbins, Lowrance, Bailey, Loy - Light Green\n\nBailey's K-Rate looking to be below 25%, will look at peripherals as well ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
     "team": "TB",
     "date": "2025-12-09",
     "score": 2,
@@ -913,7 +913,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Griffin Loy",
     "team": "TB",
     "date": "2025-12-09",
     "score": 1,
@@ -924,7 +924,7 @@
     "workout_matches": []
   },
   {
-    "player": "Griffin Loy",
+    "player": "Myles Bailey",
     "team": "TB",
     "date": "2025-12-09",
     "score": 1,
@@ -968,7 +968,7 @@
     "workout_matches": []
   },
   {
-    "player": "Joe Tiroly",
+    "player": "Kyle Jones",
     "team": "ATL",
     "date": "2025-12-09",
     "score": 1,
@@ -979,7 +979,7 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Joe Tiroly",
     "team": "ATL",
     "date": "2025-12-09",
     "score": 1,
@@ -1012,17 +1012,6 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
-    "team": "LAA",
-    "date": "2025-12-09",
-    "score": 2,
-    "note": "Flukey, Condon, Bailey, Loy - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - LAA:\nFlukey, Condon, Bailey, Loy - Green\n\nJones, Beaird- Light Green",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Trevor Condon",
     "team": "LAA",
     "date": "2025-12-09",
@@ -1045,7 +1034,18 @@
     "workout_matches": []
   },
   {
-    "player": "Phinn Beaird",
+    "player": "Myles Bailey",
+    "team": "LAA",
+    "date": "2025-12-09",
+    "score": 2,
+    "note": "Flukey, Condon, Bailey, Loy - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - LAA:\nFlukey, Condon, Bailey, Loy - Green\n\nJones, Beaird- Light Green",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Kyle Jones",
     "team": "LAA",
     "date": "2025-12-09",
     "score": 1,
@@ -1056,7 +1056,7 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Phinn Beaird",
     "team": "LAA",
     "date": "2025-12-09",
     "score": 1,
@@ -1089,7 +1089,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Myles Bailey",
     "team": "BAL",
     "date": "2025-12-09",
     "score": 2,
@@ -1100,7 +1100,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Trevor Condon",
     "team": "BAL",
     "date": "2025-12-09",
     "score": 2,
@@ -1122,7 +1122,7 @@
     "workout_matches": []
   },
   {
-    "player": "Joe Tiroly",
+    "player": "Aiden Robbins",
     "team": "BAL",
     "date": "2025-12-09",
     "score": 1,
@@ -1133,7 +1133,7 @@
     "workout_matches": []
   },
   {
-    "player": "Aiden Robbins",
+    "player": "Joe Tiroly",
     "team": "BAL",
     "date": "2025-12-09",
     "score": 1,
@@ -1166,6 +1166,17 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "NYM",
+    "date": "2025-12-09",
+    "score": 2,
+    "note": "Flukey, Condon, Bailey, Marchand - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - NYM:\nFlukey, Condon, Bailey, Marchand - Green\n\nLowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green\n\n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Taj Marchand",
     "team": "NYM",
     "date": "2025-12-09",
@@ -1188,40 +1199,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "NYM",
-    "date": "2025-12-09",
-    "score": 2,
-    "note": "Flukey, Condon, Bailey, Marchand - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - NYM:\nFlukey, Condon, Bailey, Marchand - Green\n\nLowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green\n\n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Griffin Loy",
-    "team": "NYM",
-    "date": "2025-12-09",
-    "score": 1,
-    "note": "Lowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - NYM:\nFlukey, Condon, Bailey, Marchand - Green\n\nLowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green\n\n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Phinn Beaird",
-    "team": "NYM",
-    "date": "2025-12-09",
-    "score": 1,
-    "note": "Lowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - NYM:\nFlukey, Condon, Bailey, Marchand - Green\n\nLowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green\n\n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
     "team": "NYM",
     "date": "2025-12-09",
     "score": 1,
@@ -1244,6 +1222,28 @@
   },
   {
     "player": "Alex Kranzler",
+    "team": "NYM",
+    "date": "2025-12-09",
+    "score": 1,
+    "note": "Lowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - NYM:\nFlukey, Condon, Bailey, Marchand - Green\n\nLowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green\n\n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Griffin Loy",
+    "team": "NYM",
+    "date": "2025-12-09",
+    "score": 1,
+    "note": "Lowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - NYM:\nFlukey, Condon, Bailey, Marchand - Green\n\nLowrance, Robbins, Beaird, Tiroly, Loy, Kranzler - Light Green\n\n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
     "team": "NYM",
     "date": "2025-12-09",
     "score": 1,
@@ -1342,29 +1342,18 @@
     "workout_matches": []
   },
   {
-    "player": "Taj Marchand",
-    "team": "ARI",
-    "date": "2025-12-10",
-    "score": 2,
-    "note": "Flukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - ARZ: \nFlukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green\n\nBailey - Light Green",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "ARI",
-    "date": "2025-12-10",
-    "score": 2,
-    "note": "Flukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - ARZ: \nFlukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green\n\nBailey - Light Green",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Boston Torres",
+    "team": "ARI",
+    "date": "2025-12-10",
+    "score": 2,
+    "note": "Flukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - ARZ: \nFlukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green\n\nBailey - Light Green",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
     "team": "ARI",
     "date": "2025-12-10",
     "score": 2,
@@ -1387,6 +1376,17 @@
   },
   {
     "player": "Alex Kranzler",
+    "team": "ARI",
+    "date": "2025-12-10",
+    "score": 2,
+    "note": "Flukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - ARZ: \nFlukey, Condon, Lowrance, Marchand, Robbins, Jones, Kranzler, Torres - Green\n\nBailey - Light Green",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
     "team": "ARI",
     "date": "2025-12-10",
     "score": 2,
@@ -1430,17 +1430,6 @@
     "workout_matches": []
   },
   {
-    "player": "Joe Tiroly",
-    "team": "MIA",
-    "date": "2025-12-10",
-    "score": 2,
-    "note": "Flukey, Condon, Robbins, Tiroly - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - MIA:\nFlukey, Condon, Robbins, Tiroly - Green\n\nBailey, Marchand, Lowrance - Light green\n\nWanted us to send us something over from the one-pagers",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Cameron Flukey",
     "team": "MIA",
     "date": "2025-12-10",
@@ -1453,6 +1442,17 @@
   },
   {
     "player": "Aiden Robbins",
+    "team": "MIA",
+    "date": "2025-12-10",
+    "score": 2,
+    "note": "Flukey, Condon, Robbins, Tiroly - Green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - MIA:\nFlukey, Condon, Robbins, Tiroly - Green\n\nBailey, Marchand, Lowrance - Light green\n\nWanted us to send us something over from the one-pagers",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
     "team": "MIA",
     "date": "2025-12-10",
     "score": 2,
@@ -1529,17 +1529,6 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "SD",
-    "date": "2025-12-10",
-    "score": 2,
-    "note": "Flukey, Condon, Robbins, Marchand, Lowrance, Bailey - Green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - SD:\n\nFlukey, Condon, Robbins, Marchand, Lowrance, Bailey - Green\n\nJones, Tiroly, Kranzler, Cleveland - Light green\n\nComped Bailey to Carlos Delgado, Condon was better than De Brun, Marchand looks like Billy Carlson, Kranzler like David Bednar. Liked Cleveland in high school.",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Aiden Robbins",
     "team": "SD",
     "date": "2025-12-10",
@@ -1562,7 +1551,7 @@
     "workout_matches": []
   },
   {
-    "player": "Bo Lowrance",
+    "player": "Trevor Condon",
     "team": "SD",
     "date": "2025-12-10",
     "score": 2,
@@ -1573,22 +1562,11 @@
     "workout_matches": []
   },
   {
-    "player": "Joe Tiroly",
+    "player": "Bo Lowrance",
     "team": "SD",
     "date": "2025-12-10",
-    "score": 1,
-    "note": "Jones, Tiroly, Kranzler, Cleveland - Light green",
-    "channel": "winter-meetings-2026",
-    "full_text": "TeamIntel - SD:\n\nFlukey, Condon, Robbins, Marchand, Lowrance, Bailey - Green\n\nJones, Tiroly, Kranzler, Cleveland - Light green\n\nComped Bailey to Carlos Delgado, Condon was better than De Brun, Marchand looks like Billy Carlson, Kranzler like David Bednar. Liked Cleveland in high school.",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Cole Cleveland",
-    "team": "SD",
-    "date": "2025-12-10",
-    "score": 1,
-    "note": "Jones, Tiroly, Kranzler, Cleveland - Light green",
+    "score": 2,
+    "note": "Flukey, Condon, Robbins, Marchand, Lowrance, Bailey - Green",
     "channel": "winter-meetings-2026",
     "full_text": "TeamIntel - SD:\n\nFlukey, Condon, Robbins, Marchand, Lowrance, Bailey - Green\n\nJones, Tiroly, Kranzler, Cleveland - Light green\n\nComped Bailey to Carlos Delgado, Condon was better than De Brun, Marchand looks like Billy Carlson, Kranzler like David Bednar. Liked Cleveland in high school.",
     "workout": false,
@@ -1617,6 +1595,28 @@
     "workout_matches": []
   },
   {
+    "player": "Joe Tiroly",
+    "team": "SD",
+    "date": "2025-12-10",
+    "score": 1,
+    "note": "Jones, Tiroly, Kranzler, Cleveland - Light green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - SD:\n\nFlukey, Condon, Robbins, Marchand, Lowrance, Bailey - Green\n\nJones, Tiroly, Kranzler, Cleveland - Light green\n\nComped Bailey to Carlos Delgado, Condon was better than De Brun, Marchand looks like Billy Carlson, Kranzler like David Bednar. Liked Cleveland in high school.",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Cole Cleveland",
+    "team": "SD",
+    "date": "2025-12-10",
+    "score": 1,
+    "note": "Jones, Tiroly, Kranzler, Cleveland - Light green",
+    "channel": "winter-meetings-2026",
+    "full_text": "TeamIntel - SD:\n\nFlukey, Condon, Robbins, Marchand, Lowrance, Bailey - Green\n\nJones, Tiroly, Kranzler, Cleveland - Light green\n\nComped Bailey to Carlos Delgado, Condon was better than De Brun, Marchand looks like Billy Carlson, Kranzler like David Bednar. Liked Cleveland in high school.",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Taj Marchand",
     "team": "SD",
     "date": "2025-12-10",
@@ -1628,7 +1628,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Myles Bailey",
     "team": "SD",
     "date": "2025-12-10",
     "score": 1,
@@ -1639,7 +1639,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Trevor Condon",
     "team": "SD",
     "date": "2025-12-10",
     "score": 1,
@@ -1683,7 +1683,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Trevor Condon",
     "team": "CHW",
     "date": "2025-12-11",
     "score": 2,
@@ -1694,7 +1694,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Myles Bailey",
     "team": "CHW",
     "date": "2025-12-11",
     "score": 2,
@@ -1904,20 +1904,6 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "MIN",
-    "date": "2026-01-13",
-    "score": 1,
-    "note": "15 min phone call. HS is re-doing facilities so no cages now, hitting at facility close by. \n\nTeam Intel - Tigers bringing staff into see him workout in next 2 weeks. \n\nScheduled to do pro day for Dia",
-    "channel": "bo-lowrance",
-    "full_text": "15 min phone call. HS is re-doing facilities so no cages now, hitting at facility close by. \n\nTeam Intel - Tigers bringing staff into see him workout in next 2 weeks. \n\nScheduled to do pro day for Diamond Prospects Jan 31",
-    "workout": true,
-    "workout_matches": [
-      "Tigers bringing staff into see him workout",
-      "Tigers bringing staff into see him workout"
-    ]
-  },
-  {
-    "player": "Bo Lowrance",
     "team": "DET",
     "date": "2026-01-13",
     "score": 1,
@@ -1931,8 +1917,22 @@
     ]
   },
   {
+    "player": "Bo Lowrance",
+    "team": "MIN",
+    "date": "2026-01-13",
+    "score": 1,
+    "note": "15 min phone call. HS is re-doing facilities so no cages now, hitting at facility close by. \n\nTeam Intel - Tigers bringing staff into see him workout in next 2 weeks. \n\nScheduled to do pro day for Dia",
+    "channel": "bo-lowrance",
+    "full_text": "15 min phone call. HS is re-doing facilities so no cages now, hitting at facility close by. \n\nTeam Intel - Tigers bringing staff into see him workout in next 2 weeks. \n\nScheduled to do pro day for Diamond Prospects Jan 31",
+    "workout": true,
+    "workout_matches": [
+      "Tigers bringing staff into see him workout",
+      "Tigers bringing staff into see him workout"
+    ]
+  },
+  {
     "player": "Taj Marchand",
-    "team": "BAL",
+    "team": "ARI",
     "date": "2026-01-14",
     "score": 1,
     "note": "TeamIntel:\n\nTOR Zoom with Xer and Scouting Director\nPIT Zoom tomorrow with area scout\nNYY Zoom with area scout\nARI Zoom with area scout\nBAL in person meeting with Xer and Hendrik Herz\n\ndeclining pre s",
@@ -1954,7 +1954,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "CHC",
+    "team": "TOR",
     "date": "2026-01-14",
     "score": 1,
     "note": "TeamIntel:\n\nTOR Zoom with Xer and Scouting Director\nPIT Zoom tomorrow with area scout\nNYY Zoom with area scout\nARI Zoom with area scout\nBAL in person meeting with Xer and Hendrik Herz\n\ndeclining pre s",
@@ -1965,7 +1965,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "TOR",
+    "team": "BAL",
     "date": "2026-01-14",
     "score": 1,
     "note": "TeamIntel:\n\nTOR Zoom with Xer and Scouting Director\nPIT Zoom tomorrow with area scout\nNYY Zoom with area scout\nARI Zoom with area scout\nBAL in person meeting with Xer and Hendrik Herz\n\ndeclining pre s",
@@ -1987,7 +1987,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "ARI",
+    "team": "CHC",
     "date": "2026-01-14",
     "score": 1,
     "note": "TeamIntel:\n\nTOR Zoom with Xer and Scouting Director\nPIT Zoom tomorrow with area scout\nNYY Zoom with area scout\nARI Zoom with area scout\nBAL in person meeting with Xer and Hendrik Herz\n\ndeclining pre s",
@@ -2119,7 +2119,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "WSH",
+    "team": "ARI",
     "date": "2026-01-27",
     "score": 2,
     "note": "TeamIntel \n\nARI had a scout in to see Taj tonight. He talked to him after practice. Was an older guy, Taj said\nHis name was George (I don\u2019t know this guy). Told Taj that ARI would be in to see a lot t",
@@ -2130,7 +2130,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "ARI",
+    "team": "WSH",
     "date": "2026-01-27",
     "score": 2,
     "note": "TeamIntel \n\nARI had a scout in to see Taj tonight. He talked to him after practice. Was an older guy, Taj said\nHis name was George (I don\u2019t know this guy). Told Taj that ARI would be in to see a lot t",
@@ -2196,7 +2196,7 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "WSH",
+    "team": "LAD",
     "date": "2026-01-28",
     "score": 1,
     "note": "Phone call. \n\nSaid they're playing in \u201chigh level tourney @ Delbarton\u201d this spring that should be good competition. We should prob have coverage here. \n\nSaid he's up over 10 lbs from summer and liking",
@@ -2218,7 +2218,7 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "LAD",
+    "team": "WSH",
     "date": "2026-01-28",
     "score": 1,
     "note": "Phone call. \n\nSaid they're playing in \u201chigh level tourney @ Delbarton\u201d this spring that should be good competition. We should prob have coverage here. \n\nSaid he's up over 10 lbs from summer and liking",
@@ -2229,7 +2229,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "KC",
+    "team": "TB",
     "date": "2026-01-29",
     "score": 1,
     "note": "TeamIntel \n\n TB area and Xer at practice yesterday along with KC area guy",
@@ -2240,7 +2240,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "TB",
+    "team": "KC",
     "date": "2026-01-29",
     "score": 1,
     "note": "TeamIntel \n\n TB area and Xer at practice yesterday along with KC area guy",
@@ -2284,6 +2284,17 @@
   },
   {
     "player": "Trevor Condon",
+    "team": "ARI",
+    "date": "2026-02-10",
+    "score": 1,
+    "note": "Team Intel. \n\nTOR Asst GM\nARI crosschecker\nNYY crossckchecker\nMIL crosschecker \nMIL area scout \n\nSounds like most guys were watching Contreras tonight. \n\nTrev ended 2-4 w/ 2 Bb\u2019s. Two loud barrels. Hi",
+    "channel": "trevor-condon",
+    "full_text": "Team Intel. \n\nTOR Asst GM\nARI crosschecker\nNYY crossckchecker\nMIL crosschecker \nMIL area scout \n\nSounds like most guys were watching Contreras tonight. \n\nTrev ended 2-4 w/ 2 Bb\u2019s. Two loud barrels. His team is very overrated. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
     "team": "NYY",
     "date": "2026-02-10",
     "score": 1,
@@ -2305,19 +2316,19 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "ARI",
-    "date": "2026-02-10",
+    "player": "Bo Lowrance",
+    "team": "TOR",
+    "date": "2026-02-13",
     "score": 1,
-    "note": "Team Intel. \n\nTOR Asst GM\nARI crosschecker\nNYY crossckchecker\nMIL crosschecker \nMIL area scout \n\nSounds like most guys were watching Contreras tonight. \n\nTrev ended 2-4 w/ 2 Bb\u2019s. Two loud barrels. Hi",
-    "channel": "trevor-condon",
-    "full_text": "Team Intel. \n\nTOR Asst GM\nARI crosschecker\nNYY crossckchecker\nMIL crosschecker \nMIL area scout \n\nSounds like most guys were watching Contreras tonight. \n\nTrev ended 2-4 w/ 2 Bb\u2019s. Two loud barrels. His team is very overrated. ",
+    "note": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing ",
+    "channel": "bo-lowrance",
+    "full_text": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing is in a good spot. Booted one at SS, but was moving well during I/O. He looks really fast scoring on a teammates doubles almost caught the kid in front of him.\n\nThe first K he swung at 2 pitches he chased against a poo-slinger, think it maybe worth just telling him to be ultra patient with these kids\n\nGot a bunch of time with Will (A+) and chatted with Bo after. Bo said he was surprised at how many guys were here for him, and was a little nervous but said honestly settled in post error",
     "workout": false,
     "workout_matches": []
   },
   {
     "player": "Bo Lowrance",
-    "team": "STL",
+    "team": "SF",
     "date": "2026-02-13",
     "score": 1,
     "note": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing ",
@@ -2339,18 +2350,7 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "WSH",
-    "date": "2026-02-13",
-    "score": 1,
-    "note": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing ",
-    "channel": "bo-lowrance",
-    "full_text": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing is in a good spot. Booted one at SS, but was moving well during I/O. He looks really fast scoring on a teammates doubles almost caught the kid in front of him.\n\nThe first K he swung at 2 pitches he chased against a poo-slinger, think it maybe worth just telling him to be ultra patient with these kids\n\nGot a bunch of time with Will (A+) and chatted with Bo after. Bo said he was surprised at how many guys were here for him, and was a little nervous but said honestly settled in post error",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Bo Lowrance",
-    "team": "PIT",
+    "team": "STL",
     "date": "2026-02-13",
     "score": 1,
     "note": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing ",
@@ -2394,7 +2394,7 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "SF",
+    "team": "PIT",
     "date": "2026-02-13",
     "score": 1,
     "note": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing ",
@@ -2405,12 +2405,23 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "TOR",
+    "team": "WSH",
     "date": "2026-02-13",
     "score": 1,
     "note": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing ",
     "channel": "bo-lowrance",
     "full_text": "TeamIntel -\nBlue Jays\nPirates\nCardinals\nPhillies\nWhite Sox\nTwins\nGiants\nRockies\n+ a few other \n~10-12 total\n\n1-3 with a BB, a HR and 2K (one of them legitimately hit the lefty batter box dirt). Swing is in a good spot. Booted one at SS, but was moving well during I/O. He looks really fast scoring on a teammates doubles almost caught the kid in front of him.\n\nThe first K he swung at 2 pitches he chased against a poo-slinger, think it maybe worth just telling him to be ultra patient with these kids\n\nGot a bunch of time with Will (A+) and chatted with Bo after. Bo said he was surprised at how many guys were here for him, and was a little nervous but said honestly settled in post error",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "NYY",
+    "date": "2026-02-14",
+    "score": 1,
+    "note": "TeamIntel: NYY (Mitch Colahan), STL (Sean Moran &amp; Brian Moehler), BOS (Kirk Fredrikson) there to see Taj\u2019s first scrimmage. \n\nFredrikson comped Taj to Nomar Garciaparra; Mitch Colohan said Taj rem",
+    "channel": "taj-marchand",
+    "full_text": "TeamIntel: NYY (Mitch Colahan), STL (Sean Moran &amp; Brian Moehler), BOS (Kirk Fredrikson) there to see Taj\u2019s first scrimmage. \n\nFredrikson comped Taj to Nomar Garciaparra; Mitch Colohan said Taj reminds him of Aiden Miller (athleticism) &amp; Tyler Bell",
     "workout": false,
     "workout_matches": []
   },
@@ -2428,17 +2439,6 @@
   {
     "player": "Taj Marchand",
     "team": "BOS",
-    "date": "2026-02-14",
-    "score": 1,
-    "note": "TeamIntel: NYY (Mitch Colahan), STL (Sean Moran &amp; Brian Moehler), BOS (Kirk Fredrikson) there to see Taj\u2019s first scrimmage. \n\nFredrikson comped Taj to Nomar Garciaparra; Mitch Colohan said Taj rem",
-    "channel": "taj-marchand",
-    "full_text": "TeamIntel: NYY (Mitch Colahan), STL (Sean Moran &amp; Brian Moehler), BOS (Kirk Fredrikson) there to see Taj\u2019s first scrimmage. \n\nFredrikson comped Taj to Nomar Garciaparra; Mitch Colohan said Taj reminds him of Aiden Miller (athleticism) &amp; Tyler Bell",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "NYY",
     "date": "2026-02-14",
     "score": 1,
     "note": "TeamIntel: NYY (Mitch Colahan), STL (Sean Moran &amp; Brian Moehler), BOS (Kirk Fredrikson) there to see Taj\u2019s first scrimmage. \n\nFredrikson comped Taj to Nomar Garciaparra; Mitch Colohan said Taj rem",
@@ -2471,73 +2471,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "COL",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "BAL",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "STL",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "KC",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "TB",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "SEA",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "TEX",
+    "team": "MIL",
     "date": "2026-02-25",
     "score": 1,
     "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
@@ -2549,6 +2483,61 @@
   {
     "player": "Trevor Condon",
     "team": "ARI",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "DET",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "TOR",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "COL",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "CHC",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "STL",
     "date": "2026-02-25",
     "score": 1,
     "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
@@ -2581,40 +2570,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "MIL",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "LAD",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "ATL",
-    "date": "2026-02-25",
-    "score": 1,
-    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "TOR",
+    "team": "SEA",
     "date": "2026-02-25",
     "score": 1,
     "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
@@ -2636,7 +2592,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "DET",
+    "team": "ATL",
     "date": "2026-02-25",
     "score": 1,
     "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
@@ -2647,7 +2603,51 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "CHC",
+    "team": "KC",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "BAL",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "TEX",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "TB",
+    "date": "2026-02-25",
+    "score": 1,
+    "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "LAD",
     "date": "2026-02-25",
     "score": 1,
     "note": "TeamIntel. Teams with heat in last night per G \n\nCWS\nAZ\nTB\nMINN\nKC\nBAL\nCOL\nLAD\nCHC\nDET\nTEX\nSTL\nPHIL\nSEA\nTOR\nMIL\nATL",
@@ -2658,7 +2658,29 @@
   },
   {
     "player": "Taj Marchand",
+    "team": "MIL",
+    "date": "2026-03-05",
+    "score": 1,
+    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
+    "channel": "taj-marchand",
+    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
     "team": "DET",
+    "date": "2026-03-05",
+    "score": 1,
+    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
+    "channel": "taj-marchand",
+    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "NYY",
     "date": "2026-03-05",
     "score": 1,
     "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
@@ -2691,51 +2713,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "NYY",
-    "date": "2026-03-05",
-    "score": 1,
-    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
-    "channel": "taj-marchand",
-    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "MIA",
-    "date": "2026-03-05",
-    "score": 1,
-    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
-    "channel": "taj-marchand",
-    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "SD",
-    "date": "2026-03-05",
-    "score": 1,
-    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
-    "channel": "taj-marchand",
-    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "KC",
-    "date": "2026-03-05",
-    "score": 1,
-    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
-    "channel": "taj-marchand",
-    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "TB",
+    "team": "MIN",
     "date": "2026-03-05",
     "score": 1,
     "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
@@ -2757,7 +2735,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "MIL",
+    "team": "KC",
     "date": "2026-03-05",
     "score": 1,
     "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
@@ -2768,7 +2746,18 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "MIN",
+    "team": "SD",
+    "date": "2026-03-05",
+    "score": 1,
+    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
+    "channel": "taj-marchand",
+    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "TB",
     "date": "2026-03-05",
     "score": 1,
     "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
@@ -2780,6 +2769,17 @@
   {
     "player": "Taj Marchand",
     "team": "BOS",
+    "date": "2026-03-05",
+    "score": 1,
+    "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
+    "channel": "taj-marchand",
+    "full_text": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area \nMIN xer \n\n+12-15 guys I don't know ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "MIA",
     "date": "2026-03-05",
     "score": 1,
     "note": "TeamIntel in house: \n\nNYY area + wags \nAs area & Xer \nMIL Xer \nKC area and Xer \nTB area & National Xer \nBAL area & National + Hendrik \nSDP area & xer \nBOS Area \nCOL Xer \nMIA area \nPitt area \nDET area ",
@@ -2811,6 +2811,17 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "NYY",
+    "date": "2026-03-07",
+    "score": 1,
+    "note": "NYY - Bo &gt; Condon, close on Taj",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel \n\nNYY - Bo &gt; Condon, close on Taj ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Taj Marchand",
     "team": "NYY",
     "date": "2026-03-07",
@@ -2833,17 +2844,6 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "NYY",
-    "date": "2026-03-07",
-    "score": 1,
-    "note": "NYY - Bo &gt; Condon, close on Taj",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel \n\nNYY - Bo &gt; Condon, close on Taj ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Taj Marchand",
     "team": "BAL",
     "date": "2026-03-07",
@@ -2856,7 +2856,7 @@
   },
   {
     "player": "Aiden Robbins",
-    "team": "WSH",
+    "team": "NYY",
     "date": "2026-03-08",
     "score": 2,
     "note": "TeamIntel: \n\nNYY. Was running through my notes I took after me and wags sat together. He \u201cloves Aiden Robbins. One of my favorites\u201d",
@@ -2867,7 +2867,7 @@
   },
   {
     "player": "Aiden Robbins",
-    "team": "NYY",
+    "team": "WSH",
     "date": "2026-03-08",
     "score": 2,
     "note": "TeamIntel: \n\nNYY. Was running through my notes I took after me and wags sat together. He \u201cloves Aiden Robbins. One of my favorites\u201d",
@@ -2889,7 +2889,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "WSH",
+    "team": "SD",
     "date": "2026-03-12",
     "score": 1,
     "note": "10 min phone call with Hugo\n\nTeamIntel from last night: \n\nCHC area \nSDP area \n12 other guys he said \u201cI\u2019ve never seen before\u201d \n\nSaid one of the asst coaches from ole miss was also there. They told him ",
@@ -2922,7 +2922,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "SD",
+    "team": "WSH",
     "date": "2026-03-12",
     "score": 1,
     "note": "10 min phone call with Hugo\n\nTeamIntel from last night: \n\nCHC area \nSDP area \n12 other guys he said \u201cI\u2019ve never seen before\u201d \n\nSaid one of the asst coaches from ole miss was also there. They told him ",
@@ -2976,6 +2976,17 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "SF",
+    "date": "2026-03-19",
+    "score": 2,
+    "note": "HOU (Cam) met with him in Palm Beach, loves Bo and Condon. Saw Tryon this week and like him. Asked me about HS arms - told him about Lucas and the ramp up.",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel\n\nSFG (Holmes) called on Cam and Bo. Very aware of Tryon \n\nHOU (Cam) met with him in Palm Beach, loves Bo and Condon. Saw Tryon this week and like him. Asked me about HS arms - told him about Lucas and the ramp up. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Ben Tryon",
     "team": "SF",
     "date": "2026-03-19",
@@ -2998,17 +3009,6 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "SF",
-    "date": "2026-03-19",
-    "score": 2,
-    "note": "HOU (Cam) met with him in Palm Beach, loves Bo and Condon. Saw Tryon this week and like him. Asked me about HS arms - told him about Lucas and the ramp up.",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel\n\nSFG (Holmes) called on Cam and Bo. Very aware of Tryon \n\nHOU (Cam) met with him in Palm Beach, loves Bo and Condon. Saw Tryon this week and like him. Asked me about HS arms - told him about Lucas and the ramp up. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Dominic Woodward",
     "team": "HOU",
     "date": "2026-03-19",
@@ -3016,6 +3016,17 @@
     "note": "In person with Dom, Jon, Sarah, Amara + grandparents today. \n\nTeamIntel: \n\nHOU +2 other areas in",
     "channel": "dominic-woodward",
     "full_text": "In person with Dom, Jon, Sarah, Amara + grandparents today. \n\nTeamIntel: \n\nHOU +2 other areas in ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Duke McCarron",
+    "team": "SD",
+    "date": "2026-03-20",
+    "score": 1,
+    "note": "TeamIntel: Marlins, Reds, Guardians, Padres area guys in today",
+    "channel": "duke-mccarron",
+    "full_text": "TeamIntel: Marlins, Reds, Guardians, Padres area guys in today ",
     "workout": false,
     "workout_matches": []
   },
@@ -3053,28 +3064,6 @@
     "workout_matches": []
   },
   {
-    "player": "Duke McCarron",
-    "team": "SD",
-    "date": "2026-03-20",
-    "score": 1,
-    "note": "TeamIntel: Marlins, Reds, Guardians, Padres area guys in today",
-    "channel": "duke-mccarron",
-    "full_text": "TeamIntel: Marlins, Reds, Guardians, Padres area guys in today ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "WSH",
-    "date": "2026-03-21",
-    "score": 1,
-    "note": "Texted Taj and Hugo on his night. Hugo said the pitcher was awful\n\nTeamIntel:\nTB\nBOS\nTB has been at a lot of games",
-    "channel": "taj-marchand",
-    "full_text": "Texted Taj and Hugo on his night. Hugo said the pitcher was awful\n\nTeamIntel:\nTB\nBOS\nTB has been at a lot of games",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Taj Marchand",
     "team": "TB",
     "date": "2026-03-21",
@@ -3088,6 +3077,17 @@
   {
     "player": "Taj Marchand",
     "team": "BOS",
+    "date": "2026-03-21",
+    "score": 1,
+    "note": "Texted Taj and Hugo on his night. Hugo said the pitcher was awful\n\nTeamIntel:\nTB\nBOS\nTB has been at a lot of games",
+    "channel": "taj-marchand",
+    "full_text": "Texted Taj and Hugo on his night. Hugo said the pitcher was awful\n\nTeamIntel:\nTB\nBOS\nTB has been at a lot of games",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "WSH",
     "date": "2026-03-21",
     "score": 1,
     "note": "Texted Taj and Hugo on his night. Hugo said the pitcher was awful\n\nTeamIntel:\nTB\nBOS\nTB has been at a lot of games",
@@ -3119,7 +3119,7 @@
     "workout_matches": []
   },
   {
-    "player": "Brady Neal",
+    "player": "Trevor Condon",
     "team": "CIN",
     "date": "2026-03-23",
     "score": 2,
@@ -3130,7 +3130,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Brady Neal",
     "team": "CIN",
     "date": "2026-03-23",
     "score": 2,
@@ -3152,6 +3152,17 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "CIN",
+    "date": "2026-03-23",
+    "score": 1,
+    "note": "Condon and potentially Bailey would be priorities",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel \n\nCIN - Jeff Graupe\n\nGreen: Cam, Condon, Myles, Aiden, Brady Neal\nYellow: Kyle Jones \n\nWorkouts: CIN June 4, ATL June 10, Daytona June 11\n\nCondon and potentially Bailey would be priorities ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Myles Bailey",
     "team": "CIN",
     "date": "2026-03-23",
@@ -3164,18 +3175,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "CIN",
-    "date": "2026-03-23",
-    "score": 1,
-    "note": "Condon and potentially Bailey would be priorities",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel \n\nCIN - Jeff Graupe\n\nGreen: Cam, Condon, Myles, Aiden, Brady Neal\nYellow: Kyle Jones \n\nWorkouts: CIN June 4, ATL June 10, Daytona June 11\n\nCondon and potentially Bailey would be priorities ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "MIL",
+    "team": "SEA",
     "date": "2026-03-25",
     "score": 1,
     "note": "Team intel:\n\nJays, Mariners, A\u2019s, Guardians, Brewers plus 3 others",
@@ -3186,7 +3186,18 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "SEA",
+    "team": "TOR",
+    "date": "2026-03-25",
+    "score": 1,
+    "note": "Team intel:\n\nJays, Mariners, A\u2019s, Guardians, Brewers plus 3 others",
+    "channel": "trevor-condon",
+    "full_text": "Team intel:\n\nJays, Mariners, A\u2019s, Guardians, Brewers plus 3 others ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "MIL",
     "date": "2026-03-25",
     "score": 1,
     "note": "Team intel:\n\nJays, Mariners, A\u2019s, Guardians, Brewers plus 3 others",
@@ -3208,12 +3219,12 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "TOR",
-    "date": "2026-03-25",
-    "score": 1,
-    "note": "Team intel:\n\nJays, Mariners, A\u2019s, Guardians, Brewers plus 3 others",
-    "channel": "trevor-condon",
-    "full_text": "Team intel:\n\nJays, Mariners, A\u2019s, Guardians, Brewers plus 3 others ",
+    "team": "SD",
+    "date": "2026-03-28",
+    "score": 2,
+    "note": "Taj >Condon>Bo. Love the makeup and thinks Taj is \u201cready to go play for an affiliate right now\u201d",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel \n\nSDP crosschecker\n\nTaj >Condon>Bo. Love the makeup and thinks Taj is \u201cready to go play for an affiliate right now\u201d  \n",
     "workout": false,
     "workout_matches": []
   },
@@ -3230,17 +3241,6 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "SD",
-    "date": "2026-03-28",
-    "score": 2,
-    "note": "Taj >Condon>Bo. Love the makeup and thinks Taj is \u201cready to go play for an affiliate right now\u201d",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel \n\nSDP crosschecker\n\nTaj >Condon>Bo. Love the makeup and thinks Taj is \u201cready to go play for an affiliate right now\u201d  \n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
     "team": "SD",
     "date": "2026-03-28",
     "score": 2,
@@ -3280,6 +3280,17 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "BOS",
+    "date": "2026-03-30",
+    "score": 2,
+    "note": "Trev/Bo/Taj all in similar grouping, prob between their picks at 20-67 but in good spots. Cam, Aiden and Kyle all continue to be green. Ochart has looked at Bo\u2019s swing and likes it a lot - \u201che doesn't",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel\n\nBOS (Jake Bruml) \n\nTrev/Bo/Taj all in similar grouping, prob between their picks at 20-67 but in good spots. Cam, Aiden and Kyle all continue to be green. Ochart has looked at Bo\u2019s swing and likes it a lot - \u201che doesn't even know how to use his lower half yet which is really exciting.\u201d On Kyle, \u201cchecks a ton of boxes for what we like.\u201d ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Taj Marchand",
     "team": "BOS",
     "date": "2026-03-30",
@@ -3292,17 +3303,6 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "BOS",
-    "date": "2026-03-30",
-    "score": 2,
-    "note": "Trev/Bo/Taj all in similar grouping, prob between their picks at 20-67 but in good spots. Cam, Aiden and Kyle all continue to be green. Ochart has looked at Bo\u2019s swing and likes it a lot - \u201che doesn't",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel\n\nBOS (Jake Bruml) \n\nTrev/Bo/Taj all in similar grouping, prob between their picks at 20-67 but in good spots. Cam, Aiden and Kyle all continue to be green. Ochart has looked at Bo\u2019s swing and likes it a lot - \u201che doesn't even know how to use his lower half yet which is really exciting.\u201d On Kyle, \u201cchecks a ton of boxes for what we like.\u201d ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
     "team": "BOS",
     "date": "2026-03-30",
     "score": 2,
@@ -3346,6 +3346,17 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "TB",
+    "date": "2026-03-31",
+    "score": 1,
+    "note": "No Cam at 2 (no pitchers), prob no on Myles. Still love Taj and have him over Condon - \u201cevery model team will love Taj.\u201d Bo prob light green. Aiden green",
+    "channel": "2026-draft-general",
+    "full_text": "Team Intel\n\nRays (Chuck Ricci) \n\nNo Cam at 2 (no pitchers), prob no on Myles. Still love Taj and have him over Condon - \u201cevery model team will love Taj.\u201d Bo prob light green. Aiden green ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Taj Marchand",
     "team": "TB",
     "date": "2026-03-31",
@@ -3358,17 +3369,6 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "TB",
-    "date": "2026-03-31",
-    "score": 1,
-    "note": "No Cam at 2 (no pitchers), prob no on Myles. Still love Taj and have him over Condon - \u201cevery model team will love Taj.\u201d Bo prob light green. Aiden green",
-    "channel": "2026-draft-general",
-    "full_text": "Team Intel\n\nRays (Chuck Ricci) \n\nNo Cam at 2 (no pitchers), prob no on Myles. Still love Taj and have him over Condon - \u201cevery model team will love Taj.\u201d Bo prob light green. Aiden green ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
     "team": "TB",
     "date": "2026-03-31",
     "score": 1,
@@ -3420,7 +3420,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "ATL",
+    "team": "OAK",
     "date": "2026-03-31",
     "score": 1,
     "note": "In person\n\n0-3 with BB, swing looks much better. Was on the barrel all 3 times, 1 swing and miss but was very balanced. Brutal game to watch - other team threw 6 pitchers, hardest hit 80. \n\nOAK - cros",
@@ -3442,7 +3442,18 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "WSH",
+    "team": "ATL",
+    "date": "2026-03-31",
+    "score": 1,
+    "note": "In person\n\n0-3 with BB, swing looks much better. Was on the barrel all 3 times, 1 swing and miss but was very balanced. Brutal game to watch - other team threw 6 pitchers, hardest hit 80. \n\nOAK - cros",
+    "channel": "trevor-condon",
+    "full_text": "In person\n\n0-3 with BB, swing looks much better. Was on the barrel all 3 times, 1 swing and miss but was very balanced. Brutal game to watch - other team threw 6 pitchers, hardest hit 80. \n\nOAK - crosschecker \nSFG - crosschecker\nNYY - asst Director \nATL - crosschecker \nTOR - crosschecker \n\nTeam intel \n\nAll the feedback was very positive. Booth, Horn, Emerson and Lombard are top grouping then Condon and Bo slot in with a group of 6-8 behind that. Weakest part of class is HS hitters and NCAA pitching which is great for us. ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "TOR",
     "date": "2026-03-31",
     "score": 1,
     "note": "In person\n\n0-3 with BB, swing looks much better. Was on the barrel all 3 times, 1 swing and miss but was very balanced. Brutal game to watch - other team threw 6 pitchers, hardest hit 80. \n\nOAK - cros",
@@ -3464,18 +3475,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "OAK",
-    "date": "2026-03-31",
-    "score": 1,
-    "note": "In person\n\n0-3 with BB, swing looks much better. Was on the barrel all 3 times, 1 swing and miss but was very balanced. Brutal game to watch - other team threw 6 pitchers, hardest hit 80. \n\nOAK - cros",
-    "channel": "trevor-condon",
-    "full_text": "In person\n\n0-3 with BB, swing looks much better. Was on the barrel all 3 times, 1 swing and miss but was very balanced. Brutal game to watch - other team threw 6 pitchers, hardest hit 80. \n\nOAK - crosschecker \nSFG - crosschecker\nNYY - asst Director \nATL - crosschecker \nTOR - crosschecker \n\nTeam intel \n\nAll the feedback was very positive. Booth, Horn, Emerson and Lombard are top grouping then Condon and Bo slot in with a group of 6-8 behind that. Weakest part of class is HS hitters and NCAA pitching which is great for us. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "TOR",
+    "team": "WSH",
     "date": "2026-03-31",
     "score": 1,
     "note": "In person\n\n0-3 with BB, swing looks much better. Was on the barrel all 3 times, 1 swing and miss but was very balanced. Brutal game to watch - other team threw 6 pitchers, hardest hit 80. \n\nOAK - cros",
@@ -3507,7 +3507,7 @@
     "workout_matches": []
   },
   {
-    "player": "Bo Lowrance",
+    "player": "Trevor Condon",
     "team": "TOR",
     "date": "2026-04-01",
     "score": 2,
@@ -3518,7 +3518,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Bo Lowrance",
     "team": "TOR",
     "date": "2026-04-01",
     "score": 2,
@@ -3552,62 +3552,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "COL",
-    "date": "2026-04-01",
-    "score": 1,
-    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "SD",
-    "date": "2026-04-01",
-    "score": 1,
-    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "WSH",
-    "date": "2026-04-01",
-    "score": 1,
-    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
     "team": "LAA",
-    "date": "2026-04-01",
-    "score": 1,
-    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "PIT",
-    "date": "2026-04-01",
-    "score": 1,
-    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
-    "channel": "2026-draft-general",
-    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "CIN",
     "date": "2026-04-01",
     "score": 1,
     "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
@@ -3629,6 +3574,28 @@
   },
   {
     "player": "Taj Marchand",
+    "team": "CIN",
+    "date": "2026-04-01",
+    "score": 1,
+    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "COL",
+    "date": "2026-04-01",
+    "score": 1,
+    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
     "team": "CHC",
     "date": "2026-04-01",
     "score": 1,
@@ -3640,12 +3607,34 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "WSH",
-    "date": "2026-04-02",
+    "team": "SD",
+    "date": "2026-04-01",
     "score": 1,
-    "note": "Team intel  \n\nReached out the most to him: \nRays \nNationals \nPirates",
-    "channel": "taj-marchand",
-    "full_text": "Team intel  \n\nReached out the most to him: \nRays \nNationals \nPirates ",
+    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "PIT",
+    "date": "2026-04-01",
+    "score": 1,
+    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "WSH",
+    "date": "2026-04-01",
+    "score": 1,
+    "note": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - cro",
+    "channel": "2026-draft-general",
+    "full_text": "Team intel\n\nTaj's game \n\nPIT - special asst\nTBR - special asst\nSDP - crosschecker \nTOR - crosschecker \nCHC - front office guy + area scout\nCOL - crosschecker + area scout \nOAK - crosschecker\nLAA - crosschecker \nKCR - crosschecker \nCIN - area scout \nWSH - area scout ",
     "workout": false,
     "workout_matches": []
   },
@@ -3672,8 +3661,19 @@
     "workout_matches": []
   },
   {
+    "player": "Taj Marchand",
+    "team": "WSH",
+    "date": "2026-04-02",
+    "score": 1,
+    "note": "Team intel  \n\nReached out the most to him: \nRays \nNationals \nPirates",
+    "channel": "taj-marchand",
+    "full_text": "Team intel  \n\nReached out the most to him: \nRays \nNationals \nPirates ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Bo Lowrance",
-    "team": "TOR",
+    "team": "HOU",
     "date": "2026-04-03",
     "score": 1,
     "note": "TeamIntel:\n\nTentative Jays workout June 6 in Dunedin\nAstros offered June 2 or 3 in Palm Beach or June 8 in Fayetteville NC.",
@@ -3693,7 +3693,7 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "HOU",
+    "team": "TOR",
     "date": "2026-04-03",
     "score": 1,
     "note": "TeamIntel:\n\nTentative Jays workout June 6 in Dunedin\nAstros offered June 2 or 3 in Palm Beach or June 8 in Fayetteville NC.",
@@ -4020,7 +4020,7 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "CHC",
+    "team": "LAA",
     "date": "2026-04-07",
     "score": 1,
     "note": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen",
@@ -4042,28 +4042,6 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "MIA",
-    "date": "2026-04-07",
-    "score": 1,
-    "note": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen",
-    "channel": "bo-lowrance",
-    "full_text": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Bo Lowrance",
-    "team": "LAA",
-    "date": "2026-04-07",
-    "score": 1,
-    "note": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen",
-    "channel": "bo-lowrance",
-    "full_text": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Bo Lowrance",
     "team": "PIT",
     "date": "2026-04-07",
     "score": 1,
@@ -4075,6 +4053,28 @@
   },
   {
     "player": "Bo Lowrance",
+    "team": "CHC",
+    "date": "2026-04-07",
+    "score": 1,
+    "note": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen",
+    "channel": "bo-lowrance",
+    "full_text": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Bo Lowrance",
+    "team": "MIA",
+    "date": "2026-04-07",
+    "score": 1,
+    "note": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen",
+    "channel": "bo-lowrance",
+    "full_text": "Team Intel \n\nLAA Xer \nCHC Xer?? (Bald guy) \nMIA area \nPIT National Xer\nATL Xer \n2 other guys I\u2019ve never seen ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
     "team": "NYY",
     "date": "2026-04-07",
     "score": 2,
@@ -4085,7 +4085,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Bo Lowrance",
     "team": "NYY",
     "date": "2026-04-07",
     "score": 2,
@@ -4119,7 +4119,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "MIN",
+    "team": "BAL",
     "date": "2026-04-07",
     "score": 1,
     "note": "TeamIntel\n\nCLE area\nMIN area\nBAL\n\n3 more I don't recognize - will try to find out",
@@ -4130,7 +4130,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "BAL",
+    "team": "MIN",
     "date": "2026-04-07",
     "score": 1,
     "note": "TeamIntel\n\nCLE area\nMIN area\nBAL\n\n3 more I don't recognize - will try to find out",
@@ -4174,40 +4174,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "ATL",
-    "date": "2026-04-08",
-    "score": 1,
-    "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
-    "channel": "taj-marchand",
-    "full_text": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are \n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "CHC",
-    "date": "2026-04-08",
-    "score": 1,
-    "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
-    "channel": "taj-marchand",
-    "full_text": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are \n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "TOR",
-    "date": "2026-04-08",
-    "score": 1,
-    "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
-    "channel": "taj-marchand",
-    "full_text": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are \n",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Taj Marchand",
-    "team": "MIN",
+    "team": "ARI",
     "date": "2026-04-08",
     "score": 1,
     "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
@@ -4229,6 +4196,39 @@
   },
   {
     "player": "Taj Marchand",
+    "team": "ATL",
+    "date": "2026-04-08",
+    "score": 1,
+    "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
+    "channel": "taj-marchand",
+    "full_text": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are \n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "MIN",
+    "date": "2026-04-08",
+    "score": 1,
+    "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
+    "channel": "taj-marchand",
+    "full_text": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are \n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
+    "team": "TOR",
+    "date": "2026-04-08",
+    "score": 1,
+    "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
+    "channel": "taj-marchand",
+    "full_text": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are \n",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Taj Marchand",
     "team": "PIT",
     "date": "2026-04-08",
     "score": 1,
@@ -4240,7 +4240,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "ARI",
+    "team": "CHC",
     "date": "2026-04-08",
     "score": 1,
     "note": "Team Intel \n\nDET area \nARI area \nPIT area \nATL area\nCHC area + Xer \nMIN Xer \nTOR Xer \n\n2 other guys I\u2019ve never seen but will find out who they are",
@@ -4262,7 +4262,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "BAL",
+    "team": "TEX",
     "date": "2026-04-08",
     "score": 1,
     "note": "Team Intel \n\nCOL Asst GM\nTEX Xer \nBAL National Xer \nTBR National Xer",
@@ -4273,7 +4273,7 @@
   },
   {
     "player": "Taj Marchand",
-    "team": "TEX",
+    "team": "BAL",
     "date": "2026-04-08",
     "score": 1,
     "note": "Team Intel \n\nCOL Asst GM\nTEX Xer \nBAL National Xer \nTBR National Xer",
@@ -4316,7 +4316,7 @@
     "workout_matches": []
   },
   {
-    "player": "Bo Lowrance",
+    "player": "Taj Marchand",
     "team": "WSH",
     "date": "2026-04-09",
     "score": 1,
@@ -4338,7 +4338,7 @@
     "workout_matches": []
   },
   {
-    "player": "Taj Marchand",
+    "player": "Bo Lowrance",
     "team": "WSH",
     "date": "2026-04-09",
     "score": 1,
@@ -4349,7 +4349,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Kyle Jones",
     "team": "WSH",
     "date": "2026-04-09",
     "score": 0,
@@ -4360,7 +4360,7 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Myles Bailey",
     "team": "WSH",
     "date": "2026-04-09",
     "score": 0,
@@ -4394,29 +4394,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "MIA",
-    "date": "2026-04-09",
-    "score": 1,
-    "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
     "team": "NYY",
-    "date": "2026-04-09",
-    "score": 1,
-    "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
-    "team": "SD",
     "date": "2026-04-09",
     "score": 1,
     "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
@@ -4438,17 +4416,6 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "BOS",
-    "date": "2026-04-09",
-    "score": 1,
-    "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
-    "channel": "trevor-condon",
-    "full_text": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Trevor Condon",
     "team": "CHC",
     "date": "2026-04-09",
     "score": 1,
@@ -4460,7 +4427,40 @@
   },
   {
     "player": "Trevor Condon",
+    "team": "SD",
+    "date": "2026-04-09",
+    "score": 1,
+    "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
     "team": "PHI",
+    "date": "2026-04-09",
+    "score": 1,
+    "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "BOS",
+    "date": "2026-04-09",
+    "score": 1,
+    "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
+    "channel": "trevor-condon",
+    "full_text": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Trevor Condon",
+    "team": "MIA",
     "date": "2026-04-09",
     "score": 1,
     "note": "TeamIntel\n\nBOS SD\nMIA VP (Frankie) + area\nBrewers Xer + head of draft ops (5 total people)\nYankees Area + Xer\nCHC Xer\nTOR area\nPHI x3\n\n+ more",
@@ -4492,7 +4492,7 @@
     "workout_matches": []
   },
   {
-    "player": "Bo Lowrance",
+    "player": "Trevor Condon",
     "team": "NYY",
     "date": "2026-04-09",
     "score": 2,
@@ -4503,7 +4503,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Bo Lowrance",
     "team": "NYY",
     "date": "2026-04-09",
     "score": 2,
@@ -4525,7 +4525,7 @@
     "workout_matches": []
   },
   {
-    "player": "Taj Marchand",
+    "player": "Mason Eckelman",
     "team": "NYY",
     "date": "2026-04-09",
     "score": 0,
@@ -4536,7 +4536,7 @@
     "workout_matches": []
   },
   {
-    "player": "Mason Eckelman",
+    "player": "Taj Marchand",
     "team": "NYY",
     "date": "2026-04-09",
     "score": 0,
@@ -4558,7 +4558,7 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Myles Bailey",
     "team": "NYY",
     "date": "2026-04-09",
     "score": 0,
@@ -4569,7 +4569,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Kyle Jones",
     "team": "NYY",
     "date": "2026-04-09",
     "score": 0,
@@ -4591,7 +4591,7 @@
     "workout_matches": []
   },
   {
-    "player": "Lee Ellis",
+    "player": "Griffin Loy",
     "team": "NYY",
     "date": "2026-04-09",
     "score": -2,
@@ -4602,7 +4602,7 @@
     "workout_matches": []
   },
   {
-    "player": "Griffin Loy",
+    "player": "Lee Ellis",
     "team": "NYY",
     "date": "2026-04-09",
     "score": -2,
@@ -4759,7 +4759,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Trevor Condon",
     "team": "NYM",
     "date": "2026-04-10",
     "score": -1,
@@ -4770,7 +4770,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Myles Bailey",
     "team": "NYM",
     "date": "2026-04-10",
     "score": -1,
@@ -4831,7 +4831,7 @@
   },
   {
     "player": "Mason Eckelman",
-    "team": "DET",
+    "team": "LAA",
     "date": "2026-04-11",
     "score": 1,
     "note": "Team Intel \n\nDET\nLAA\nSEA \n\nAll have him turned in",
@@ -4853,7 +4853,7 @@
   },
   {
     "player": "Mason Eckelman",
-    "team": "LAA",
+    "team": "DET",
     "date": "2026-04-11",
     "score": 1,
     "note": "Team Intel \n\nDET\nLAA\nSEA \n\nAll have him turned in",
@@ -4864,7 +4864,7 @@
   },
   {
     "player": "Lee Ellis",
-    "team": "DET",
+    "team": "LAA",
     "date": "2026-04-11",
     "score": 1,
     "note": "Team Intel \n\nDET\nLAA\nSEA \n\nAll have him turned in",
@@ -4886,7 +4886,7 @@
   },
   {
     "player": "Lee Ellis",
-    "team": "LAA",
+    "team": "DET",
     "date": "2026-04-11",
     "score": 1,
     "note": "Team Intel \n\nDET\nLAA\nSEA \n\nAll have him turned in",
@@ -4908,7 +4908,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "ATL",
+    "team": "DET",
     "date": "2026-04-13",
     "score": 1,
     "note": "From George on DET Pre-draft workout. Said just needs to be at 1. Sounds like he's in play at 22 possibly for them: \n\n\nTEAM INTEL DET \n\n\nTrevor Condon\nDET Workout Options \nMay 29 - Lakeland, FL\nMay 31",
@@ -4927,7 +4927,7 @@
   },
   {
     "player": "Trevor Condon",
-    "team": "DET",
+    "team": "ATL",
     "date": "2026-04-13",
     "score": 1,
     "note": "From George on DET Pre-draft workout. Said just needs to be at 1. Sounds like he's in play at 22 possibly for them: \n\n\nTEAM INTEL DET \n\n\nTrevor Condon\nDET Workout Options \nMay 29 - Lakeland, FL\nMay 31",
@@ -4956,7 +4956,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Taj Marchand",
     "team": "STL",
     "date": "2026-04-13",
     "score": 2,
@@ -4970,7 +4970,7 @@
     ]
   },
   {
-    "player": "Taj Marchand",
+    "player": "Trevor Condon",
     "team": "STL",
     "date": "2026-04-13",
     "score": 2,
@@ -5006,7 +5006,7 @@
     "workout_matches": []
   },
   {
-    "player": "Taj Marchand",
+    "player": "Trevor Condon",
     "team": "STL",
     "date": "2026-04-13",
     "score": 1,
@@ -5022,7 +5022,7 @@
     ]
   },
   {
-    "player": "Trevor Condon",
+    "player": "Taj Marchand",
     "team": "STL",
     "date": "2026-04-13",
     "score": 1,
@@ -5082,17 +5082,6 @@
     "workout_matches": []
   },
   {
-    "player": "Brady Neal",
-    "team": "ARI",
-    "date": "2026-04-13",
-    "score": 2,
-    "note": "Green - Robbins, Cam, Condon, Neal",
-    "channel": "2026-draft-general",
-    "full_text": "Team Intel ARI \n\nGreen - Robbins, Cam, Condon, Neal \nLight green - Lowrance, jones\nYellow - Marchand, Bailey, Tiroly\n\nEckelman, Ellis, Tryon - turned in but no round yet \n\nSaw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8 \n ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Aiden Robbins",
     "team": "ARI",
     "date": "2026-04-13",
@@ -5115,7 +5104,18 @@
     "workout_matches": []
   },
   {
-    "player": "Bo Lowrance",
+    "player": "Brady Neal",
+    "team": "ARI",
+    "date": "2026-04-13",
+    "score": 2,
+    "note": "Green - Robbins, Cam, Condon, Neal",
+    "channel": "2026-draft-general",
+    "full_text": "Team Intel ARI \n\nGreen - Robbins, Cam, Condon, Neal \nLight green - Lowrance, jones\nYellow - Marchand, Bailey, Tiroly\n\nEckelman, Ellis, Tryon - turned in but no round yet \n\nSaw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8 \n ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Kyle Jones",
     "team": "ARI",
     "date": "2026-04-13",
     "score": 1,
@@ -5126,7 +5126,7 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Bo Lowrance",
     "team": "ARI",
     "date": "2026-04-13",
     "score": 1,
@@ -5214,28 +5214,6 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "ARI",
-    "date": "2026-04-13",
-    "score": 1,
-    "note": "Saw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8",
-    "channel": "2026-draft-general",
-    "full_text": "Team Intel ARI \n\nGreen - Robbins, Cam, Condon, Neal \nLight green - Lowrance, jones\nYellow - Marchand, Bailey, Tiroly\n\nEckelman, Ellis, Tryon - turned in but no round yet \n\nSaw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8 \n ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Joe Tiroly",
-    "team": "ARI",
-    "date": "2026-04-13",
-    "score": 1,
-    "note": "Saw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8",
-    "channel": "2026-draft-general",
-    "full_text": "Team Intel ARI \n\nGreen - Robbins, Cam, Condon, Neal \nLight green - Lowrance, jones\nYellow - Marchand, Bailey, Tiroly\n\nEckelman, Ellis, Tryon - turned in but no round yet \n\nSaw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8 \n ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Brady Neal",
     "team": "ARI",
     "date": "2026-04-13",
@@ -5258,6 +5236,28 @@
     "workout_matches": []
   },
   {
+    "player": "Trevor Condon",
+    "team": "ARI",
+    "date": "2026-04-13",
+    "score": 1,
+    "note": "Saw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8",
+    "channel": "2026-draft-general",
+    "full_text": "Team Intel ARI \n\nGreen - Robbins, Cam, Condon, Neal \nLight green - Lowrance, jones\nYellow - Marchand, Bailey, Tiroly\n\nEckelman, Ellis, Tryon - turned in but no round yet \n\nSaw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8 \n ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Joe Tiroly",
+    "team": "ARI",
+    "date": "2026-04-13",
+    "score": 1,
+    "note": "Saw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8",
+    "channel": "2026-draft-general",
+    "full_text": "Team Intel ARI \n\nGreen - Robbins, Cam, Condon, Neal \nLight green - Lowrance, jones\nYellow - Marchand, Bailey, Tiroly\n\nEckelman, Ellis, Tryon - turned in but no round yet \n\nSaw Condon plus power in Miami @ PBR, flying to see him Wed. Neal top 5 rounds for slot, Bo overpay at 53, Taj overpay after that, Bailey rounds 2-3, Tiroly 4-8 \n ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
     "player": "Taj Marchand",
     "team": "BOS",
     "date": "2026-04-13",
@@ -5265,28 +5265,6 @@
     "note": "BOS scouting director coming into see Taj on Wednesday \n\nTeam intel",
     "channel": "taj-marchand",
     "full_text": "BOS scouting director coming into see Taj on Wednesday \n\nTeam intel ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "MIA",
-    "date": "2026-04-13",
-    "score": 1,
-    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "SD",
-    "date": "2026-04-13",
-    "score": 1,
-    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
     "workout": false,
     "workout_matches": []
   },
@@ -5314,7 +5292,51 @@
   },
   {
     "player": "Devin Diaz",
+    "team": "CLE",
+    "date": "2026-04-13",
+    "score": 1,
+    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "SF",
+    "date": "2026-04-13",
+    "score": 1,
+    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
     "team": "HOU",
+    "date": "2026-04-13",
+    "score": 1,
+    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "CHC",
+    "date": "2026-04-13",
+    "score": 1,
+    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "SD",
     "date": "2026-04-13",
     "score": 1,
     "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
@@ -5336,29 +5358,7 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "SF",
-    "date": "2026-04-13",
-    "score": 1,
-    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "CLE",
-    "date": "2026-04-13",
-    "score": 1,
-    "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "CHC",
+    "team": "MIA",
     "date": "2026-04-13",
     "score": 1,
     "note": "Team Intel, teams in tonight:\n\nCHC\nLAA\nLAD\nSF X2\nMIA\nHOU\nCLE\nARI\nSD",
@@ -5369,7 +5369,7 @@
   },
   {
     "player": "Phinn Beaird",
-    "team": "STL",
+    "team": "MIL",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
@@ -5380,7 +5380,7 @@
   },
   {
     "player": "Phinn Beaird",
-    "team": "BAL",
+    "team": "OAK",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
@@ -5402,51 +5402,7 @@
   },
   {
     "player": "Phinn Beaird",
-    "team": "KC",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
-    "channel": "phinn-beaird",
-    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Phinn Beaird",
-    "team": "WSH",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
-    "channel": "phinn-beaird",
-    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Phinn Beaird",
-    "team": "TB",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
-    "channel": "phinn-beaird",
-    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Phinn Beaird",
-    "team": "SEA",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
-    "channel": "phinn-beaird",
-    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Phinn Beaird",
-    "team": "MIL",
+    "team": "CLE",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
@@ -5468,7 +5424,7 @@
   },
   {
     "player": "Phinn Beaird",
-    "team": "CLE",
+    "team": "STL",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
@@ -5479,7 +5435,51 @@
   },
   {
     "player": "Phinn Beaird",
-    "team": "OAK",
+    "team": "SEA",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
+    "channel": "phinn-beaird",
+    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Phinn Beaird",
+    "team": "KC",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
+    "channel": "phinn-beaird",
+    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Phinn Beaird",
+    "team": "BAL",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
+    "channel": "phinn-beaird",
+    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Phinn Beaird",
+    "team": "TB",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
+    "channel": "phinn-beaird",
+    "full_text": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrioles (Will Robertson)\n3 Brewers\nMariners (got some side video of Phinn)\nGuardians\nGiants\nA's\n\nAmong others I couldn't make out teams for, mostly older more veteran guys - it seemed as though most were there for Brick.\n\nRays seemed most interested in Phinn, Ramsey was telling me how much he likes him and how great his ECP performance was.",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Phinn Beaird",
+    "team": "WSH",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel\n\nTeams that watched Phinn's pen:\n2 Rays (Nate Ramsey &amp; RJ Harrison)\n2 Cardinals (one from Kansas City &amp; the other from Birmingham)\n1 Brewers\n\nWere there\nYankees (Mitch Holohan)\nOrio",
@@ -5632,17 +5632,6 @@
     "workout_matches": []
   },
   {
-    "player": "Taj Marchand",
-    "team": "STL",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Zach Mortimer called on Condon getting to Jupiter June 1. Taj secondary priority.",
-    "channel": "2026-draft-general",
-    "full_text": "Team Intel StL\n\nZach Mortimer called on Condon getting to Jupiter June 1. Taj secondary priority. \n\nRequested testing data from summer. ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Trevor Condon",
     "team": "STL",
     "date": "2026-04-14",
@@ -5654,13 +5643,13 @@
     "workout_matches": []
   },
   {
-    "player": "Lee Ellis",
-    "team": "WSH",
+    "player": "Taj Marchand",
+    "team": "STL",
     "date": "2026-04-14",
-    "score": 2,
-    "note": "Team Intel PIT (Phone call with Area guy, Jalen)\n\n\u2022 Seen Lee 2/3 times so far this spring and plans on getting a \"later\" look at him\n\u2022 Loves the athlete, asked if he was going to play 2nd the rest of ",
-    "channel": "lee-ellis",
-    "full_text": "Team Intel PIT (Phone call with Area guy, Jalen)\n\n\u2022 Seen Lee 2/3 times so far this spring and plans on getting a \"later\" look at him\n\u2022 Loves the athlete, asked if he was going to play 2nd the rest of the year, knew he was out sick\n\u2022 Said there's real tools in there and would like to see him be more consistent at plate. Said he goes in spurts where hes really hot then tapers off with some bad looks. \n\u2022 Has him turned in 4-7R range \n\u2022 went through lees points MD had",
+    "score": 1,
+    "note": "Zach Mortimer called on Condon getting to Jupiter June 1. Taj secondary priority.",
+    "channel": "2026-draft-general",
+    "full_text": "Team Intel StL\n\nZach Mortimer called on Condon getting to Jupiter June 1. Taj secondary priority. \n\nRequested testing data from summer. ",
     "workout": false,
     "workout_matches": []
   },
@@ -5669,6 +5658,17 @@
     "team": "PIT",
     "date": "2026-04-14",
     "score": 1,
+    "note": "Team Intel PIT (Phone call with Area guy, Jalen)\n\n\u2022 Seen Lee 2/3 times so far this spring and plans on getting a \"later\" look at him\n\u2022 Loves the athlete, asked if he was going to play 2nd the rest of ",
+    "channel": "lee-ellis",
+    "full_text": "Team Intel PIT (Phone call with Area guy, Jalen)\n\n\u2022 Seen Lee 2/3 times so far this spring and plans on getting a \"later\" look at him\n\u2022 Loves the athlete, asked if he was going to play 2nd the rest of the year, knew he was out sick\n\u2022 Said there's real tools in there and would like to see him be more consistent at plate. Said he goes in spurts where hes really hot then tapers off with some bad looks. \n\u2022 Has him turned in 4-7R range \n\u2022 went through lees points MD had",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Lee Ellis",
+    "team": "WSH",
+    "date": "2026-04-14",
+    "score": 2,
     "note": "Team Intel PIT (Phone call with Area guy, Jalen)\n\n\u2022 Seen Lee 2/3 times so far this spring and plans on getting a \"later\" look at him\n\u2022 Loves the athlete, asked if he was going to play 2nd the rest of ",
     "channel": "lee-ellis",
     "full_text": "Team Intel PIT (Phone call with Area guy, Jalen)\n\n\u2022 Seen Lee 2/3 times so far this spring and plans on getting a \"later\" look at him\n\u2022 Loves the athlete, asked if he was going to play 2nd the rest of the year, knew he was out sick\n\u2022 Said there's real tools in there and would like to see him be more consistent at plate. Said he goes in spurts where hes really hot then tapers off with some bad looks. \n\u2022 Has him turned in 4-7R range \n\u2022 went through lees points MD had",
@@ -5699,7 +5699,106 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "MIA",
+    "team": "LAA",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "OAK",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "TOR",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "ARI",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "CLE",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "SF",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "HOU",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "CHC",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "PHI",
+    "date": "2026-04-14",
+    "score": 1,
+    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "channel": "devin-diaz",
+    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Devin Diaz",
+    "team": "NYM",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
@@ -5732,50 +5831,6 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "HOU",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "NYM",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "PHI",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "CLE",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
     "team": "LAD",
     "date": "2026-04-14",
     "score": 1,
@@ -5787,62 +5842,7 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "LAA",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "ARI",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "TOR",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "SF",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "OAK",
-    "date": "2026-04-14",
-    "score": 1,
-    "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "channel": "devin-diaz",
-    "full_text": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
-    "player": "Devin Diaz",
-    "team": "CHC",
+    "team": "MIA",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel teams in over the last 4 games from Jay \n\n\nCHC\nLAD\nSF\nMIA\nLAD\nSF\nTEX\nNYM\nHOU\nNYM\nSDP\nPHI\nTEX\nOAK\nTEX\nLAD\nSF XER\nHOU\nTOR\nSF\nCLE\nCHC\nLAA\nARI",
@@ -5853,7 +5853,7 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "WSH",
+    "team": "LAD",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel \n\nLAD, Fitzpatrick was there for the HR to see Bo\nBefore popping over and seeing Bolemon",
@@ -5864,7 +5864,7 @@
   },
   {
     "player": "Bo Lowrance",
-    "team": "LAD",
+    "team": "WSH",
     "date": "2026-04-14",
     "score": 1,
     "note": "Team Intel \n\nLAD, Fitzpatrick was there for the HR to see Bo\nBefore popping over and seeing Bolemon",
@@ -5886,7 +5886,7 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "COL",
+    "team": "SEA",
     "date": "2026-04-16",
     "score": 1,
     "note": "Team Intel from tonight's game per Jay: \n\nCOL \nKC\nSEA\nCLE\nOAK xer",
@@ -5908,7 +5908,7 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "SEA",
+    "team": "OAK",
     "date": "2026-04-16",
     "score": 1,
     "note": "Team Intel from tonight's game per Jay: \n\nCOL \nKC\nSEA\nCLE\nOAK xer",
@@ -5930,7 +5930,7 @@
   },
   {
     "player": "Devin Diaz",
-    "team": "OAK",
+    "team": "COL",
     "date": "2026-04-16",
     "score": 1,
     "note": "Team Intel from tonight's game per Jay: \n\nCOL \nKC\nSEA\nCLE\nOAK xer",
@@ -5973,17 +5973,6 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
-    "team": "SF",
-    "date": "2026-04-17",
-    "score": 2,
-    "note": "SFG - Holmes (4, 55) \n\nMostly talked Cam, asked about medical at combine \n\nAsked if he should see Bo, said they're late to the party and he hasn't seen him. I said no \n\nBailey potentially at 55, loved",
-    "channel": "2026-draft-general",
-    "full_text": "SFG - Holmes (4, 55) \n\nMostly talked Cam, asked about medical at combine \n\nAsked if he should see Bo, said they're late to the party and he hasn't seen him. I said no \n\nBailey potentially at 55, loved Condon and and Robbins but not getting there. Not on jones at 55 ",
-    "workout": false,
-    "workout_matches": []
-  },
-  {
     "player": "Aiden Robbins",
     "team": "SF",
     "date": "2026-04-17",
@@ -5995,7 +5984,7 @@
     "workout_matches": []
   },
   {
-    "player": "Myles Bailey",
+    "player": "Kyle Jones",
     "team": "SF",
     "date": "2026-04-17",
     "score": 2,
@@ -6006,7 +5995,18 @@
     "workout_matches": []
   },
   {
-    "player": "Kyle Jones",
+    "player": "Trevor Condon",
+    "team": "SF",
+    "date": "2026-04-17",
+    "score": 2,
+    "note": "SFG - Holmes (4, 55) \n\nMostly talked Cam, asked about medical at combine \n\nAsked if he should see Bo, said they're late to the party and he hasn't seen him. I said no \n\nBailey potentially at 55, loved",
+    "channel": "2026-draft-general",
+    "full_text": "SFG - Holmes (4, 55) \n\nMostly talked Cam, asked about medical at combine \n\nAsked if he should see Bo, said they're late to the party and he hasn't seen him. I said no \n\nBailey potentially at 55, loved Condon and and Robbins but not getting there. Not on jones at 55 ",
+    "workout": false,
+    "workout_matches": []
+  },
+  {
+    "player": "Myles Bailey",
     "team": "SF",
     "date": "2026-04-17",
     "score": 2,
@@ -6074,7 +6074,7 @@
     ]
   },
   {
-    "player": "Taj Marchand",
+    "player": "Trevor Condon",
     "team": "BAL",
     "date": "2026-04-17",
     "score": 1,
@@ -6085,7 +6085,7 @@
     "workout_matches": []
   },
   {
-    "player": "Trevor Condon",
+    "player": "Taj Marchand",
     "team": "BAL",
     "date": "2026-04-17",
     "score": 1,
