@@ -1374,3 +1374,9 @@ if __name__ == '__main__':
     with open(out_path, 'w') as f:
         f.write(html)
     print(f"Dashboard written to {out_path}")
+
+    # Also emit teamintel.json for downstream consumers (sv-draft-fit-workout)
+    json_path = os.path.join(out_dir, 'teamintel.json')
+    with open(json_path, 'w') as f:
+        json.dump(records, f, indent=2)
+    print(f"Records JSON written to {json_path}")
