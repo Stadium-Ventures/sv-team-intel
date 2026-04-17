@@ -207,7 +207,10 @@ _WORKOUT_BROAD_PATTERNS = [
     r'\bcome\s+(?:in|out)\s+for\s+(?:a\s+)?workout',
     r'\bworkout\s+(?:scheduled|set\s+for|planned)',
     r'\bscheduled\s+(?:for\s+)?.*?workout',
-    r'\b(?:jays|astros|cubs|tigers|rays|dodgers|yankees|mets|braves|reds|padres|pirates|phillies|nationals|marlins|brewers|cardinals|rockies|diamondbacks|giants|mariners|angels|twins|royals|guardians|orioles|rangers|white sox|red sox|blue jays)\s+.*?workout',
+    # Team name (full) + workout — allow crossing a line or two
+    r'\b(?:jays|astros|cubs|tigers|rays|dodgers|yankees|mets|braves|reds|padres|pirates|phillies|nationals|marlins|brewers|cardinals|rockies|diamondbacks|giants|mariners|angels|twins|royals|guardians|orioles|rangers|white sox|red sox|blue jays)[\s\S]{0,40}?workout',
+    # Team abbreviation + workout  ("NYY workouts", "BAL workout", "Team Intel BAL\n\n...Workout in Sarasota")
+    r'\b(?:ari|atl|bal|bos|chc|chw|cin|cle|col|det|hou|kc|laa|lad|mia|mil|min|nym|nyy|oak|phi|pit|sd|sdp|sea|sf|sfg|stl|tb|tbr|tex|tor|wsh|was)[\s\S]{0,40}?workout',
     r'offered\s+.*?\b(?:jan|feb|mar|apr|may|june|july|aug|sep|oct|nov|dec)\b',
     r'tentative\s+.*?workout',
 ]
@@ -217,7 +220,10 @@ _WORKOUT_TARGETED_PATTERNS = [
     r'\bwants?\s+\w+(?:\s+(?:and|,)\s+\w+)?\s+(?:to|at)\s+workout\b',       # "wants Bo to workout" / "want Taj and Condon at workout"
     r'\bbring(?:ing)?\s+\w+\s+in\s+.*?workout',                              # "bringing him in for a workout"
     r'\bworkout\s+(?:on\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d',  # "workout June 5"
+    # "Workout in Sarasota May 24-29" — allow a few intermediate words before the month
+    r'\bworkout\s+(?:in|at|on|for|during)\s+(?:\w+\s+){0,4}(?:jan|feb|mar|apr|may|june|july|aug|sep|oct|nov|dec)\w*\s+\d',
     r'\bworkout\s+\w*\s*@\s+\w',                                             # "workout @ Port St Lucie"
+    r'\bworkout\s+important\b',                                              # "Condon — workout important"
 ]
 
 def _spans_for(text_lc, patterns):
