@@ -184,26 +184,94 @@ def find_players_in_text(text):
         found.add('Taj Marchand')
     return found
 
-def has_workout_invite(text):
+# Single-player Slack channels — every message in these is already scoped to one player,
+# so a workout phrase anywhere in the text applies to that player.
+_SINGLE_PLAYER_CHANNELS = set(CHANNEL_TO_PLAYER.keys())
+
+# Player alias map: full name -> set of lowercase aliases (first name, last name, nicknames).
+PLAYER_ALIASES = {}
+for _last_lc, _full in PLAYERS_2026.items():
+    _first = _full.split()[0].lower()
+    PLAYER_ALIASES[_full] = {_last_lc, _first}
+PLAYER_ALIASES['Cameron Flukey'].update({'cam'})
+PLAYER_ALIASES['Trevor Condon'].update({'trev'})
+# 'bo' and 'taj' already first names
+
+# Broad patterns — team-level workout facts that apply to every player named in the message.
+_WORKOUT_BROAD_PATTERNS = [
+    r'pre[- ]?draft\s+\w*\s*workout',
+    r'\bpdw\b',
+    r'invite\w*\s.*?workout',
+    r'workout\s+invite\w*',
+    r'\bprivate\s+workout',
+    r'\bcome\s+(?:in|out)\s+for\s+(?:a\s+)?workout',
+    r'\bworkout\s+(?:scheduled|set\s+for|planned)',
+    r'\bscheduled\s+(?:for\s+)?.*?workout',
+    r'\b(?:jays|astros|cubs|tigers|rays|dodgers|yankees|mets|braves|reds|padres|pirates|phillies|nationals|marlins|brewers|cardinals|rockies|diamondbacks|giants|mariners|angels|twins|royals|guardians|orioles|rangers|white sox|red sox|blue jays)\s+.*?workout',
+    r'offered\s+.*?\b(?:jan|feb|mar|apr|may|june|july|aug|sep|oct|nov|dec)\b',
+    r'tentative\s+.*?workout',
+]
+
+# Targeted patterns — phrase directly names the invited player(s).
+_WORKOUT_TARGETED_PATTERNS = [
+    r'\bwants?\s+\w+(?:\s+(?:and|,)\s+\w+)?\s+(?:to|at)\s+workout\b',       # "wants Bo to workout" / "want Taj and Condon at workout"
+    r'\bbring(?:ing)?\s+\w+\s+in\s+.*?workout',                              # "bringing him in for a workout"
+    r'\bworkout\s+(?:on\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d',  # "workout June 5"
+    r'\bworkout\s+\w*\s*@\s+\w',                                             # "workout @ Port St Lucie"
+]
+
+def _spans_for(text_lc, patterns):
+    spans = []
+    for pat in patterns:
+        for m in re.finditer(pat, text_lc):
+            spans.append(m.span())
+    return spans
+
+_ALL_ALIASES = set()
+for _aliases in PLAYER_ALIASES.values():
+    _ALL_ALIASES.update(_aliases)
+
+_SENTENCE_BOUNDARY = re.compile(r'[.!?\n]')
+
+def _sentence_around(text, span):
+    """Return the sentence/line containing `span` — bounded by [.!?\\n] or the text edges."""
+    s, e = span
+    left_boundary = 0
+    for m in _SENTENCE_BOUNDARY.finditer(text, 0, s):
+        left_boundary = m.end()
+    right_match = _SENTENCE_BOUNDARY.search(text, e)
+    right_boundary = right_match.start() if right_match else len(text)
+    return text[left_boundary:right_boundary]
+
+def has_workout_invite(text, player=None, channel=None):
+    """
+    Detect a pre-draft workout invitation.
+
+    Broad patterns (team-level facts like "pre-draft workout", "Rangers workout",
+    "STL Cardinals workout invite") apply to every player record derived from the message.
+
+    Targeted patterns (e.g. "Wants Bo to workout", "Want Taj and Condon at workout") only
+    flag the player whose alias appears in the same sentence as the phrase.
+    """
     tl = text.lower()
-    # Match pre-draft workout mentions and invite+workout combos
-    if re.search(r'pre[- ]?draft\s+\w*\s*workout', tl):
+    broad = _spans_for(tl, _WORKOUT_BROAD_PATTERNS)
+    targeted = _spans_for(tl, _WORKOUT_TARGETED_PATTERNS)
+    if not broad and not targeted:
+        return False
+    # Single-player channel: any workout phrase applies to that player.
+    if channel in _SINGLE_PLAYER_CHANNELS:
         return True
-    if re.search(r'invite\w*\s.*workout', tl):
+    if broad:
         return True
-    if re.search(r'workout\s+invite', tl):
+    aliases = PLAYER_ALIASES.get(player) if player else None
+    if not aliases:
+        # Unknown player: be permissive.
         return True
-    if re.search(r'\bpdw\b', tl):
-        return True
-    # Team name + workout (e.g. "Jays workout", "Cubs workout", "Rangers pre draft Carolinas workout")
-    if re.search(r'\b(jays|astros|cubs|tigers|rays|dodgers|yankees|mets|braves|reds|padres|pirates|phillies|nationals|marlins|brewers|cardinals|rockies|diamondbacks|giants|mariners|angels|twins|royals|guardians|orioles|rangers|white sox|red sox|blue jays)\s+.*?workout', tl):
-        return True
-    # "offered" with a date pattern (team offering a workout)
-    if re.search(r'offered\s+.*\b(june|july|may|jan|feb|mar|apr)\b', tl):
-        return True
-    # Tentative workout
-    if re.search(r'tentative\s+.*workout', tl):
-        return True
+    for span in targeted:
+        sentence = _sentence_around(tl, span)
+        for alias in aliases:
+            if re.search(r'\b' + re.escape(alias) + r'\b', sentence):
+                return True
     return False
 
 def score_line_for_team(line, full_text=""):
@@ -336,7 +404,8 @@ def parse_messages(messages):
 
     # Add workout flag based on note/full_text
     for r in records:
-        r['workout'] = has_workout_invite(r.get('full_text', '') + ' ' + r.get('note', ''))
+        text = r.get('full_text', '') + '\n' + r.get('note', '')
+        r['workout'] = has_workout_invite(text, r.get('player'), r.get('channel'))
 
     # Deduplicate
     seen = set()
