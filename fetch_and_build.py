@@ -287,7 +287,9 @@ def workout_match_details(text, player=None, channel=None):
 
 def score_line_for_team(line, full_text=""):
     ll = line.lower()
-    if re.search(r'\bred\b', ll) and 'green' not in ll:
+    if re.search(r'\bred\b', ll) and 'green' not in ll and 'orange' not in ll:
+        return -2
+    if 'orange' in ll:
         return -1
     if 'yellow' in ll:
         return 0
@@ -563,7 +565,8 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-2 {{ background-color: #c6efce !important; color: #1a5e1a; font-weight: 700; }}
 .score-1 {{ background-color: #e2efda !important; color: #3a6b30; font-weight: 600; }}
 .score-0 {{ background-color: #fff2cc !important; color: #7a6b00; font-weight: 600; }}
-.score-n1 {{ background-color: #fce4ec !important; color: #9a2020; font-weight: 600; }}
+.score-n1 {{ background-color: #ffd9b3 !important; color: #8a4500; font-weight: 600; }}
+.score-na {{ background-color: #e0e0e0 !important; color: #666; font-weight: 600; font-style: italic; }}
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
@@ -587,8 +590,9 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup .popup-scores button.ps2 {{ background: #c6efce; color: #1a5e1a; border-color: #a3d9a5; }}
 #scorePopup .popup-scores button.ps1 {{ background: #e2efda; color: #3a6b30; border-color: #c5deb8; }}
 #scorePopup .popup-scores button.ps0 {{ background: #fff2cc; color: #7a6b00; border-color: #e6d98a; }}
-#scorePopup .popup-scores button.psn1 {{ background: #fce4ec; color: #9a2020; border-color: #f5c6cb; }}
+#scorePopup .popup-scores button.psn1 {{ background: #ffd9b3; color: #8a4500; border-color: #f5b97a; }}
 #scorePopup .popup-scores button.psn2 {{ background: #f4c7c3; color: #8b1a1a; border-color: #e8a8a3; }}
+#scorePopup .popup-scores button.psna {{ background: #e0e0e0; color: #666; border-color: #bbb; font-style: italic; font-size: 12px; }}
 #scorePopup .popup-reset {{
     font-size: 11px; color: #888; cursor: pointer; text-decoration: underline;
     text-align: center; display: block;
@@ -848,6 +852,7 @@ function checkPw() {{
         </div>
     </div>
     <div id="playerSummary" class="player-summary"></div>
+    <div id="hiddenBar"></div>
     <table class="detail-table" id="detailTable"></table>
 </div>
 
@@ -862,6 +867,7 @@ const PLAYER_ALIASES = {player_aliases_js};
 // --- Override system (Vercel KV) — per-record overrides ---
 var scoreOverrides = {{}};
 var _popupPlayer = '', _popupTeam = '', _popupDate = '';
+var _showHidden = false;
 
 async function loadOverrides() {{
     try {{
@@ -873,6 +879,10 @@ async function loadOverrides() {{
 function getScore(r) {{
     const ok = r.player + '|' + r.team + '|' + r.date;
     return scoreOverrides.hasOwnProperty(ok) ? scoreOverrides[ok] : r.score;
+}}
+
+function isExcluded(r) {{
+    return getScore(r) === 'NA';
 }}
 
 // --- Message modal (click a row's note to see full message + highlighted PDW trigger) ---
@@ -1049,14 +1059,18 @@ function closeScorePopup() {{
 }}
 
 function buildMatrix() {{
+    // Only count records that aren't manually flagged NA (false connections)
+    const activeRecords = RECORDS.filter(r => !isExcluded(r));
     const latest = {{}};
-    RECORDS.forEach(r => {{
+    const counts = {{}};
+    activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
         if (!latest[key] || r.date > latest[key].date) latest[key] = r;
+        counts[key] = (counts[key] || 0) + 1;
     }});
     // Track if any record for a player+team has a workout invite
     const workoutMap = {{}};
-    RECORDS.forEach(r => {{
+    activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
         if (r.workout) workoutMap[key] = true;
     }});
@@ -1068,21 +1082,24 @@ function buildMatrix() {{
             else delete workoutMap[parts];
         }}
     }});
-    const playerTeams = {{}}, playerAllScores = {{}};
+    const playerTeams = {{}}, playerTeamCounts = {{}}, playerAllScores = {{}};
     Object.values(latest).forEach(r => {{
         if (!playerTeams[r.player]) playerTeams[r.player] = {{}};
+        if (!playerTeamCounts[r.player]) playerTeamCounts[r.player] = {{}};
         const score = getScore(r);
         playerTeams[r.player][r.team] = score;
+        playerTeamCounts[r.player][r.team] = counts[r.player + '|' + r.team] || 0;
         if (!playerAllScores[r.player]) playerAllScores[r.player] = [];
         playerAllScores[r.player].push(score);
     }});
     ALL_2026_PLAYERS.forEach(p => {{
         if (!playerTeams[p]) playerTeams[p] = {{}};
+        if (!playerTeamCounts[p]) playerTeamCounts[p] = {{}};
         if (!playerAllScores[p]) playerAllScores[p] = [];
     }});
     const playerAvgs = {{}};
     Object.keys(playerAllScores).forEach(p => {{
-        const s = playerAllScores[p];
+        const s = playerAllScores[p].filter(v => typeof v === 'number');
         playerAvgs[p] = s.length > 0 ? s.reduce((a,b) => a+b, 0) / s.length : null;
     }});
     const sortedPlayers = Object.keys(playerAvgs).sort((a,b) => {{
@@ -1091,7 +1108,7 @@ function buildMatrix() {{
         if (playerAvgs[b] === null) return 1;
         return playerAvgs[b] - playerAvgs[a];
     }});
-    return {{ playerTeams, playerAvgs, sortedPlayers, workoutMap }};
+    return {{ playerTeams, playerTeamCounts, playerAvgs, sortedPlayers, workoutMap }};
 }}
 
 function scoreClass(s) {{
@@ -1112,7 +1129,7 @@ function badgeClass(s) {{
 }}
 
 function renderMatrix() {{
-    const {{ playerTeams, playerAvgs, sortedPlayers, workoutMap }} = buildMatrix();
+    const {{ playerTeams, playerTeamCounts, playerAvgs, sortedPlayers, workoutMap }} = buildMatrix();
 
     var fHtml = '<thead><tr><th>AVG</th><th>Client</th></tr></thead><tbody>';
     var sHtml = '<thead><tr>';
@@ -1122,16 +1139,17 @@ function renderMatrix() {{
     sortedPlayers.forEach(player => {{
         const avg = playerAvgs[player];
         const avgDisplay = avg !== null ? avg.toFixed(2) : '-';
-        const avgClass = avg === null ? '' : avg >= 1.5 ? 'score-2' : avg >= 0.75 ? 'score-1' : avg >= 0 ? 'score-0' : 'score-n1';
+        const avgClass = avg === null ? '' : avg >= 1.5 ? 'score-2' : avg >= 0.75 ? 'score-1' : avg >= 0 ? 'score-0' : avg >= -1 ? 'score-n1' : 'score-n2';
         fHtml += '<tr><td class="' + avgClass + '">' + avgDisplay + '</td>';
         fHtml += '<td class="clickable" onclick="jumpToDetail(\\'' + player.replace(/'/g, "\\\\'") + '\\')">' + player + '</td></tr>';
         sHtml += '<tr>';
         const esc = player.replace(/'/g, "\\\\'");
         ALL_TEAMS.forEach(team => {{
             const s = playerTeams[player] && playerTeams[player][team];
+            const cnt = (playerTeamCounts[player] && playerTeamCounts[player][team]) || 0;
             const wk = workoutMap[player + '|' + team];
-            if (s !== undefined && s !== null) {{
-                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\')">' + s + '</td>';
+            if (s !== undefined && s !== null && typeof s === 'number' && cnt > 0) {{
+                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\')" title="Score: ' + s + ' \\u2022 ' + cnt + ' touch' + (cnt===1?'':'es') + '">' + cnt + '</td>';
             }} else {{
                 sHtml += '<td></td>';
             }}
@@ -1156,17 +1174,34 @@ function renderMatrix() {{
         '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">Aug 2025 - Present</span></div>';
 }}
 
+function toggleHidden() {{
+    _showHidden = !_showHidden;
+    renderDetail();
+}}
+
 function renderDetail() {{
     const player = document.getElementById('playerSelect').value;
     if (!player) return;
-    const pr = RECORDS.filter(r => r.player === player).sort((a,b) => b.date.localeCompare(a.date));
-    const teams = new Set(pr.map(r => r.team));
-    const avg = pr.length > 0 ? pr.reduce((a,r) => a + getScore(r), 0) / pr.length : 0;
+    const allPr = RECORDS.filter(r => r.player === player).sort((a,b) => b.date.localeCompare(a.date));
+    const hiddenCount = allPr.filter(r => isExcluded(r)).length;
+    const pr = _showHidden ? allPr : allPr.filter(r => !isExcluded(r));
+    const teams = new Set(pr.filter(r => !isExcluded(r)).map(r => r.team));
+    const numScores = pr.filter(r => !isExcluded(r)).map(r => getScore(r));
+    const avg = numScores.length > 0 ? numScores.reduce((a,b) => a + b, 0) / numScores.length : 0;
     document.getElementById('playerSummary').innerHTML =
         '<div class="summary-item"><span class="summary-label">Player</span><span class="summary-value">' + player + '</span></div>' +
-        '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + pr.length + '</span></div>' +
+        '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + numScores.length + '</span></div>' +
         '<div class="summary-item"><span class="summary-label">Teams Connected</span><span class="summary-value">' + teams.size + '</span></div>' +
-        '<div class="summary-item"><span class="summary-label">Avg Score</span><span class="summary-value">' + (pr.length > 0 ? avg.toFixed(2) : '-') + '</span></div>';
+        '<div class="summary-item"><span class="summary-label">Avg Score</span><span class="summary-value">' + (numScores.length > 0 ? avg.toFixed(2) : '-') + '</span></div>';
+
+    let hiddenBar = '';
+    if (hiddenCount > 0) {{
+        const label = _showHidden ? 'hide' : 'show';
+        hiddenBar = '<div style="padding:6px 10px;font-size:12px;color:#888;margin-bottom:6px;">' +
+            hiddenCount + ' record' + (hiddenCount===1?'':'s') + ' hidden (marked NA) \\u00b7 ' +
+            '<span style="text-decoration:underline;cursor:pointer;color:#2d5016;" onclick="toggleHidden()">' + label + '</span></div>';
+    }}
+
     let html = '<thead><tr><th>Date</th><th>Team</th><th>Intel Note</th><th>Score</th></tr></thead><tbody>';
     if (pr.length === 0) {{
         html += '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">No intel reports yet</td></tr>';
@@ -1176,14 +1211,19 @@ function renderDetail() {{
         const s = getScore(r);
         const esc = r.player.replace(/'/g, "\\\\'");
         const isOverridden = scoreOverrides.hasOwnProperty(r.player + '|' + r.team + '|' + r.date);
-        const wBadge = isPDW(r.player, r.team) ? '<span class="workout-badge">PDW</span>' : '';
+        const excluded = isExcluded(r);
+        const wBadge = !excluded && isPDW(r.player, r.team) ? '<span class="workout-badge">PDW</span>' : '';
         const rowKey = r.player + '|' + r.team + '|' + r.date + '|' + i;
-        html += '<tr><td>' + r.date + '</td><td>' + r.team + wBadge + '</td>' +
+        const rowStyle = excluded ? ' style="opacity:0.45;"' : '';
+        const scoreDisp = (s === 'NA') ? 'NA' : (s + (isOverridden ? ' *' : ''));
+        const badgeCls = (s === 'NA') ? 'score-na' : badgeClass(s);
+        html += '<tr' + rowStyle + '><td>' + r.date + '</td><td>' + r.team + wBadge + '</td>' +
             '<td class="note-cell" onclick="openMessageModal(\\'' + rowKey + '\\')">' + note + '</td>' +
-            '<td><span class="score-badge ' + badgeClass(s) + '" style="cursor:pointer;" onclick="openScorePopup(\\'' + esc + '\\', \\'' + r.team + '\\', \\'' + r.date + '\\', event)">' + s + (isOverridden ? ' *' : '') + '</span></td></tr>';
+            '<td><span class="score-badge ' + badgeCls + '" style="cursor:pointer;" onclick="openScorePopup(\\'' + esc + '\\', \\'' + r.team + '\\', \\'' + r.date + '\\', event)">' + scoreDisp + '</span></td></tr>';
         _modalIndex[rowKey] = r;
     }});
     html += '</tbody>';
+    document.getElementById('hiddenBar').innerHTML = hiddenBar;
     document.getElementById('detailTable').innerHTML = html;
 }}
 
@@ -1234,6 +1274,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <button class="ps0" onclick="saveScore(0)">0</button>
         <button class="psn1" onclick="saveScore(-1)">-1</button>
         <button class="psn2" onclick="saveScore(-2)">-2</button>
+        <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
     <span class="popup-reset" onclick="saveScore(null)">Reset to original</span>
