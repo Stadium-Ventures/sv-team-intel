@@ -250,35 +250,40 @@ def _sentence_around(text, span):
     return text[left_boundary:right_boundary]
 
 def has_workout_invite(text, player=None, channel=None):
+    """Bool wrapper over workout_match_details."""
+    return len(workout_match_details(text, player, channel)) > 0
+
+def workout_match_details(text, player=None, channel=None):
     """
-    Detect a pre-draft workout invitation.
-
-    Broad patterns (team-level facts like "pre-draft workout", "Rangers workout",
-    "STL Cardinals workout invite") apply to every player record derived from the message.
-
-    Targeted patterns (e.g. "Wants Bo to workout", "Want Taj and Condon at workout") only
-    flag the player whose alias appears in the same sentence as the phrase.
+    Return list of {'start','end','text','kind'} for the specific regex spans that
+    triggered a workout flag. UI uses these to highlight the phrase in the message.
     """
     tl = text.lower()
-    broad = _spans_for(tl, _WORKOUT_BROAD_PATTERNS)
-    targeted = _spans_for(tl, _WORKOUT_TARGETED_PATTERNS)
-    if not broad and not targeted:
-        return False
-    # Single-player channel: any workout phrase applies to that player.
+    broad_spans = _spans_for(tl, _WORKOUT_BROAD_PATTERNS)
+    targeted_spans = _spans_for(tl, _WORKOUT_TARGETED_PATTERNS)
+    if not broad_spans and not targeted_spans:
+        return []
+    matches = []
     if channel in _SINGLE_PLAYER_CHANNELS:
-        return True
-    if broad:
-        return True
+        for s, e in broad_spans:
+            matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'broad'})
+        for s, e in targeted_spans:
+            matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'targeted'})
+        return matches
+    for s, e in broad_spans:
+        matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'broad'})
     aliases = PLAYER_ALIASES.get(player) if player else None
-    if not aliases:
-        # Unknown player: be permissive.
-        return True
-    for span in targeted:
-        sentence = _sentence_around(tl, span)
-        for alias in aliases:
-            if re.search(r'\b' + re.escape(alias) + r'\b', sentence):
-                return True
-    return False
+    if aliases:
+        for s, e in targeted_spans:
+            sentence = _sentence_around(tl, (s, e))
+            for alias in aliases:
+                if re.search(r'\b' + re.escape(alias) + r'\b', sentence):
+                    matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'targeted'})
+                    break
+    elif targeted_spans and not broad_spans:
+        for s, e in targeted_spans:
+            matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'targeted'})
+    return matches
 
 def score_line_for_team(line, full_text=""):
     ll = line.lower()
@@ -323,7 +328,7 @@ def parse_messages(messages):
                     records.append({
                         'player': player, 'team': team, 'date': date,
                         'score': score, 'note': ls[:200],
-                        'channel': channel, 'full_text': text[:400],
+                        'channel': channel, 'full_text': text[:3000],
                     })
 
         elif channel in CHANNEL_TO_PLAYER:
@@ -355,7 +360,7 @@ def parse_messages(messages):
                 records.append({
                     'player': player, 'team': team, 'date': date,
                     'score': best_score, 'note': text.strip()[:200],
-                    'channel': channel, 'full_text': text[:400],
+                    'channel': channel, 'full_text': text[:3000],
                 })
 
         else:
@@ -382,7 +387,7 @@ def parse_messages(messages):
                             records.append({
                                 'player': p, 'team': header_team, 'date': date,
                                 'score': score, 'note': ls[:200],
-                                'channel': channel, 'full_text': text[:400],
+                                'channel': channel, 'full_text': text[:3000],
                             })
             elif players and all_teams:
                 for line in text.split('\n'):
@@ -396,7 +401,7 @@ def parse_messages(messages):
                                 records.append({
                                     'player': p, 'team': t, 'date': date,
                                     'score': score, 'note': ls[:200],
-                                    'channel': channel, 'full_text': text[:400],
+                                    'channel': channel, 'full_text': text[:3000],
                                 })
                     elif lp and not lt and all_teams:
                         score = score_line_for_team(ls, text)
@@ -405,13 +410,16 @@ def parse_messages(messages):
                                 records.append({
                                     'player': p, 'team': t, 'date': date,
                                     'score': score, 'note': text.strip()[:200],
-                                    'channel': channel, 'full_text': text[:400],
+                                    'channel': channel, 'full_text': text[:3000],
                                 })
 
-    # Add workout flag based on note/full_text
+    # Add workout flag + match details based on note/full_text
     for r in records:
         text = r.get('full_text', '') + '\n' + r.get('note', '')
-        r['workout'] = has_workout_invite(text, r.get('player'), r.get('channel'))
+        matches = workout_match_details(text, r.get('player'), r.get('channel'))
+        r['workout'] = len(matches) > 0
+        # Store just the matched phrases (lowercase text triggers highlighting in JS)
+        r['workout_matches'] = [m['text'] for m in matches]
 
     # Deduplicate
     seen = set()
@@ -593,6 +601,51 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup .popup-pdw.active {{ background: #d4a017; color: white; }}
 #scorePopup .popup-reset:hover {{ color: #c0392b; }}
 #scoreOverlay {{ display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 8999; }}
+
+#messageOverlay {{
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 9100;
+}}
+#messageOverlay.visible {{ display: flex; align-items: center; justify-content: center; }}
+#messageModal {{
+    background: white; border-radius: 10px; padding: 20px 24px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    max-width: 680px; width: 92%; max-height: 80vh; overflow: auto;
+    font-size: 13px; color: #222;
+}}
+#messageModal .mm-close {{
+    float: right; cursor: pointer; color: #888; font-size: 20px; line-height: 1;
+    padding: 0 4px; border: none; background: none;
+}}
+#messageModal .mm-close:hover {{ color: #c0392b; }}
+#messageModal .mm-header {{
+    font-size: 12px; color: #666; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 4px;
+    text-transform: uppercase;
+}}
+#messageModal .mm-title {{
+    font-size: 16px; font-weight: 700; color: #2d5016; margin-bottom: 2px;
+}}
+#messageModal .mm-meta {{
+    font-size: 11px; color: #888; margin-bottom: 14px;
+}}
+#messageModal .mm-body {{
+    background: #f8faf6; border-left: 3px solid #2d5016; padding: 12px 14px;
+    white-space: pre-wrap; line-height: 1.5; font-size: 13px;
+    border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}}
+#messageModal mark.mm-hl {{
+    background: #fdf6c7; border-bottom: 2px solid #d4a017;
+    padding: 1px 2px; border-radius: 2px; color: #6a4c00; font-weight: 600;
+}}
+#messageModal .mm-legend {{
+    font-size: 11px; color: #888; margin-top: 10px;
+}}
+#messageModal .mm-legend .pill {{
+    display: inline-block; background: #fdf6c7; border-bottom: 2px solid #d4a017;
+    padding: 1px 6px; border-radius: 2px; margin-right: 4px; color: #6a4c00; font-weight: 600;
+}}
+.detail-table td.note-cell {{ cursor: pointer; }}
+.detail-table tr:hover td.note-cell {{ background: #f0f7ec; }}
 
 .detail-container {{ padding: 20px 30px; display: none; }}
 .player-select-wrapper {{ display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }}
@@ -812,6 +865,68 @@ function getScore(r) {{
     return scoreOverrides.hasOwnProperty(ok) ? scoreOverrides[ok] : r.score;
 }}
 
+// --- Message modal (click a row's note to see full message + highlighted PDW trigger) ---
+var _modalIndex = {{}};
+
+function _escapeHtml(s) {{
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}}
+
+function _highlightMatches(text, matches) {{
+    // matches is an array of substrings to highlight (case-insensitive, first-occurrence each).
+    if (!matches || !matches.length) return _escapeHtml(text);
+    // Find character ranges for each match (case-insensitive). Take longest-first to avoid nesting.
+    const lc = text.toLowerCase();
+    const ranges = [];
+    matches.slice().sort((a,b) => b.length - a.length).forEach(function(m) {{
+        if (!m) return;
+        var idx = 0;
+        var needle = m.toLowerCase();
+        while ((idx = lc.indexOf(needle, idx)) !== -1) {{
+            ranges.push([idx, idx + m.length]);
+            idx += m.length;
+        }}
+    }});
+    if (!ranges.length) return _escapeHtml(text);
+    ranges.sort(function(a,b){{ return a[0]-b[0]; }});
+    // Merge overlapping
+    const merged = [ranges[0]];
+    for (var k = 1; k < ranges.length; k++) {{
+        var last = merged[merged.length-1];
+        if (ranges[k][0] <= last[1]) {{ last[1] = Math.max(last[1], ranges[k][1]); }}
+        else merged.push(ranges[k]);
+    }}
+    var out = '', cursor = 0;
+    merged.forEach(function(r) {{
+        out += _escapeHtml(text.slice(cursor, r[0]));
+        out += '<mark class="mm-hl">' + _escapeHtml(text.slice(r[0], r[1])) + '</mark>';
+        cursor = r[1];
+    }});
+    out += _escapeHtml(text.slice(cursor));
+    return out;
+}}
+
+function openMessageModal(rowKey) {{
+    const r = _modalIndex[rowKey];
+    if (!r) return;
+    const body = (r.full_text && r.full_text.length > r.note.length) ? r.full_text : r.note;
+    const isPDWrow = !!r.workout;
+    document.getElementById('mmTitle').textContent = r.player + ' · ' + r.team;
+    document.getElementById('mmMeta').textContent = r.date + ' · #' + (r.channel || 'unknown') +
+        (isPDWrow ? ' · PDW flagged' : '');
+    document.getElementById('mmBody').innerHTML = _highlightMatches(body, r.workout_matches || []);
+    document.getElementById('mmLegend').style.display = (isPDWrow && (r.workout_matches || []).length) ? 'block' : 'none';
+    document.getElementById('messageOverlay').classList.add('visible');
+}}
+
+function closeMessageModal() {{
+    document.getElementById('messageOverlay').classList.remove('visible');
+}}
+
+document.addEventListener('keydown', function(e) {{
+    if (e.key === 'Escape') closeMessageModal();
+}});
+
 async function saveScore(score) {{
     const player = _popupPlayer, team = _popupTeam, date = _popupDate;
     const key = player + '|' + team + '|' + date;
@@ -1020,14 +1135,17 @@ function renderDetail() {{
     if (pr.length === 0) {{
         html += '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">No intel reports yet</td></tr>';
     }}
-    pr.forEach(r => {{
+    pr.forEach((r, i) => {{
         const note = r.note.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\n/g,'<br>').replace(/&amp;/g,'&');
         const s = getScore(r);
         const esc = r.player.replace(/'/g, "\\\\'");
         const isOverridden = scoreOverrides.hasOwnProperty(r.player + '|' + r.team + '|' + r.date);
         const wBadge = r.workout ? '<span class="workout-badge">PDW</span>' : '';
-        html += '<tr><td>' + r.date + '</td><td>' + r.team + wBadge + '</td><td>' + note + '</td>' +
+        const rowKey = r.player + '|' + r.team + '|' + r.date + '|' + i;
+        html += '<tr><td>' + r.date + '</td><td>' + r.team + wBadge + '</td>' +
+            '<td class="note-cell" onclick="openMessageModal(\\'' + rowKey + '\\')">' + note + '</td>' +
             '<td><span class="score-badge ' + badgeClass(s) + '" style="cursor:pointer;" onclick="openScorePopup(\\'' + esc + '\\', \\'' + r.team + '\\', \\'' + r.date + '\\', event)">' + s + (isOverridden ? ' *' : '') + '</span></td></tr>';
+        _modalIndex[rowKey] = r;
     }});
     html += '</tbody>';
     document.getElementById('detailTable').innerHTML = html;
@@ -1083,6 +1201,18 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
     <span class="popup-reset" onclick="saveScore(null)">Reset to original</span>
+</div>
+<div id="messageOverlay" onclick="if(event.target===this) closeMessageModal()">
+    <div id="messageModal">
+        <button class="mm-close" onclick="closeMessageModal()">&times;</button>
+        <div class="mm-header">Full Slack Message</div>
+        <div class="mm-title" id="mmTitle"></div>
+        <div class="mm-meta" id="mmMeta"></div>
+        <div class="mm-body" id="mmBody"></div>
+        <div class="mm-legend" id="mmLegend" style="display:none;">
+            <span class="pill">highlighted</span> = text that triggered the PDW flag
+        </div>
+    </div>
 </div>
 </body>
 </html>'''
