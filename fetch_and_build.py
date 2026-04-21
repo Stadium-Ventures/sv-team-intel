@@ -1011,6 +1011,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .ev-cancel {{ padding: 9px 14px; background: #eee; color: #333; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
 .ev-delete {{ padding: 9px 14px; background: #c94040; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }}
 .ev-delete:hover {{ background: #a83030; }}
+.ev-slack {{ padding: 9px 14px; background: #4a154b; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }}
+.ev-slack:hover {{ background: #611f62; }}
 .ev-note {{ font-size: 11px; color: #888; margin-top: 6px; }}
 
 @media (max-width: 640px) {{
@@ -1112,6 +1114,7 @@ function checkPw() {{
 <div id="detailView" class="detail-container">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
         <button onclick="showView('matrix')" style="padding:6px 14px;font-size:13px;font-weight:600;background:#2d5016;color:white;border:none;border-radius:6px;cursor:pointer;">&#8592; Back</button>
+        <button onclick="jumpToCalendarForCurrentPlayer()" style="padding:6px 14px;font-size:13px;font-weight:600;background:#d4a017;color:white;border:none;border-radius:6px;cursor:pointer;" title="Show this player's workouts on the calendar">&#x1F4C5; View Calendar</button>
         <div class="player-select-wrapper" style="margin-bottom:0;">
             <label>Select Player:</label>
             <select class="player-select" id="playerSelect" onchange="_filterTeam=null; renderDetail()">
@@ -1204,6 +1207,7 @@ function checkPw() {{
         </div>
         <div class="ev-btns">
             <button class="ev-delete" id="evDeleteBtn" onclick="deleteEvent()" style="display:none;">Delete</button>
+            <button class="ev-slack" id="evSlackBtn" onclick="openSlackFromEvent()" style="display:none;" title="Open the originating Slack message">&#x1F4AC; View Slack Message</button>
             <button class="ev-cancel" onclick="closeEventModal()">Cancel</button>
             <button class="ev-save" onclick="saveEvent()">Save</button>
         </div>
@@ -1666,6 +1670,7 @@ const MONTH_NAMES = ['January','February','March','April','May','June','July','A
 var _calMonth = new Date(2026, 4, 1); // May 2026 default
 var _calEvents = {{}};       // manual events from API
 var _calAutoEvents = [];     // events derived from RECORDS.workout_dates
+var _calRecordsByPlayerTeam = {{}};  // 'player|team' -> [records] for Slack link lookup
 var _calInitialized = false;
 
 async function _calApi(method, body) {{
@@ -1683,8 +1688,12 @@ async function loadCalendarEvents() {{
 
 function buildAutoEvents() {{
     const out = [];
+    const byPT = {{}};
     RECORDS.forEach(r => {{
-        if (!r.workout || !r.workout_dates || !r.workout_dates.length) return;
+        if (!r.workout) return;
+        const k = r.player + '|' + r.team;
+        (byPT[k] = byPT[k] || []).push(r);
+        if (!r.workout_dates || !r.workout_dates.length) return;
         r.workout_dates.forEach(wd => {{
             out.push({{
                 auto: true,
@@ -1697,10 +1706,12 @@ function buildAutoEvents() {{
                 tentative: !!wd.tentative,
                 notes: null,
                 title: null,
+                _postDate: r.date,  // Slack post date, for rowKey lookup
             }});
         }});
     }});
     _calAutoEvents = out;
+    _calRecordsByPlayerTeam = byPT;
 }}
 
 function _getMergedEvents() {{
@@ -1796,7 +1807,7 @@ function renderCalendar() {{
         let cls = 'cal-cell';
         if (isDraft) cls += ' cal-draft';
         if (isToday) cls += ' cal-today';
-        html += '<div class="' + cls + '" onclick="openEventModal(null, \\'' + iso + '\\')">';
+        html += '<div class="' + cls + '" data-iso="' + iso + '">';
         html += '<div class="cal-daynum">' + dayNum + (isDraft ? ' <span class="cal-drafttag">DRAFT</span>' : '') + '</div>';
         const evs = byDate[iso] || [];
         evs.forEach(ev => {{
@@ -1804,7 +1815,7 @@ function renderCalendar() {{
             const marker = ev.auto ? '' : '*';
             const evId = ev.id || '';
             html += '<div class="cal-chip" style="background:' + color + ';" ' +
-                'onclick="event.stopPropagation();openEventModal(' + JSON.stringify(evId) + ', \\'' + iso + '\\', ' + JSON.stringify(JSON.stringify(ev)) + ')" ' +
+                'onclick="openEventModal(' + JSON.stringify(evId) + ', \\'' + iso + '\\', ' + JSON.stringify(JSON.stringify(ev)) + ')" ' +
                 'title="' + (ev.notes || '').replace(/"/g,'&quot;') + '">' +
                 _chipLabel(ev) + marker + '</div>';
         }});
@@ -1850,9 +1861,60 @@ function openEventModal(id, isoDate, evJson) {{
     document.getElementById('evNotes').value = (ev && ev.notes) || '';
     document.getElementById('evDeleteBtn').style.display = (id && ev && !ev.auto) ? 'inline-block' : 'none';
     document.getElementById('evNote').textContent = (ev && ev.auto) ? 'This event was auto-parsed from a Slack message. Saving creates a manual override.' : '';
+    // Slack button: only meaningful for workout events with a backing record.
+    const slackBtn = document.getElementById('evSlackBtn');
+    const type = (ev && ev.type) || 'workout';
+    const pt = playerSel.value + '|' + (teamSel.value || '');
+    const hasSlackRecord = (type === 'workout') && !!(_calRecordsByPlayerTeam[pt] && _calRecordsByPlayerTeam[pt].length);
+    slackBtn.style.display = hasSlackRecord ? 'inline-block' : 'none';
     overlay.dataset.editId = (id && ev && !ev.auto) ? id : '';
+    overlay.dataset.player = playerSel.value;
+    overlay.dataset.team = teamSel.value || '';
+    overlay.dataset.date = document.getElementById('evDate').value;
     evSyncType();
     overlay.style.display = 'flex';
+}}
+
+function openSlackFromEvent() {{
+    const overlay = document.getElementById('evOverlay');
+    const player = overlay.dataset.player;
+    const team = overlay.dataset.team;
+    const evDate = overlay.dataset.date;
+    const pool = _calRecordsByPlayerTeam[player + '|' + team] || [];
+    if (!pool.length) {{ showToast('No Slack message found for this player/team', false); return; }}
+    // Prefer the record whose workout_dates contains this event's date.
+    let picked = pool.find(r => (r.workout_dates || []).some(wd => wd.date === evDate));
+    if (!picked) {{
+        // Fallback: most recent record by post-date.
+        picked = pool.slice().sort((a,b) => (b.date || '').localeCompare(a.date || ''))[0];
+    }}
+    const rowKey = picked.player + '|' + picked.team + '|' + picked.date + '|cal';
+    _modalIndex[rowKey] = picked;
+    closeEventModal();
+    openMessageModal(rowKey);
+}}
+
+function jumpToCalendarForCurrentPlayer() {{
+    const player = document.getElementById('playerSelect').value;
+    if (!player) {{ showView('calendar'); return; }}
+    // Make sure calendar is initialized so filter dropdown is populated.
+    (async () => {{
+        if (!_calInitialized) {{ await initCalendar(); }}
+        const sel = document.getElementById('calPlayerFilter');
+        // Ensure option exists (players only-in-RECORDS go in at init)
+        let found = false;
+        for (let i = 0; i < sel.options.length; i++) {{ if (sel.options[i].value === player) {{ found = true; break; }} }}
+        if (!found) {{ const o = document.createElement('option'); o.value = player; o.textContent = player; sel.appendChild(o); }}
+        sel.value = player;
+        // Jump to a month where this player has events if possible, else stay.
+        const autoDates = _calAutoEvents.filter(e => e.player === player).map(e => e.date).sort();
+        if (autoDates.length) {{
+            const d = new Date(autoDates[0] + 'T00:00:00');
+            _calMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+        }}
+        showView('calendar');
+        renderCalendar();
+    }})();
 }}
 
 function closeEventModal() {{
@@ -1863,6 +1925,9 @@ function evSyncType() {{
     const t = document.getElementById('evType').value;
     document.getElementById('evTeamRow').style.display = (t === 'workout') ? 'flex' : 'none';
     document.getElementById('evTitleRow').style.display = (t === 'workout') ? 'none' : 'flex';
+    // Hide Slack button for non-workout events.
+    const slackBtn = document.getElementById('evSlackBtn');
+    if (slackBtn && t !== 'workout') slackBtn.style.display = 'none';
 }}
 
 async function saveEvent() {{
