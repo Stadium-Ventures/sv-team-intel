@@ -186,6 +186,12 @@ td.overridden::after { content: '*'; position: absolute; top: 1px; right: 3px; f
     padding: 0 4px; border: none; background: none;
 }
 #messageModal .mm-close:hover { color: #c0392b; }
+#messageModal .mm-back {
+    float: left; cursor: pointer; padding: 4px 10px; margin-right: 10px;
+    background: #d4a017; color: white; border: none; border-radius: 5px;
+    font-size: 12px; font-weight: 600;
+}
+#messageModal .mm-back:hover { background: #b8890f; }
 #messageModal .mm-header {
     font-size: 12px; color: #666; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 4px;
     text-transform: uppercase;
@@ -466,7 +472,7 @@ function checkPw() {
         <div>
             <h1>TeamIntel Dashboard</h1>
             <div class="subtitle">Player Intelligence Score By Team &mdash; 2026 MLB Draft</div>
-            <div class="last-updated">Last updated: April 21, 2026 11:13 AM ET</div>
+            <div class="last-updated">Last updated: April 21, 2026 11:16 AM ET</div>
         </div>
     </div>
     <div class="nav-tabs">
@@ -705,6 +711,10 @@ function _highlightMatches(text, phraseGroups) {
 function openMessageModal(rowKey) {
     const r = _modalIndex[rowKey];
     if (!r) return;
+    // Default: no back button. openSlackFromEvent sets it after this call.
+    _mmReturnToEvent = null;
+    const bb = document.getElementById('mmBackBtn');
+    if (bb) bb.style.display = 'none';
     const body = (r.full_text && r.full_text.length > r.note.length) ? r.full_text : r.note;
     const isPDWrow = !!r.workout;
     const playerAliases = (PLAYER_ALIASES[r.player] || []).concat([r.player]);
@@ -728,6 +738,9 @@ function openMessageModal(rowKey) {
 
 function closeMessageModal() {
     document.getElementById('messageOverlay').classList.remove('visible');
+    _mmReturnToEvent = null;
+    const bb = document.getElementById('mmBackBtn');
+    if (bb) bb.style.display = 'none';
 }
 
 document.addEventListener('keydown', function(e) {
@@ -1235,6 +1248,9 @@ function renderCalendar() {
     document.getElementById('calLegend').innerHTML = legend;
 }
 
+var _lastEventModalCtx = null;     // last args to openEventModal: id, isoDate, ev
+var _mmReturnToEvent = null;       // if set, message modal shows "Back to Event" button
+
 function openEventChip(cid) {
     const ev = _calChipIndex[cid];
     if (!ev) return;
@@ -1244,6 +1260,7 @@ function openEventChip(cid) {
 function openEventModal(id, isoDate, ev) {
     const overlay = document.getElementById('evOverlay');
     ev = ev || null;
+    _lastEventModalCtx = { id: id, isoDate: isoDate, ev: ev };
     document.getElementById('evTitle').textContent = (id && ev && !ev.auto) ? 'Edit Event' : (ev && ev.auto ? 'Edit Auto-Workout' : 'Add Event');
     document.getElementById('evDate').value = (ev && ev.date) || isoDate || _fmtIso(new Date());
     document.getElementById('evType').value = (ev && ev.type) || 'workout';
@@ -1294,8 +1311,22 @@ function openSlackFromEvent() {
     }
     const rowKey = picked.player + '|' + picked.team + '|' + picked.date + '|cal';
     _modalIndex[rowKey] = picked;
+    // Capture the event context so the message modal can offer "Back to Event".
+    const returnCtx = _lastEventModalCtx ? { id: _lastEventModalCtx.id, isoDate: _lastEventModalCtx.isoDate, ev: _lastEventModalCtx.ev } : null;
     closeEventModal();
     openMessageModal(rowKey);
+    if (returnCtx) {
+        _mmReturnToEvent = returnCtx;
+        document.getElementById('mmBackBtn').style.display = 'inline-block';
+    }
+}
+
+function returnToEvent() {
+    const ctx = _mmReturnToEvent;
+    _mmReturnToEvent = null;
+    document.getElementById('mmBackBtn').style.display = 'none';
+    closeMessageModal();
+    if (ctx) openEventModal(ctx.id, ctx.isoDate, ctx.ev);
 }
 
 function jumpToCalendarForCurrentPlayer() {
@@ -1413,6 +1444,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {
 <div id="messageOverlay" onclick="if(event.target===this) closeMessageModal()">
     <div id="messageModal">
         <button class="mm-close" onclick="closeMessageModal()">&times;</button>
+        <button class="mm-back" id="mmBackBtn" onclick="returnToEvent()" style="display:none;">&#8592; Back to Event</button>
         <div class="mm-header">Full Slack Message</div>
         <div class="mm-title" id="mmTitle"></div>
         <div class="mm-meta" id="mmMeta"></div>
