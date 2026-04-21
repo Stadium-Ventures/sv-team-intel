@@ -1671,6 +1671,8 @@ var _calMonth = new Date(2026, 4, 1); // May 2026 default
 var _calEvents = {{}};       // manual events from API
 var _calAutoEvents = [];     // events derived from RECORDS.workout_dates
 var _calRecordsByPlayerTeam = {{}};  // 'player|team' -> [records] for Slack link lookup
+var _calChipIndex = {{}};    // 'c5' -> ev, rebuilt each render (dispatch table for chip clicks)
+var _calChipCounter = 0;
 var _calInitialized = false;
 
 async function _calApi(method, body) {{
@@ -1789,6 +1791,9 @@ function renderCalendar() {{
         if (fType && ev.type !== fType) return false;
         return true;
     }});
+    // Reset chip dispatch table for this render.
+    _calChipIndex = {{}};
+    _calChipCounter = 0;
     const byDate = {{}};
     merged.forEach(ev => {{ (byDate[ev.date] = byDate[ev.date] || []).push(ev); }});
 
@@ -1813,10 +1818,12 @@ function renderCalendar() {{
         evs.forEach(ev => {{
             const color = _chipColor(ev);
             const marker = ev.auto ? '' : '*';
-            const evId = ev.id || '';
+            const cid = 'c' + (_calChipCounter++);
+            _calChipIndex[cid] = ev;
+            const safeTitle = (ev.notes || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
             html += '<div class="cal-chip" style="background:' + color + ';" ' +
-                'onclick="openEventModal(' + JSON.stringify(evId) + ', \\'' + iso + '\\', ' + JSON.stringify(JSON.stringify(ev)) + ')" ' +
-                'title="' + (ev.notes || '').replace(/"/g,'&quot;') + '">' +
+                'onclick="openEventChip(\\'' + cid + '\\')" ' +
+                'title="' + safeTitle + '">' +
                 _chipLabel(ev) + marker + '</div>';
         }});
         html += '</div>';
@@ -1837,9 +1844,15 @@ function renderCalendar() {{
     document.getElementById('calLegend').innerHTML = legend;
 }}
 
-function openEventModal(id, isoDate, evJson) {{
+function openEventChip(cid) {{
+    const ev = _calChipIndex[cid];
+    if (!ev) return;
+    openEventModal(ev.id || null, ev.date, ev);
+}}
+
+function openEventModal(id, isoDate, ev) {{
     const overlay = document.getElementById('evOverlay');
-    const ev = evJson ? JSON.parse(evJson) : null;
+    ev = ev || null;
     document.getElementById('evTitle').textContent = (id && ev && !ev.auto) ? 'Edit Event' : (ev && ev.auto ? 'Edit Auto-Workout' : 'Add Event');
     document.getElementById('evDate').value = (ev && ev.date) || isoDate || _fmtIso(new Date());
     document.getElementById('evType').value = (ev && ev.type) || 'workout';
