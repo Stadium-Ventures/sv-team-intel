@@ -2025,7 +2025,10 @@ function openEventModal(id, isoDate, ev) {{
         const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
         players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; playerSel.appendChild(o); }});
     }}
-    playerSel.value = (ev && ev.player) || playerSel.options[0].value;
+    // Default to the calendar's currently-filtered player when adding a new event.
+    const calFilterEl = document.getElementById('calPlayerFilter');
+    const calFilterPlayer = calFilterEl ? calFilterEl.value : '';
+    playerSel.value = (ev && ev.player) || calFilterPlayer || playerSel.options[0].value;
     const teamSel = document.getElementById('evTeam');
     if (teamSel.options.length <= 1) {{
         ALL_TEAMS.forEach(t => {{ const o = document.createElement('option'); o.value = t; o.textContent = t; teamSel.appendChild(o); }});
