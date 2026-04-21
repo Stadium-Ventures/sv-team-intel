@@ -1781,8 +1781,12 @@ function renderCalendar() {{
 
     const playerSel = document.getElementById('calPlayerFilter');
     if (playerSel.options.length <= 1) {{
-        const players = [...new Set(RECORDS.map(r => r.player))].sort();
-        players.forEach(p => {{
+        // Only players with a pre-draft workout invite (workout:true record) or a manual workout event.
+        const workoutPlayers = new Set(RECORDS.filter(r => r.workout).map(r => r.player));
+        Object.values(_calEvents || {{}}).forEach(ev => {{
+            if (ev.type === 'workout' && ev.player) workoutPlayers.add(ev.player);
+        }});
+        [...workoutPlayers].sort().forEach(p => {{
             const o = document.createElement('option'); o.value = p; o.textContent = p; playerSel.appendChild(o);
         }});
     }}
