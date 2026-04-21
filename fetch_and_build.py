@@ -1487,6 +1487,8 @@ async function togglePDW() {{
     updatePDWButton();
     renderMatrix();
     renderDetail();
+    // Reflect the PDW flip on the calendar immediately (no rebuild / refresh needed).
+    if (window._calInitialized) {{ buildAutoEvents(); renderCalendar(); }}
 }}
 
 function updatePDWButton() {{
@@ -1764,7 +1766,12 @@ function buildAutoEvents() {{
     const byKey = {{}};          // 'player|team|date' -> best event (dedup)
     const byPT = {{}};
     RECORDS.forEach(r => {{
-        if (!r.workout) return;
+        // Respect manual PDW override from the matrix popup:
+        //   w|player|team === false -> force-off (hide auto chips even if r.workout)
+        //   w|player|team === true  -> force-on (but we still need workout_dates to place chips)
+        const _ov = scoreOverrides['w|' + r.player + '|' + r.team];
+        const _isPDW = (_ov === false) ? false : (_ov === true ? true : !!r.workout);
+        if (!_isPDW) return;
         const ptKey = r.player + '|' + r.team;
         (byPT[ptKey] = byPT[ptKey] || []).push(r);
         if (!r.workout_dates || !r.workout_dates.length) return;
