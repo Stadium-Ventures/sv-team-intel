@@ -63,7 +63,7 @@ TEAM_ABBR = {
     'MIN': 'MIN', 'MINNESOTA': 'MIN', 'TWINS': 'MIN', 'MINN': 'MIN',
     'NYM': 'NYM', 'METS': 'NYM',
     'NYY': 'NYY', 'YANKEES': 'NYY',
-    'OAK': 'OAK', 'ATH': 'OAK', 'ATHLETICS': 'OAK', "A'S": 'OAK',
+    'ATH': 'ATH', 'OAK': 'ATH', 'ATHLETICS': 'ATH', "A'S": 'ATH',
     'PHI': 'PHI', 'PHIL': 'PHI', 'PHILLIES': 'PHI', 'PHILADELPHIA': 'PHI',
     'PIT': 'PIT', 'PIRATES': 'PIT', 'PITT': 'PIT', 'PITTSBURGH': 'PIT',
     'SD': 'SD', 'SDP': 'SD', 'PADRES': 'SD', 'SAN DIEGO': 'SD',
@@ -701,27 +701,43 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .legend-swatch {{ width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }}
 
 .matrix-container {{ padding: 20px 30px; }}
-.matrix-wrapper {{ display: flex; max-height: 75vh; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }}
-.matrix-fixed {{ flex-shrink: 0; overflow: hidden; z-index: 10; box-shadow: 2px 0 4px rgba(0,0,0,0.1); }}
-.matrix-scroll {{ flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: none; }}
-.matrix-wrapper {{ overscroll-behavior: none; }}
+.matrix-scroll {{
+    max-height: 75vh; overflow: auto;
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); background: white;
+}}
 .matrix-table {{
     border-collapse: separate; border-spacing: 0; font-size: 12px;
     width: auto; min-width: 100%; background: white;
-    border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }}
 .matrix-table th, .matrix-table td {{
     padding: 8px 6px; text-align: center;
     border-right: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8;
-    white-space: nowrap; height: 32px;
+    white-space: nowrap; height: 32px; background: white;
 }}
 .matrix-table thead th {{
     background: #2d5016; color: white; font-weight: 600; font-size: 11px;
     letter-spacing: 0.3px; border-right-color: #3a6520; border-bottom: 2px solid #1a3a0a;
-    position: sticky; top: 0; z-index: 2;
+    position: sticky; top: 0; z-index: 3;
 }}
-.matrix-fixed td:first-child {{ background: #f8faf6; color: #2d5016; font-size: 13px; font-weight: 700; min-width: 50px; }}
-.matrix-fixed td:nth-child(2) {{ background: white; text-align: left; padding-left: 10px; font-size: 12px; font-weight: 600; min-width: 140px; }}
+/* Sticky first column (TOTAL) */
+.matrix-table th:nth-child(1), .matrix-table td:nth-child(1) {{
+    position: sticky; left: 0; z-index: 2;
+    min-width: 50px; max-width: 50px;
+}}
+.matrix-table td:nth-child(1) {{ background: #f8faf6; color: #2d5016; font-size: 13px; font-weight: 700; }}
+/* Sticky second column (Client name) */
+.matrix-table th:nth-child(2), .matrix-table td:nth-child(2) {{
+    position: sticky; left: 51px; z-index: 2;
+    min-width: 140px; max-width: 140px;
+}}
+.matrix-table td:nth-child(2) {{
+    background: white; text-align: left; padding-left: 10px; font-size: 12px; font-weight: 600;
+    box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1);
+}}
+.matrix-table thead th:nth-child(2) {{ box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1); }}
+/* Header corners stack above both row- and column-sticky */
+.matrix-table thead th:nth-child(1), .matrix-table thead th:nth-child(2) {{ z-index: 4; }}
 .matrix-table tbody tr:hover td {{ background-color: #f0f7ec !important; }}
 
 .score-2 {{ background-color: #c6efce !important; color: #1a5e1a; font-weight: 700; }}
@@ -913,13 +929,17 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
         flex-wrap: wrap; gap: 8px 20px; padding: 8px 16px; font-size: 12px;
     }}
 
-    .matrix-container {{ padding: 10px 0; overflow: auto; -webkit-overflow-scrolling: touch; }}
-    .matrix-table {{ font-size: 11px; }}
-    .matrix-table th, .matrix-table td {{ padding: 6px 4px; }}
-    .matrix-fixed td:first-child {{ min-width: 36px; font-size: 10px; }}
-    .matrix-fixed td:nth-child(2) {{ min-width: 90px; font-size: 10px; padding-left: 4px; }}
-    .matrix-fixed th:first-child {{ min-width: 36px; font-size: 10px; }}
-    .matrix-fixed th:nth-child(2) {{ min-width: 90px; font-size: 10px; }}
+    .matrix-container {{ padding: 10px 4px; }}
+    .matrix-scroll {{ max-height: 72vh; }}
+    .matrix-table {{ font-size: 10px; }}
+    .matrix-table th, .matrix-table td {{ padding: 5px 3px; height: 26px; }}
+    .matrix-table th:nth-child(1), .matrix-table td:nth-child(1) {{
+        min-width: 36px; max-width: 36px; font-size: 10px;
+    }}
+    .matrix-table th:nth-child(2), .matrix-table td:nth-child(2) {{
+        min-width: 90px; max-width: 90px; font-size: 10px; padding-left: 4px;
+        left: 37px;  /* col 1 width + 1px border */
+    }}
 
     .detail-container {{ padding: 12px 16px; }}
     .player-select {{ min-width: 200px; font-size: 13px; }}
@@ -1117,13 +1137,8 @@ function checkPw() {{
 <div id="statsBar" class="stats-bar"></div>
 
 <div id="matrixView" class="matrix-container">
-    <div class="matrix-wrapper">
-        <div class="matrix-fixed" id="matrixFixed">
-            <table class="matrix-table" id="matrixFixedTable"></table>
-        </div>
-        <div class="matrix-scroll" id="matrixScroll">
-            <table class="matrix-table" id="matrixScrollTable"></table>
-        </div>
+    <div class="matrix-scroll" id="matrixScroll">
+        <table class="matrix-table" id="matrixTable"></table>
     </div>
 </div>
 
@@ -1552,40 +1567,32 @@ function badgeClass(s) {{
 function renderMatrix() {{
     const {{ playerTeams, playerTeamCounts, playerAvgs, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
 
-    var fHtml = '<thead><tr><th>TOTAL</th><th>Client</th></tr></thead><tbody>';
-    var sHtml = '<thead><tr>';
-    ALL_TEAMS.forEach(t => sHtml += '<th>' + t + '</th>');
-    sHtml += '</tr></thead><tbody>';
+    var html = '<thead><tr><th>TOTAL</th><th>Client</th>';
+    ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
+    html += '</tr></thead><tbody>';
 
     sortedPlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
         const avg = playerAvgs[player];
         const avgClass = avg === null ? '' : avg >= 1.5 ? 'score-2' : avg >= 0.75 ? 'score-1' : avg >= 0 ? 'score-0' : avg >= -1 ? 'score-n1' : 'score-n2';
         const titleAttr = avg !== null ? ' title="Avg score: ' + avg.toFixed(2) + '"' : '';
-        fHtml += '<tr><td class="' + avgClass + '"' + titleAttr + '>' + total + '</td>';
-        fHtml += '<td class="clickable" onclick="jumpToDetail(\\'' + player.replace(/'/g, "\\\\'") + '\\')">' + player + '</td></tr>';
-        sHtml += '<tr>';
         const esc = player.replace(/'/g, "\\\\'");
+        html += '<tr><td class="' + avgClass + '"' + titleAttr + '>' + total + '</td>';
+        html += '<td class="clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + player + '</td>';
         ALL_TEAMS.forEach(team => {{
             const s = playerTeams[player] && playerTeams[player][team];
             const cnt = (playerTeamCounts[player] && playerTeamCounts[player][team]) || 0;
             const wk = workoutMap[player + '|' + team];
             if (s !== undefined && s !== null && typeof s === 'number' && cnt > 0) {{
-                sHtml += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + s + ' \\u2022 ' + cnt + ' touch' + (cnt===1?'':'es') + '">' + cnt + '</td>';
+                html += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + s + ' \\u2022 ' + cnt + ' touch' + (cnt===1?'':'es') + '">' + cnt + '</td>';
             }} else {{
-                sHtml += '<td></td>';
+                html += '<td></td>';
             }}
         }});
-        sHtml += '</tr>';
+        html += '</tr>';
     }});
-    fHtml += '</tbody>';
-    sHtml += '</tbody>';
-    document.getElementById('matrixFixedTable').innerHTML = fHtml;
-    document.getElementById('matrixScrollTable').innerHTML = sHtml;
-
-    var scrollEl = document.getElementById('matrixScroll');
-    var fixedEl = document.getElementById('matrixFixed');
-    scrollEl.onscroll = function() {{ fixedEl.scrollTop = scrollEl.scrollTop; }};
+    html += '</tbody>';
+    document.getElementById('matrixTable').innerHTML = html;
 
     let uniquePairs = 0;
     Object.keys(playerTeams).forEach(p => uniquePairs += Object.keys(playerTeams[p]).length);
@@ -1691,7 +1698,7 @@ const TEAM_COLORS = {{
     'ARI':'#A71930','ATL':'#CE1141','BAL':'#DF4601','BOS':'#BD3039','CHC':'#0E3386',
     'CWS':'#27251F','CIN':'#C6011F','CLE':'#00385D','COL':'#333366','DET':'#0C2340',
     'HOU':'#EB6E1F','KC':'#004687','LAA':'#BA0021','LAD':'#005A9C','MIA':'#00A3E0',
-    'MIL':'#12284B','MIN':'#002B5C','NYM':'#FF5910','NYY':'#003087','OAK':'#003831',
+    'MIL':'#12284B','MIN':'#002B5C','NYM':'#FF5910','NYY':'#003087','ATH':'#003831',
     'PHI':'#E81828','PIT':'#FDB827','SD':'#2F241D','SF':'#FD5A1E','SEA':'#0C2C56',
     'STL':'#C41E3A','TB':'#092C5C','TEX':'#003278','TOR':'#134A8E','WSH':'#AB0003'
 }};
