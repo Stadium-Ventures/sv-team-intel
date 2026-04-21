@@ -321,6 +321,122 @@ def workout_match_details(text, player=None, channel=None):
             matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'targeted'})
     return matches
 
+# --- Workout-date parser (pre-draft window: May 1 – July 13, 2026) ---
+_WD_MONTH_NUM = {
+    'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
+    'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12,
+}
+_WD_MONTH_RE = r'(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
+_WD_MIN = datetime(2026, 5, 1)
+_WD_MAX = datetime(2026, 7, 13)
+_WD_TENTATIVE_RE = re.compile(r'\b(tentative|likely|maybe|possibly|tbd|possible|hopefully|might)\b', re.I)
+_WD_TIME_RE = re.compile(r'\b(\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM))\b')
+_WD_LOC_RE = re.compile(
+    r'(?:\bin|\bat|@)\s+([A-Z][\w\.\- ]+?)(?=[\.,\n]|\s+or\s+|\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\s+\d|\Z)',
+    re.I,
+)
+_WD_DATE_LIST_LINE_RE = re.compile(
+    r'^\s*(?:' + _WD_MONTH_RE + r'\s+\d{1,2}(?:st|nd|rd|th)?|\d{1,2}/\d{1,2})\s*[-–:]\s*\S',
+    re.I,
+)
+
+
+def _wd_safe(year, month, day):
+    try:
+        return datetime(year, month, day)
+    except (ValueError, TypeError):
+        return None
+
+
+def _wd_extract_dates(line):
+    found = []
+    for m in re.finditer(_WD_MONTH_RE + r'\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s*,?\s*(\d{4}))?', line, re.I):
+        month = _WD_MONTH_NUM.get(m.group(1).upper()[:3])
+        day = int(m.group(2))
+        year = int(m.group(3)) if m.group(3) else 2026
+        d = _wd_safe(year, month, day)
+        if d and _WD_MIN <= d <= _WD_MAX:
+            found.append(d)
+    for m in re.finditer(_WD_MONTH_RE + r'\s+(\d{1,2})(?:st|nd|rd|th)?\s+or\s+(\d{1,2})(?:st|nd|rd|th)?', line, re.I):
+        month = _WD_MONTH_NUM.get(m.group(1).upper()[:3])
+        day = int(m.group(3))
+        d = _wd_safe(2026, month, day)
+        if d and _WD_MIN <= d <= _WD_MAX:
+            found.append(d)
+    for m in re.finditer(_WD_MONTH_RE + r'\s+(\d{1,2})-(\d{1,2})\b', line, re.I):
+        month = _WD_MONTH_NUM.get(m.group(1).upper()[:3])
+        day = int(m.group(3))
+        d = _wd_safe(2026, month, day)
+        if d and _WD_MIN <= d <= _WD_MAX:
+            found.append(d)
+    for m in re.finditer(r'\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b', line):
+        month = int(m.group(1))
+        day = int(m.group(2))
+        year = m.group(3)
+        if year:
+            year = int(year)
+            if year < 100: year += 2000
+        else:
+            year = 2026
+        d = _wd_safe(year, month, day)
+        if d and _WD_MIN <= d <= _WD_MAX:
+            found.append(d)
+    seen = set(); out = []
+    for d in found:
+        s = d.strftime('%Y-%m-%d')
+        if s not in seen:
+            seen.add(s); out.append(s)
+    return out
+
+
+def _wd_first_team(line):
+    lu = line.upper()
+    best_pos = None; best_team = None
+    for key, team in TEAM_ABBR.items():
+        if len(key) < 2: continue
+        if team == 'ATL' and re.search(r'METRO\s+ATL|ATL\.', lu): continue
+        m = re.search(r'\b' + re.escape(key) + r'\b', lu)
+        if not m: continue
+        if best_pos is None or m.start() < best_pos:
+            best_pos = m.start(); best_team = team
+    return best_team
+
+
+def extract_workout_dates(full_text):
+    """
+    Parse message text for pre-draft workout dates attributed to teams.
+    Returns { team_abbr: [ {date, tentative, time, location}, ... ] }.
+    """
+    merged = defaultdict(dict)
+    current_team = None
+    for raw_line in full_text.split('\n'):
+        line = raw_line.strip()
+        if not line: continue
+        is_date_list = bool(_WD_DATE_LIST_LINE_RE.match(line))
+        teams_in_line = find_teams_in_line(line)
+        if teams_in_line and not is_date_list:
+            current_team = _wd_first_team(line) or sorted(teams_in_line)[0]
+        dates = _wd_extract_dates(line)
+        if not dates: continue
+        tentative = bool(_WD_TENTATIVE_RE.search(line))
+        tm = _WD_TIME_RE.search(line)
+        time_str = tm.group(1).strip() if tm else None
+        lm = _WD_LOC_RE.search(line)
+        location = lm.group(1).strip() if lm else None
+        targets = sorted(teams_in_line) if (teams_in_line and not is_date_list) else [current_team]
+        for team in targets:
+            for d in dates:
+                ev = merged[team].get(d)
+                if ev is None:
+                    merged[team][d] = {'date': d, 'tentative': tentative, 'time': time_str, 'location': location}
+                else:
+                    if tentative: ev['tentative'] = True
+                    if time_str and not ev['time']: ev['time'] = time_str
+                    if location and (not ev['location'] or len(location) > len(ev['location'])):
+                        ev['location'] = location
+    return {t: list(d.values()) for t, d in merged.items() if t}
+
+
 def score_line_for_team(line, full_text=""):
     ll = line.lower()
     if re.search(r'\bred\b', ll) and 'green' not in ll and 'orange' not in ll:
@@ -452,12 +568,22 @@ def parse_messages(messages):
                                 })
 
     # Add workout flag + match details based on note/full_text
+    # Also attach parsed workout_dates (pre-draft window, May–Jul 2026),
+    # filtered to the record's team so cross-team mentions don't bleed in.
+    _wd_cache = {}
     for r in records:
         text = r.get('full_text', '') + '\n' + r.get('note', '')
         matches = workout_match_details(text, r.get('player'), r.get('channel'))
         r['workout'] = len(matches) > 0
-        # Store just the matched phrases (lowercase text triggers highlighting in JS)
         r['workout_matches'] = [m['text'] for m in matches]
+
+        if r['workout']:
+            ft = r.get('full_text', '')
+            if ft not in _wd_cache:
+                _wd_cache[ft] = extract_workout_dates(ft)
+            r['workout_dates'] = _wd_cache[ft].get(r['team'], [])
+        else:
+            r['workout_dates'] = []
 
     # Deduplicate
     seen = set()
@@ -1388,6 +1514,92 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
     return html
 
 
+# --- KV OVERRIDES (merged into teamintel.json for downstream consumers) ---
+# The dashboard applies these client-side; downstream consumers (sv-draft-fit-workout)
+# read the static JSON and never see the overrides unless we merge them here.
+#
+# KV blob shape (key = 'score_overrides'):
+#   "player|team|date" -> int (-2..2) or "NA"         (score edit / exclusion)
+#   "w|player|team"    -> true | false                 (PDW flag toggle)
+def load_kv_overrides():
+    url = os.environ.get('REDIS_URL')
+    if not url:
+        print("INFO: REDIS_URL not set — skipping manual overrides.")
+        return {}
+    try:
+        import redis as _redis
+    except ImportError:
+        print("WARN: 'redis' package not installed — skipping manual overrides.")
+        return {}
+    try:
+        client = _redis.from_url(url, socket_connect_timeout=10, socket_timeout=8)
+        raw = client.get('score_overrides')
+        try:
+            client.close()
+        except Exception:
+            pass
+        if not raw:
+            return {}
+        if isinstance(raw, bytes):
+            raw = raw.decode('utf-8')
+        return json.loads(raw)
+    except Exception as e:
+        print(f"WARN: Failed to load overrides from Redis: {e}")
+        return {}
+
+
+def apply_overrides(records, overrides):
+    if not overrides:
+        return records
+
+    score_ov = {}
+    pdw_ov = {}
+    for key, val in overrides.items():
+        if key.startswith('w|'):
+            parts = key.split('|', 2)
+            if len(parts) == 3:
+                pdw_ov[(parts[1], parts[2])] = val
+        else:
+            parts = key.split('|')
+            if len(parts) == 3:
+                score_ov[(parts[0], parts[1], parts[2])] = val
+
+    out = []
+    applied_score = 0
+    excluded = 0
+    for r in records:
+        rkey = (r.get('player'), r.get('team'), r.get('date'))
+        copy = dict(r)
+        if rkey in score_ov:
+            val = score_ov[rkey]
+            if val == 'NA':
+                excluded += 1
+                continue
+            copy['score'] = val
+            copy['score_overridden'] = True
+            applied_score += 1
+        out.append(copy)
+
+    pdw_flipped = set()
+    pdw_missing = set()
+    for (player, team), val in pdw_ov.items():
+        matched = False
+        for r in out:
+            if r.get('player') == player and r.get('team') == team:
+                r['workout'] = bool(val)
+                r['workout_overridden'] = True
+                matched = True
+        (pdw_flipped if matched else pdw_missing).add((player, team))
+
+    print(
+        f"Applied overrides: {applied_score} score edits, {excluded} excluded, "
+        f"{len(pdw_flipped)} PDW pairs flipped, {len(pdw_missing)} PDW with no records"
+    )
+    for p, t in sorted(pdw_missing):
+        print(f"  (skipped PDW override {p}/{t} — no records for pair)")
+    return out
+
+
 # --- MAIN ---
 if __name__ == '__main__':
     token = os.environ.get('SLACK_BOT_TOKEN')
@@ -1414,8 +1626,13 @@ if __name__ == '__main__':
         f.write(html)
     print(f"Dashboard written to {out_path}")
 
-    # Also emit teamintel.json for downstream consumers (sv-draft-fit-workout)
+    # Also emit teamintel.json for downstream consumers (sv-draft-fit-workout).
+    # Merge manual KV overrides (website edits) so PDW toggles + score edits
+    # propagate downstream. Dashboard HTML applies overrides client-side,
+    # so we only merge into the JSON output.
+    overrides = load_kv_overrides()
+    records_for_json = apply_overrides(records, overrides)
     json_path = os.path.join(out_dir, 'teamintel.json')
     with open(json_path, 'w') as f:
-        json.dump(records, f, indent=2)
+        json.dump(records_for_json, f, indent=2)
     print(f"Records JSON written to {json_path}")
