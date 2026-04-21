@@ -364,7 +364,17 @@ td.overridden::after { content: '*'; position: absolute; top: 1px; right: 3px; f
     border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     cursor: pointer; font-weight: 600;
 }
-.cal-chip.tentative { opacity: 0.7; border: 1px dashed rgba(255,255,255,0.8); }
+/* Workout invites (default): lighter, hollow look */
+.cal-chip.workout-invite {
+    background-color: transparent !important;
+    color: inherit;
+    border: 1.5px dashed var(--chip-color, #888);
+    font-weight: 500;
+}
+.cal-chip.workout-invite .chip-text { color: var(--chip-color, #333); }
+/* Confirmed workout: solid, bold, with check */
+.cal-chip.workout-confirmed { font-weight: 800; box-shadow: 0 0 0 2px rgba(0,0,0,0.15) inset; }
+.cal-chip.tentative { opacity: 0.75; font-style: italic; }
 .cal-chip.manual::after { content: ' *'; opacity: 0.8; }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 10px; font-size: 10px; color: #666; }
 .cal-legend-item { display: flex; align-items: center; gap: 4px; }
@@ -472,7 +482,7 @@ function checkPw() {
         <div>
             <h1>TeamIntel Dashboard</h1>
             <div class="subtitle">Player Intelligence Score By Team &mdash; 2026 MLB Draft</div>
-            <div class="last-updated">Last updated: April 21, 2026 11:19 AM ET</div>
+            <div class="last-updated">Last updated: April 21, 2026 11:23 AM ET</div>
         </div>
     </div>
     <div class="nav-tabs">
@@ -551,8 +561,12 @@ function checkPw() {
     <div class="cal-grid" id="calGrid"></div>
     <div class="cal-legend" id="calLegend"></div>
     <div style="margin-top:10px;font-size:11px;color:#888;">
-        Workouts are auto-parsed from Slack messages. Click any day to add a manual event (playoffs, travel, etc.) or click a chip to edit.
-        <span style="opacity:0.8;">Chip with "*" = manually added or edited.</span>
+        Workouts are auto-parsed from Slack messages. Click a chip to view/edit; use <b>+ Add Event</b> for new entries.
+        <span style="opacity:0.8;display:inline-block;margin-left:10px;">
+            <span style="display:inline-block;padding:1px 6px;border:1.5px dashed #2d5016;color:#2d5016;border-radius:3px;font-size:10px;font-weight:500;">DASHED</span> = invite &nbsp;·&nbsp;
+            <span style="display:inline-block;padding:1px 6px;background:#2d5016;color:white;border-radius:3px;font-size:10px;font-weight:800;">&#10003; SOLID</span> = confirmed going &nbsp;·&nbsp;
+            <span>"*" = manually edited</span>
+        </span>
     </div>
 </div>
 
@@ -594,9 +608,13 @@ function checkPw() {
             <label>Location (optional)</label>
             <input type="text" id="evLocation" placeholder="e.g. Port St Lucie">
         </div>
+        <div class="ev-row cb" id="evConfirmedRow">
+            <input type="checkbox" id="evConfirmed">
+            <label for="evConfirmed"><strong>Confirmed — player is going</strong> (unchecked = invite only)</label>
+        </div>
         <div class="ev-row cb">
             <input type="checkbox" id="evTentative">
-            <label for="evTentative">Tentative</label>
+            <label for="evTentative">Tentative date (from Slack)</label>
         </div>
         <div class="ev-row">
             <label>Notes (optional)</label>
@@ -1111,6 +1129,7 @@ function buildAutoEvents() {
                 time: wd.time || null,
                 location: wd.location || null,
                 tentative: !!wd.tentative,
+                confirmed: false,
                 notes: null,
                 title: null,
                 _postDate: r.date,
@@ -1237,10 +1256,24 @@ function renderCalendar() {
             const cid = 'c' + (_calChipCounter++);
             _calChipIndex[cid] = ev;
             const safeTitle = (ev.notes || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-            html += '<div class="cal-chip" style="background:' + color + ';" ' +
+            const isWorkout = ev.type === 'workout';
+            const isConfirmed = isWorkout && !!ev.confirmed;
+            let cls = 'cal-chip';
+            let style = '';
+            let prefix = '';
+            if (isWorkout && !isConfirmed) {
+                cls += ' workout-invite';
+                style = 'border-color:' + color + ';color:' + color + ';--chip-color:' + color + ';';
+            } else {
+                if (isConfirmed) cls += ' workout-confirmed';
+                style = 'background:' + color + ';';
+                if (isConfirmed) prefix = '&#10003; ';
+            }
+            if (ev.tentative) cls += ' tentative';
+            html += '<div class="' + cls + '" style="' + style + '" ' +
                 'onclick="openEventChip(\'' + cid + '\')" ' +
                 'title="' + safeTitle + '">' +
-                _chipLabel(ev) + marker + '</div>';
+                prefix + _chipLabel(ev) + marker + '</div>';
         });
         html += '</div>';
     }
@@ -1291,6 +1324,7 @@ function openEventModal(id, isoDate, ev) {
     document.getElementById('evTime').value = (ev && ev.time) || '';
     document.getElementById('evLocation').value = (ev && ev.location) || '';
     document.getElementById('evTentative').checked = !!(ev && ev.tentative);
+    document.getElementById('evConfirmed').checked = !!(ev && ev.confirmed);
     document.getElementById('evNotes').value = (ev && ev.notes) || '';
     document.getElementById('evDeleteBtn').style.display = (id && ev && !ev.auto) ? 'inline-block' : 'none';
     document.getElementById('evNote').textContent = (ev && ev.auto) ? 'This event was auto-parsed from a Slack message. Saving creates a manual override.' : '';
@@ -1372,6 +1406,7 @@ function evSyncType() {
     const t = document.getElementById('evType').value;
     document.getElementById('evTeamRow').style.display = (t === 'workout') ? 'flex' : 'none';
     document.getElementById('evTitleRow').style.display = (t === 'workout') ? 'none' : 'flex';
+    document.getElementById('evConfirmedRow').style.display = (t === 'workout') ? 'flex' : 'none';
     // Hide Slack button for non-workout events.
     const slackBtn = document.getElementById('evSlackBtn');
     if (slackBtn && t !== 'workout') slackBtn.style.display = 'none';
@@ -1387,6 +1422,7 @@ async function saveEvent() {
         time: document.getElementById('evTime').value || null,
         location: document.getElementById('evLocation').value || null,
         tentative: document.getElementById('evTentative').checked,
+        confirmed: document.getElementById('evConfirmed').checked,
         notes: document.getElementById('evNotes').value || null,
     };
     const editId = document.getElementById('evOverlay').dataset.editId;

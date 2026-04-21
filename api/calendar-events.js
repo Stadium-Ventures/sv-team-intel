@@ -68,6 +68,7 @@ module.exports = async function handler(req, res) {
         time: body.time || null,
         location: body.location || null,
         tentative: !!body.tentative,
+        confirmed: !!body.confirmed,
       };
       await kvSet(c, events);
       return res.json({ ok: true, id, event: events[id] });
