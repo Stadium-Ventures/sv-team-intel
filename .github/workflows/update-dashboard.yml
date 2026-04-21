@@ -22,12 +22,13 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install slack-sdk
+        run: pip install slack-sdk redis
 
       - name: Fetch and build dashboard
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
           OUTPUT_DIR: ./public
         run: |
           mkdir -p public

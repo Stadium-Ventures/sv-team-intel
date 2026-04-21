@@ -1,22 +1,24 @@
 const Redis = require('ioredis');
 
-let client = null;
-function getClient() {
-  if (!client) {
-    const url = process.env.REDIS_URL;
-    if (!url) throw new Error('REDIS_URL not set');
-    client = new Redis(url, { lazyConnect: false, maxRetriesPerRequest: 2 });
-  }
-  return client;
+function makeClient() {
+  const url = process.env.REDIS_URL;
+  if (!url) throw new Error('REDIS_URL not set');
+  return new Redis(url, {
+    connectTimeout: 10000,
+    commandTimeout: 8000,
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: false,
+    lazyConnect: false,
+  });
 }
 
-async function kvGet() {
-  const raw = await getClient().get('score_overrides');
+async function kvGet(c) {
+  const raw = await c.get('score_overrides');
   return raw ? JSON.parse(raw) : {};
 }
 
-async function kvSet(value) {
-  await getClient().set('score_overrides', JSON.stringify(value));
+async function kvSet(c, value) {
+  await c.set('score_overrides', JSON.stringify(value));
 }
 
 module.exports = async function handler(req, res) {
@@ -25,15 +27,16 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  const c = makeClient();
   try {
     if (req.method === 'GET') {
-      const overrides = await kvGet();
+      const overrides = await kvGet(c);
       return res.json(overrides);
     }
 
     if (req.method === 'POST') {
       const { player, team, date, score, key: rawKey } = req.body;
-      const overrides = await kvGet();
+      const overrides = await kvGet(c);
       const key = rawKey || `${player}|${team}|${date}`;
       if (!key || key === 'undefined|undefined|undefined') return res.status(400).json({ error: 'key or player+team+date required' });
       if (score === null || score === undefined) {
@@ -41,12 +44,14 @@ module.exports = async function handler(req, res) {
       } else {
         overrides[key] = score;
       }
-      await kvSet(overrides);
+      await kvSet(c, overrides);
       return res.json({ ok: true });
     }
 
     res.status(405).json({ error: 'Method not allowed' });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  } finally {
+    c.disconnect();
   }
 };

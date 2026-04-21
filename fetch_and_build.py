@@ -924,6 +924,102 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 
     .login-box {{ min-width: 280px; padding: 30px 24px; }}
 }}
+
+/* --- Calendar view --- */
+#calendarView {{ padding: 12px 16px; display: none; }}
+.cal-toolbar {{ display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }}
+.cal-nav {{ display: flex; align-items: center; gap: 6px; }}
+.cal-nav button {{
+    padding: 6px 12px; font-size: 13px; font-weight: 600;
+    background: #2d5016; color: white; border: none; border-radius: 6px; cursor: pointer;
+}}
+.cal-nav button:hover {{ background: #3a6b1d; }}
+.cal-month-label {{ font-size: 16px; font-weight: 700; min-width: 150px; text-align: center; color: #2d5016; }}
+.cal-addbtn {{
+    padding: 6px 14px; font-size: 13px; font-weight: 600;
+    background: #d4a017; color: white; border: none; border-radius: 6px; cursor: pointer;
+}}
+.cal-addbtn:hover {{ background: #b8890f; }}
+.cal-filter {{ display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }}
+.cal-filter select, .cal-filter input {{ padding: 4px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
+.cal-grid {{
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    border: 1px solid #d6d6d6; border-radius: 6px; overflow: hidden; background: #eee; gap: 1px;
+}}
+.cal-dow {{
+    background: #2d5016; color: white; padding: 6px 8px; font-size: 11px; font-weight: 600;
+    text-align: center; letter-spacing: 0.5px;
+}}
+.cal-cell {{
+    background: white; min-height: 92px; padding: 4px 5px; position: relative;
+    cursor: pointer; transition: background 0.12s;
+}}
+.cal-cell:hover {{ background: #f0f7ec; }}
+.cal-cell.other-month {{ background: #fafafa; color: #aaa; }}
+.cal-cell.today {{ background: #fffbe6; }}
+.cal-cell.today::before {{
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #d4a017;
+}}
+.cal-daynum {{ font-size: 11px; color: #888; font-weight: 600; margin-bottom: 2px; }}
+.cal-cell.today .cal-daynum {{ color: #d4a017; }}
+.cal-chip {{
+    display: block; font-size: 10px; padding: 2px 5px; margin-bottom: 2px;
+    border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    cursor: pointer; font-weight: 600;
+}}
+.cal-chip.tentative {{ opacity: 0.7; border: 1px dashed rgba(255,255,255,0.8); }}
+.cal-chip.manual::after {{ content: ' *'; opacity: 0.8; }}
+.cal-legend {{ display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 10px; font-size: 10px; color: #666; }}
+.cal-legend-item {{ display: flex; align-items: center; gap: 4px; }}
+.cal-legend-swatch, .cal-legend-sw {{ width: 12px; height: 12px; border-radius: 3px; }}
+.cal-pad {{ background: #fafafa !important; cursor: default !important; }}
+.cal-pad:hover {{ background: #fafafa !important; }}
+.cal-cell.cal-draft {{ background: #fff5e0; }}
+.cal-cell.cal-today {{ background: #fffbe6; }}
+.cal-cell.cal-today::before {{
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #d4a017;
+}}
+.cal-drafttag {{
+    display: inline-block; font-size: 8px; padding: 1px 4px; background: #d4a017; color: white;
+    border-radius: 2px; vertical-align: middle; font-weight: 700; letter-spacing: 0.5px;
+}}
+
+/* --- Event modal --- */
+#evOverlay {{
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+}}
+#evOverlay.open {{ display: flex; }}
+#evModal {{
+    background: white; border-radius: 8px; padding: 20px 22px; width: 420px; max-width: 92vw;
+    max-height: 90vh; overflow-y: auto; box-shadow: 0 6px 32px rgba(0,0,0,0.3);
+}}
+.ev-title {{ font-size: 16px; font-weight: 700; color: #2d5016; margin-bottom: 14px; }}
+.ev-row {{ display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }}
+.ev-row label {{ font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }}
+.ev-row input[type="text"], .ev-row input[type="date"], .ev-row input[type="time"],
+.ev-row select, .ev-row textarea {{
+    width: 100%; padding: 7px 10px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;
+    font-family: inherit; box-sizing: border-box;
+}}
+.ev-row textarea {{ resize: vertical; min-height: 60px; }}
+.ev-row.cb {{ flex-direction: row; align-items: center; gap: 6px; }}
+.ev-row.cb label {{ text-transform: none; letter-spacing: 0; margin: 0; }}
+.ev-btns {{ display: flex; gap: 8px; margin-top: 16px; }}
+.ev-save {{ flex: 1; padding: 9px 14px; background: #2d5016; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
+.ev-save:hover {{ background: #3a6b1d; }}
+.ev-cancel {{ padding: 9px 14px; background: #eee; color: #333; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
+.ev-delete {{ padding: 9px 14px; background: #c94040; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }}
+.ev-delete:hover {{ background: #a83030; }}
+.ev-note {{ font-size: 11px; color: #888; margin-top: 6px; }}
+
+@media (max-width: 640px) {{
+    .cal-cell {{ min-height: 70px; padding: 3px; }}
+    .cal-chip {{ font-size: 9px; padding: 1px 4px; }}
+    .cal-daynum {{ font-size: 10px; }}
+    .cal-toolbar {{ gap: 8px; }}
+    .cal-month-label {{ font-size: 14px; min-width: 110px; }}
+}}
 </style>
 </head>
 <body>
@@ -983,6 +1079,7 @@ function checkPw() {{
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="showView('matrix')">Matrix View</div>
         <div class="nav-tab" onclick="showView('detail')">Detail View</div>
+        <div class="nav-tab" onclick="showView('calendar')">Calendar</div>
     </div>
 </div>
 
@@ -1027,7 +1124,92 @@ function checkPw() {{
     <table class="detail-table" id="detailTable"></table>
 </div>
 
+<div id="calendarView">
+    <div class="cal-toolbar">
+        <div class="cal-nav">
+            <button onclick="calShiftMonth(-1)" title="Previous month">&#8592;</button>
+            <div class="cal-month-label" id="calMonthLabel"></div>
+            <button onclick="calShiftMonth(1)" title="Next month">&#8594;</button>
+            <button onclick="calJumpTo('today')" title="Jump to today" style="margin-left:6px;">Today</button>
+        </div>
+        <button class="cal-addbtn" onclick="openEventModal(null, null)">+ Add Event</button>
+        <div class="cal-filter">
+            <label for="calPlayerFilter">Player:</label>
+            <select id="calPlayerFilter" onchange="renderCalendar()"><option value="">All</option></select>
+        </div>
+        <div class="cal-filter">
+            <label for="calTypeFilter">Type:</label>
+            <select id="calTypeFilter" onchange="renderCalendar()">
+                <option value="">All</option>
+                <option value="workout">Workouts</option>
+                <option value="playoff">Playoffs</option>
+                <option value="travel">Travel</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend" id="calLegend"></div>
+    <div style="margin-top:10px;font-size:11px;color:#888;">
+        Workouts are auto-parsed from Slack messages. Click any day to add a manual event (playoffs, travel, etc.) or click a chip to edit.
+        <span style="opacity:0.8;">Chip with "*" = manually added or edited.</span>
+    </div>
+</div>
+
 </div><!-- /appContent -->
+
+<div id="evOverlay" onclick="if(event.target===this) closeEventModal()">
+    <div id="evModal">
+        <div class="ev-title" id="evTitle">Add Event</div>
+        <div class="ev-row">
+            <label>Date</label>
+            <input type="date" id="evDate" min="2026-04-01" max="2026-08-31">
+        </div>
+        <div class="ev-row">
+            <label>Type</label>
+            <select id="evType" onchange="evSyncType()">
+                <option value="workout">Pre-Draft Workout</option>
+                <option value="playoff">Playoff Game</option>
+                <option value="travel">Travel</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="ev-row">
+            <label>Player</label>
+            <select id="evPlayer"></select>
+        </div>
+        <div class="ev-row" id="evTeamRow">
+            <label>Team</label>
+            <select id="evTeam"><option value="">—</option></select>
+        </div>
+        <div class="ev-row" id="evTitleRow" style="display:none;">
+            <label>Title</label>
+            <input type="text" id="evTitleInput" placeholder="e.g. ACC Championship">
+        </div>
+        <div class="ev-row">
+            <label>Time (optional)</label>
+            <input type="text" id="evTime" placeholder="e.g. 11am, 9:30 AM">
+        </div>
+        <div class="ev-row">
+            <label>Location (optional)</label>
+            <input type="text" id="evLocation" placeholder="e.g. Port St Lucie">
+        </div>
+        <div class="ev-row cb">
+            <input type="checkbox" id="evTentative">
+            <label for="evTentative">Tentative</label>
+        </div>
+        <div class="ev-row">
+            <label>Notes (optional)</label>
+            <textarea id="evNotes"></textarea>
+        </div>
+        <div class="ev-btns">
+            <button class="ev-delete" id="evDeleteBtn" onclick="deleteEvent()" style="display:none;">Delete</button>
+            <button class="ev-cancel" onclick="closeEventModal()">Cancel</button>
+            <button class="ev-save" onclick="saveEvent()">Save</button>
+        </div>
+        <div class="ev-note" id="evNote"></div>
+    </div>
+</div>
 
 <script>
 const RECORDS = {records_js};
@@ -1452,15 +1634,278 @@ function clearTeamFilter() {{
 
 function showView(view) {{
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    const mx = document.getElementById('matrixView');
+    const dt = document.getElementById('detailView');
+    const cl = document.getElementById('calendarView');
+    mx.style.display = 'none'; dt.style.display = 'none'; cl.style.display = 'none';
     if (view === 'matrix') {{
-        document.getElementById('matrixView').style.display = 'block';
-        document.getElementById('detailView').style.display = 'none';
+        mx.style.display = 'block';
         document.querySelectorAll('.nav-tab')[0].classList.add('active');
-    }} else {{
-        document.getElementById('matrixView').style.display = 'none';
-        document.getElementById('detailView').style.display = 'block';
+    }} else if (view === 'detail') {{
+        dt.style.display = 'block';
         document.querySelectorAll('.nav-tab')[1].classList.add('active');
+    }} else if (view === 'calendar') {{
+        cl.style.display = 'block';
+        document.querySelectorAll('.nav-tab')[2].classList.add('active');
+        if (!window._calInitialized) {{ initCalendar(); }}
     }}
+}}
+
+// ================= Calendar =================
+const TEAM_COLORS = {{
+    'ARI':'#A71930','ATL':'#CE1141','BAL':'#DF4601','BOS':'#BD3039','CHC':'#0E3386',
+    'CWS':'#27251F','CIN':'#C6011F','CLE':'#00385D','COL':'#333366','DET':'#0C2340',
+    'HOU':'#EB6E1F','KC':'#004687','LAA':'#BA0021','LAD':'#005A9C','MIA':'#00A3E0',
+    'MIL':'#12284B','MIN':'#002B5C','NYM':'#FF5910','NYY':'#003087','OAK':'#003831',
+    'PHI':'#E81828','PIT':'#FDB827','SD':'#2F241D','SF':'#FD5A1E','SEA':'#0C2C56',
+    'STL':'#C41E3A','TB':'#092C5C','TEX':'#003278','TOR':'#134A8E','WSH':'#AB0003'
+}};
+const TYPE_COLORS = {{ workout:null, playoff:'#6a3a9a', travel:'#555', other:'#999' }};
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+var _calMonth = new Date(2026, 4, 1); // May 2026 default
+var _calEvents = {{}};       // manual events from API
+var _calAutoEvents = [];     // events derived from RECORDS.workout_dates
+var _calInitialized = false;
+
+async function _calApi(method, body) {{
+    const opts = {{ method: method, headers: {{'Content-Type':'application/json'}} }};
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch('/api/calendar-events', opts);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+}}
+
+async function loadCalendarEvents() {{
+    try {{ _calEvents = await _calApi('GET', null) || {{}}; }}
+    catch(e) {{ _calEvents = {{}}; console.warn('calendar load failed', e); }}
+}}
+
+function buildAutoEvents() {{
+    const out = [];
+    RECORDS.forEach(r => {{
+        if (!r.workout || !r.workout_dates || !r.workout_dates.length) return;
+        r.workout_dates.forEach(wd => {{
+            out.push({{
+                auto: true,
+                type: 'workout',
+                date: wd.date,
+                player: r.player,
+                team: r.team,
+                time: wd.time || null,
+                location: wd.location || null,
+                tentative: !!wd.tentative,
+                notes: null,
+                title: null,
+            }});
+        }});
+    }});
+    _calAutoEvents = out;
+}}
+
+function _getMergedEvents() {{
+    // Manual overrides match auto events by (player|team|date|type). Manual wins.
+    const manualKeys = new Set();
+    const manual = Object.values(_calEvents || {{}});
+    manual.forEach(ev => {{
+        manualKeys.add([ev.player, ev.team || '', ev.date, ev.type].join('|'));
+    }});
+    const autos = _calAutoEvents.filter(ev => {{
+        const k = [ev.player, ev.team || '', ev.date, ev.type].join('|');
+        return !manualKeys.has(k);
+    }});
+    return autos.concat(manual.map(ev => Object.assign({{ auto:false }}, ev)));
+}}
+
+function _fmtMonth(d) {{ return MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear(); }}
+function _fmtIso(d) {{
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear() + '-' + m + '-' + day;
+}}
+
+function calShiftMonth(delta) {{
+    _calMonth = new Date(_calMonth.getFullYear(), _calMonth.getMonth()+delta, 1);
+    renderCalendar();
+}}
+
+function calJumpTo(which) {{
+    if (which === 'today') {{
+        const now = new Date();
+        _calMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    }}
+    renderCalendar();
+}}
+
+function _chipColor(ev) {{
+    if (ev.type === 'workout') {{ return TEAM_COLORS[ev.team] || '#888'; }}
+    return TYPE_COLORS[ev.type] || '#888';
+}}
+
+function _chipLabel(ev) {{
+    if (ev.type === 'workout') {{
+        return (ev.team || '?') + ' · ' + (ev.player || '?') + (ev.tentative ? ' (T)' : '');
+    }}
+    const t = ev.title || ({{playoff:'Playoff', travel:'Travel', other:'Event'}}[ev.type] || 'Event');
+    return (ev.player || '?') + ' · ' + t;
+}}
+
+function renderCalendar() {{
+    document.getElementById('calMonthLabel').textContent = _fmtMonth(_calMonth);
+
+    const playerSel = document.getElementById('calPlayerFilter');
+    if (playerSel.options.length <= 1) {{
+        const players = [...new Set(RECORDS.map(r => r.player))].sort();
+        players.forEach(p => {{
+            const o = document.createElement('option'); o.value = p; o.textContent = p; playerSel.appendChild(o);
+        }});
+    }}
+    const fPlayer = playerSel.value;
+    const fType = document.getElementById('calTypeFilter').value;
+
+    const year = _calMonth.getFullYear(), month = _calMonth.getMonth();
+    const first = new Date(year, month, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+
+    let html = '';
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {{
+        html += '<div class="cal-dow">' + d + '</div>';
+    }});
+
+    const merged = _getMergedEvents().filter(ev => {{
+        if (fPlayer && ev.player !== fPlayer) return false;
+        if (fType && ev.type !== fType) return false;
+        return true;
+    }});
+    const byDate = {{}};
+    merged.forEach(ev => {{ (byDate[ev.date] = byDate[ev.date] || []).push(ev); }});
+
+    const todayIso = _fmtIso(new Date());
+    const cells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+    for (let i = 0; i < cells; i++) {{
+        const dayNum = i - startDow + 1;
+        if (dayNum < 1 || dayNum > daysInMonth) {{
+            html += '<div class="cal-cell cal-pad"></div>';
+            continue;
+        }}
+        const d = new Date(year, month, dayNum);
+        const iso = _fmtIso(d);
+        const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
+        const isToday = (iso === todayIso);
+        let cls = 'cal-cell';
+        if (isDraft) cls += ' cal-draft';
+        if (isToday) cls += ' cal-today';
+        html += '<div class="' + cls + '" onclick="openEventModal(null, \\'' + iso + '\\')">';
+        html += '<div class="cal-daynum">' + dayNum + (isDraft ? ' <span class="cal-drafttag">DRAFT</span>' : '') + '</div>';
+        const evs = byDate[iso] || [];
+        evs.forEach(ev => {{
+            const color = _chipColor(ev);
+            const marker = ev.auto ? '' : '*';
+            const evId = ev.id || '';
+            html += '<div class="cal-chip" style="background:' + color + ';" ' +
+                'onclick="event.stopPropagation();openEventModal(' + JSON.stringify(evId) + ', \\'' + iso + '\\', ' + JSON.stringify(JSON.stringify(ev)) + ')" ' +
+                'title="' + (ev.notes || '').replace(/"/g,'&quot;') + '">' +
+                _chipLabel(ev) + marker + '</div>';
+        }});
+        html += '</div>';
+    }}
+    document.getElementById('calGrid').innerHTML = html;
+
+    // Legend: show unique teams active in the merged set this month
+    const activeTeams = new Set();
+    merged.forEach(ev => {{
+        if (ev.date.slice(0,7) === year + '-' + String(month+1).padStart(2,'0')) {{
+            if (ev.type === 'workout' && ev.team) activeTeams.add(ev.team);
+        }}
+    }});
+    let legend = '';
+    [...activeTeams].sort().forEach(t => {{
+        legend += '<span class="cal-legend-item"><span class="cal-legend-sw" style="background:' + (TEAM_COLORS[t]||'#888') + '"></span>' + t + '</span>';
+    }});
+    document.getElementById('calLegend').innerHTML = legend;
+}}
+
+function openEventModal(id, isoDate, evJson) {{
+    const overlay = document.getElementById('evOverlay');
+    const ev = evJson ? JSON.parse(evJson) : null;
+    document.getElementById('evTitle').textContent = (id && ev && !ev.auto) ? 'Edit Event' : (ev && ev.auto ? 'Edit Auto-Workout' : 'Add Event');
+    document.getElementById('evDate').value = (ev && ev.date) || isoDate || _fmtIso(new Date());
+    document.getElementById('evType').value = (ev && ev.type) || 'workout';
+    const playerSel = document.getElementById('evPlayer');
+    if (playerSel.options.length === 0) {{
+        const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
+        players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; playerSel.appendChild(o); }});
+    }}
+    playerSel.value = (ev && ev.player) || playerSel.options[0].value;
+    const teamSel = document.getElementById('evTeam');
+    if (teamSel.options.length <= 1) {{
+        ALL_TEAMS.forEach(t => {{ const o = document.createElement('option'); o.value = t; o.textContent = t; teamSel.appendChild(o); }});
+    }}
+    teamSel.value = (ev && ev.team) || '';
+    document.getElementById('evTitleInput').value = (ev && ev.title) || '';
+    document.getElementById('evTime').value = (ev && ev.time) || '';
+    document.getElementById('evLocation').value = (ev && ev.location) || '';
+    document.getElementById('evTentative').checked = !!(ev && ev.tentative);
+    document.getElementById('evNotes').value = (ev && ev.notes) || '';
+    document.getElementById('evDeleteBtn').style.display = (id && ev && !ev.auto) ? 'inline-block' : 'none';
+    document.getElementById('evNote').textContent = (ev && ev.auto) ? 'This event was auto-parsed from a Slack message. Saving creates a manual override.' : '';
+    overlay.dataset.editId = (id && ev && !ev.auto) ? id : '';
+    evSyncType();
+    overlay.style.display = 'flex';
+}}
+
+function closeEventModal() {{
+    document.getElementById('evOverlay').style.display = 'none';
+}}
+
+function evSyncType() {{
+    const t = document.getElementById('evType').value;
+    document.getElementById('evTeamRow').style.display = (t === 'workout') ? 'flex' : 'none';
+    document.getElementById('evTitleRow').style.display = (t === 'workout') ? 'none' : 'flex';
+}}
+
+async function saveEvent() {{
+    const body = {{
+        date: document.getElementById('evDate').value,
+        type: document.getElementById('evType').value,
+        player: document.getElementById('evPlayer').value,
+        team: document.getElementById('evTeam').value || null,
+        title: document.getElementById('evTitleInput').value || null,
+        time: document.getElementById('evTime').value || null,
+        location: document.getElementById('evLocation').value || null,
+        tentative: document.getElementById('evTentative').checked,
+        notes: document.getElementById('evNotes').value || null,
+    }};
+    const editId = document.getElementById('evOverlay').dataset.editId;
+    if (editId) body.id = editId;
+    try {{
+        const r = await _calApi('POST', body);
+        if (r && r.event) {{ _calEvents[r.id] = r.event; }}
+        closeEventModal();
+        renderCalendar();
+        showToast('Event saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + e.message, false); }}
+}}
+
+async function deleteEvent() {{
+    const id = document.getElementById('evOverlay').dataset.editId;
+    if (!id) return;
+    if (!confirm('Delete this event?')) return;
+    try {{
+        await _calApi('DELETE', {{ id: id }});
+        delete _calEvents[id];
+        closeEventModal();
+        renderCalendar();
+        showToast('Event deleted', true);
+    }} catch(e) {{ showToast('Delete failed: ' + e.message, false); }}
+}}
+
+async function initCalendar() {{
+    _calInitialized = true;
+    buildAutoEvents();
+    await loadCalendarEvents();
+    renderCalendar();
 }}
 
 async function init() {{
