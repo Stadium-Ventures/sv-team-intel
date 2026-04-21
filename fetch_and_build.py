@@ -1702,15 +1702,16 @@ async function loadCalendarEvents() {{
 }}
 
 function buildAutoEvents() {{
-    const out = [];
+    const byKey = {{}};          // 'player|team|date' -> best event (dedup)
     const byPT = {{}};
     RECORDS.forEach(r => {{
         if (!r.workout) return;
-        const k = r.player + '|' + r.team;
-        (byPT[k] = byPT[k] || []).push(r);
+        const ptKey = r.player + '|' + r.team;
+        (byPT[ptKey] = byPT[ptKey] || []).push(r);
         if (!r.workout_dates || !r.workout_dates.length) return;
         r.workout_dates.forEach(wd => {{
-            out.push({{
+            const key = r.player + '|' + r.team + '|' + wd.date;
+            const candidate = {{
                 auto: true,
                 type: 'workout',
                 date: wd.date,
@@ -1721,11 +1722,18 @@ function buildAutoEvents() {{
                 tentative: !!wd.tentative,
                 notes: null,
                 title: null,
-                _postDate: r.date,  // Slack post date, for rowKey lookup
-            }});
+                _postDate: r.date,
+            }};
+            const existing = byKey[key];
+            if (!existing) {{ byKey[key] = candidate; return; }}
+            // Merge: keep richer metadata (location > time > tentative-flag > most recent post).
+            if (!existing.location && candidate.location) existing.location = candidate.location;
+            if (!existing.time && candidate.time) existing.time = candidate.time;
+            if (!existing.tentative && candidate.tentative) existing.tentative = true;
+            if ((candidate._postDate || '') > (existing._postDate || '')) existing._postDate = candidate._postDate;
         }});
     }});
-    _calAutoEvents = out;
+    _calAutoEvents = Object.values(byKey);
     _calRecordsByPlayerTeam = byPT;
 }}
 
