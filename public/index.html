@@ -442,14 +442,44 @@ td.overridden::after { content: '*'; position: absolute; top: 1px; right: 3px; f
 .ev-delete:hover { background: #a83030; }
 .ev-slack { padding: 9px 14px; background: #4a154b; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }
 .ev-slack:hover { background: #611f62; }
+.ev-clear { padding: 9px 14px; background: #e8a317; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }
+.ev-clear:hover { background: #c98c0e; }
 .ev-note { font-size: 11px; color: #888; margin-top: 6px; }
 
+/* --- Mobile agenda view (calendar) --- */
+.cal-agenda { display: none; }
+.agenda-day {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px; border-bottom: 1px solid #e8e8e8; background: white;
+}
+.agenda-day:first-child { border-top: 1px solid #e8e8e8; }
+.agenda-day.agenda-draft { background: #fff5e0; }
+.agenda-date {
+    flex-shrink: 0; width: 52px; text-align: center; padding: 4px 0;
+    background: #f8faf6; border-radius: 6px;
+}
+.agenda-dow { font-size: 10px; font-weight: 700; color: #888; letter-spacing: 0.5px; }
+.agenda-dnum { font-size: 22px; font-weight: 800; color: #2d5016; line-height: 1; }
+.agenda-drafttag {
+    display: inline-block; font-size: 8px; padding: 1px 4px; background: #d4a017; color: white;
+    border-radius: 2px; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;
+}
+.agenda-chips { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.agenda-chips .cal-chip { font-size: 12px; padding: 6px 10px; white-space: normal; }
+.agenda-empty { padding: 30px 20px; text-align: center; color: #888; font-size: 13px; }
+.agenda-none { font-size: 11px; color: #888; font-style: italic; padding: 4px 0; }
+
 @media (max-width: 640px) {
-    .cal-cell { min-height: 70px; padding: 3px; }
-    .cal-chip { font-size: 9px; padding: 1px 4px; }
-    .cal-daynum { font-size: 10px; }
-    .cal-toolbar { gap: 8px; }
+    #calendarView { padding: 8px 0; }
+    .cal-toolbar { gap: 8px; padding: 0 12px; }
     .cal-month-label { font-size: 14px; min-width: 110px; }
+    .cal-nav button { padding: 8px 10px; }
+    .cal-addbtn { padding: 8px 12px; }
+    .cal-filter { flex: 1 1 100%; }
+    .cal-filter select { flex: 1; min-width: 0; }
+    .cal-grid { display: none; }
+    .cal-agenda { display: block; }
+    .cal-legend { padding: 0 12px; }
 }
 </style>
 </head>
@@ -504,7 +534,7 @@ function checkPw() {
         <div>
             <h1>TeamIntel Dashboard</h1>
             <div class="subtitle">Player Intelligence Score By Team &mdash; 2026 MLB Draft</div>
-            <div class="last-updated">Last updated: April 21, 2026 11:40 AM ET</div>
+            <div class="last-updated">Last updated: April 21, 2026 11:46 AM ET</div>
         </div>
     </div>
     <div class="nav-tabs">
@@ -576,6 +606,7 @@ function checkPw() {
         </div>
     </div>
     <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-agenda" id="calAgenda"></div>
     <div class="cal-legend" id="calLegend"></div>
     <div style="margin-top:10px;font-size:11px;color:#888;">
         Workouts are auto-parsed from Slack messages. Click a chip to view/edit; use <b>+ Add Event</b> for new entries.
@@ -639,6 +670,7 @@ function checkPw() {
         </div>
         <div class="ev-btns">
             <button class="ev-delete" id="evDeleteBtn" onclick="deleteEvent()" style="display:none;">Delete</button>
+            <button class="ev-clear" id="evClearBtn" onclick="clearEventChanges()" style="display:none;" title="Remove manual override; restore auto-parsed version">Clear Changes</button>
             <button class="ev-slack" id="evSlackBtn" onclick="openSlackFromEvent()" style="display:none;" title="Open the originating Slack message">&#x1F4AC; View Slack Message</button>
             <button class="ev-cancel" onclick="closeEventModal()">Cancel</button>
             <button class="ev-save" onclick="saveEvent()">Save</button>
@@ -1288,6 +1320,67 @@ function renderCalendar() {
     }
     document.getElementById('calGrid').innerHTML = html;
 
+    // Mobile agenda view: same events, grouped chronologically by date.
+    const monthKey = year + '-' + String(month+1).padStart(2,'0');
+    const agendaDates = Object.keys(byDate).filter(d => d.slice(0,7) === monthKey).sort();
+    // Always surface draft days even if empty.
+    ['2026-07-11','2026-07-12','2026-07-13'].forEach(d => {
+        if (d.slice(0,7) === monthKey && agendaDates.indexOf(d) === -1) agendaDates.push(d);
+    });
+    agendaDates.sort();
+    let agendaHtml = '';
+    if (!agendaDates.length) {
+        agendaHtml = '<div class="agenda-empty">No events this month.</div>';
+    } else {
+        const dowNames = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+        agendaDates.forEach(iso => {
+            const parts = iso.split('-');
+            const d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+            const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
+            let dayCls = 'agenda-day';
+            if (isDraft) dayCls += ' agenda-draft';
+            agendaHtml += '<div class="' + dayCls + '">';
+            agendaHtml += '<div class="agenda-date">';
+            agendaHtml += '<div class="agenda-dow">' + dowNames[d.getDay()] + '</div>';
+            agendaHtml += '<div class="agenda-dnum">' + d.getDate() + '</div>';
+            if (isDraft) agendaHtml += '<div class="agenda-drafttag">DRAFT</div>';
+            agendaHtml += '</div>';
+            agendaHtml += '<div class="agenda-chips">';
+            const evs = byDate[iso] || [];
+            if (!evs.length) {
+                agendaHtml += '<div class="agenda-none">' + (isDraft ? 'MLB Draft Day — no workouts' : 'No events') + '</div>';
+            } else {
+                evs.forEach(ev => {
+                    const color = _chipColor(ev);
+                    const marker = ev.auto ? '' : '*';
+                    const cid = 'a' + (_calChipCounter++);
+                    _calChipIndex[cid] = ev;
+                    const safeTitle = (ev.notes || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+                    const isWorkout = ev.type === 'workout';
+                    const isConfirmed = isWorkout && !!ev.confirmed;
+                    let cls = 'cal-chip';
+                    let style = '';
+                    let prefix = '';
+                    if (isWorkout && !isConfirmed) {
+                        cls += ' workout-invite';
+                        style = 'border-color:' + color + ';color:' + color + ';--chip-color:' + color + ';';
+                    } else {
+                        if (isConfirmed) cls += ' workout-confirmed';
+                        style = 'background:' + color + ';';
+                        if (isConfirmed) prefix = '&#10003; ';
+                    }
+                    if (ev.tentative) cls += ' tentative';
+                    agendaHtml += '<div class="' + cls + '" style="' + style + '" ' +
+                        'onclick="openEventChip(\'' + cid + '\')" ' +
+                        'title="' + safeTitle + '">' +
+                        prefix + _chipLabel(ev) + marker + '</div>';
+                });
+            }
+            agendaHtml += '</div></div>';
+        });
+    }
+    document.getElementById('calAgenda').innerHTML = agendaHtml;
+
     // Legend: show unique teams active in the merged set this month
     const activeTeams = new Set();
     merged.forEach(ev => {
@@ -1335,7 +1428,13 @@ function openEventModal(id, isoDate, ev) {
     document.getElementById('evTentative').checked = !!(ev && ev.tentative);
     document.getElementById('evConfirmed').checked = !!(ev && ev.confirmed);
     document.getElementById('evNotes').value = (ev && ev.notes) || '';
-    document.getElementById('evDeleteBtn').style.display = (id && ev && !ev.auto) ? 'inline-block' : 'none';
+    // If this is a manual override of an auto-parsed workout, offer "Clear Changes"
+    // (restores the auto-parsed version) instead of Delete.
+    const hasAutoCounterpart = !!(ev && !ev.auto && ev.type === 'workout' && _calAutoEvents.some(a =>
+        a.player === ev.player && a.team === ev.team && a.date === ev.date && a.type === 'workout'));
+    const isManualEdit = !!(id && ev && !ev.auto);
+    document.getElementById('evDeleteBtn').style.display = (isManualEdit && !hasAutoCounterpart) ? 'inline-block' : 'none';
+    document.getElementById('evClearBtn').style.display = (isManualEdit && hasAutoCounterpart) ? 'inline-block' : 'none';
     document.getElementById('evNote').textContent = (ev && ev.auto) ? 'This event was auto-parsed from a Slack message. Saving creates a manual override.' : '';
     // Slack button: only meaningful for workout events with a backing record.
     const slackBtn = document.getElementById('evSlackBtn');
@@ -1456,6 +1555,19 @@ async function deleteEvent() {
         renderCalendar();
         showToast('Event deleted', true);
     } catch(e) { showToast('Delete failed: ' + e.message, false); }
+}
+
+async function clearEventChanges() {
+    const id = document.getElementById('evOverlay').dataset.editId;
+    if (!id) return;
+    if (!confirm('Clear manual changes and restore the auto-parsed version?')) return;
+    try {
+        await _calApi('DELETE', { id: id });
+        delete _calEvents[id];
+        closeEventModal();
+        renderCalendar();
+        showToast('Changes cleared — restored to auto-parsed version', true);
+    } catch(e) { showToast('Clear failed: ' + e.message, false); }
 }
 
 async function initCalendar() {
