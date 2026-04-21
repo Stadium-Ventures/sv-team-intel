@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#2d5016"/>
+  <path d="M50 10 a 10 10 0 0 1 4 12" stroke="#d4a017" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M52 14 l 0 -2 m 2 2 l 1 -1 m 1 2 l 1 -1 m 0 3 l 2 0" stroke="#d4a017" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <text x="32" y="44" font-family="'Segoe UI', Arial, sans-serif" font-size="30" font-weight="800" text-anchor="middle" fill="white" letter-spacing="-1">TI</text>
+</svg>
