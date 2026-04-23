@@ -321,13 +321,13 @@ def workout_match_details(text, player=None, channel=None):
             matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'targeted'})
     return matches
 
-# --- Workout-date parser (pre-draft window: May 1 – July 13, 2026) ---
+# --- Workout-date parser (pre-draft window: April 1 – July 13, 2026) ---
 _WD_MONTH_NUM = {
     'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
     'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12,
 }
 _WD_MONTH_RE = r'(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
-_WD_MIN = datetime(2026, 5, 1)
+_WD_MIN = datetime(2026, 4, 1)
 _WD_MAX = datetime(2026, 7, 13)
 _WD_TENTATIVE_RE = re.compile(r'\b(tentative|likely|maybe|possibly|tbd|possible|hopefully|might)\b', re.I)
 _WD_TIME_RE = re.compile(r'\b(\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM))\b')
@@ -1843,7 +1843,12 @@ const TEAM_COLORS = {{
 const TYPE_COLORS = {{ workout:null, playoff:'#6a3a9a', travel:'#555', other:'#999', game:'#12284b' }};
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-var _calMonth = new Date(2026, 4, 1); // May 2026 default
+// Default to the current month so the calendar tracks forward as time moves.
+// Calendar navigation works for any month regardless of this start value.
+var _calMonth = (function() {{
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+}})();
 var _calEvents = {{}};       // manual events from API
 var _calAutoEvents = [];     // events derived from RECORDS.workout_dates
 var _calRecordsByPlayerTeam = {{}};  // 'player|team' -> [records] for Slack link lookup

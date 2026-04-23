@@ -1233,7 +1233,12 @@ const TEAM_COLORS = {
 const TYPE_COLORS = { workout:null, playoff:'#6a3a9a', travel:'#555', other:'#999', game:'#12284b' };
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-var _calMonth = new Date(2026, 4, 1); // May 2026 default
+// Default to the current month so the calendar tracks forward as time moves.
+// Calendar navigation works for any month regardless of this start value.
+var _calMonth = (function() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+})();
 var _calEvents = {};       // manual events from API
 var _calAutoEvents = [];     // events derived from RECORDS.workout_dates
 var _calRecordsByPlayerTeam = {};  // 'player|team' -> [records] for Slack link lookup
