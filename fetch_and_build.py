@@ -1410,7 +1410,7 @@ function checkPw() {{
     <span class="legend-title">Interest Key:</span>
     <div class="legend-item" style="gap:4px;align-items:center;">
         <span style="font-size:11px;color:#999;">Not interested</span>
-        <div style="display:flex;height:18px;width:200px;border-radius:3px;border:1px solid rgba(0,0,0,0.1);background:linear-gradient(to right, rgb(225,110,105) 0%, #fff 50%, rgb(252,232,130) 65%, rgb(130,200,140) 100%);"></div>
+        <div style="display:flex;height:18px;width:220px;border-radius:3px;border:1px solid rgba(0,0,0,0.1);background:linear-gradient(to right, rgb(225,110,105) 0%, rgb(245,160,95) 35%, #fff 50%, rgb(252,232,130) 65%, rgb(130,200,140) 100%);"></div>
         <span style="font-size:11px;color:#999;">Strong interest</span>
     </div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
@@ -1905,11 +1905,25 @@ function interestColor(v, cap) {{
         }}
         return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
     }}
-    // Negative: white → saturated red/salmon.
-    const r = Math.round(255 - (255 - 225) * t);
-    const g = Math.round(255 - (255 - 110) * t);
-    const b = Math.round(255 - (255 - 105) * t);
-    return 'rgb(' + r + ',' + g + ',' + b + ')';
+    // Negative side: white → orange (early/mild cool) → red (strong cool).
+    // Mirrors the positive-side transition through yellow.
+    const ORANGE_T = 0.30;
+    const white = [255, 255, 255];
+    const orange = [245, 160, 95];
+    const red = [225, 110, 105];
+    let r, g, b;
+    if (t <= ORANGE_T) {{
+        const u = t / ORANGE_T;
+        r = white[0] + (orange[0] - white[0]) * u;
+        g = white[1] + (orange[1] - white[1]) * u;
+        b = white[2] + (orange[2] - white[2]) * u;
+    }} else {{
+        const u = (t - ORANGE_T) / (1 - ORANGE_T);
+        r = orange[0] + (red[0] - orange[0]) * u;
+        g = orange[1] + (red[1] - orange[1]) * u;
+        b = orange[2] + (red[2] - orange[2]) * u;
+    }}
+    return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
 }}
 
 function renderMatrix() {{
