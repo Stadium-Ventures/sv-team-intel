@@ -2091,11 +2091,10 @@ async function exportCalendarPDF() {{
     const nowIso = _fmtIso(new Date());
 
     const container = document.createElement('div');
-    // Hide by positioning far above the viewport (user never sees it, but it still has
-    // real layout dimensions so html2canvas can measure/capture). We must NOT use
-    // opacity:0 here — html2canvas composites opacity into the output canvas, which
-    // is then encoded as JPEG and flattened to white (looks like a blank page).
-    container.style.cssText = 'position:absolute;top:-100000px;left:0;width:1100px;background:white;padding:26px 28px;font-family:Arial,sans-serif;color:#222;';
+    // Render IN the viewport (html2canvas gets confused by offscreen positioning /
+    // opacity:0 and produces a blank canvas). Cover the user's view with a solid
+    // overlay during the render so the container stays hidden from them.
+    container.style.cssText = 'position:fixed;top:0;left:0;width:1100px;background:white;padding:26px 28px;font-family:Arial,sans-serif;color:#222;z-index:99990;';
     container.setAttribute('data-pdf-root', '1');
     container.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #2d5016;padding-bottom:10px;margin-bottom:14px;">'
@@ -2108,6 +2107,14 @@ async function exportCalendarPDF() {{
       + _buildPdfGridHtml(year, month, byDate)
       + _buildPdfAgendaHtml(players, byDate, year, month);
     document.body.appendChild(container);
+
+    // Opaque overlay hides the briefly-visible container from the user.
+    // Sits on top of everything including the container (higher z-index).
+    const pdfOverlay = document.createElement('div');
+    pdfOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(20,30,20,0.94);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:white;font-family:Arial,sans-serif;';
+    pdfOverlay.innerHTML = '<div style="font-size:18px;font-weight:700;letter-spacing:0.5px;">Building PDF...</div>'
+        + '<div style="font-size:12px;opacity:0.75;">This takes a couple of seconds.</div>';
+    document.body.appendChild(pdfOverlay);
 
     const btn = document.querySelector('.cal-pdfbtn');
     if (btn) {{ btn.disabled = true; btn.textContent = 'Building...'; }}
@@ -2126,15 +2133,13 @@ async function exportCalendarPDF() {{
                 scrollX: 0,
                 scrollY: 0,
                 windowWidth: 1200,
-                // html2canvas clones the DOM into an iframe before rasterizing. Reset
-                // the cloned root to visible, on-screen coordinates so any offscreen
-                // positioning on the live element can't produce a blank frame.
+                // Belt-and-suspenders: even though the container is in-viewport, force
+                // the cloned root to static/visible in case the fixed positioning
+                // trips html2canvas's bounding-rect math on Safari / older Chrome.
                 onclone: (clonedDoc) => {{
                     const el = clonedDoc.querySelector('[data-pdf-root]');
                     if (el) {{
                         el.style.position = 'static';
-                        el.style.top = 'auto';
-                        el.style.left = 'auto';
                         el.style.opacity = '1';
                         el.style.visibility = 'visible';
                         el.style.transform = 'none';
@@ -2150,6 +2155,7 @@ async function exportCalendarPDF() {{
         showToast('PDF failed: ' + e.message, false);
     }} finally {{
         document.body.removeChild(container);
+        if (pdfOverlay.parentNode) pdfOverlay.parentNode.removeChild(pdfOverlay);
         if (btn) {{ btn.disabled = false; btn.innerHTML = '&#x2B07; PDF'; }}
     }}
 }}
