@@ -460,21 +460,26 @@ def score_line_for_team(line, full_text=""):
 # the message line. Tier 1 (SD / GM / VP / Special Asst) weighs 2×; T2 (National
 # X'er) 1.5×; T3 (plain X'er / regional) 1.25×; T4 (area scout) is baseline.
 
-# TIER_MULTIPLIERS doubles as the score floor for a record: when a senior
-# attendee is detected, the record's sentiment score is bumped up to this
-# value (floor) unless sentiment was already higher or explicitly negative.
-# T3 is 1.0 (baseline — no bump). T4 is 0.5 (area scouts weigh less than
-# a generic touch). T1/T2 actively bump the score.
-TIER_MULTIPLIERS = {1: 2.0, 2: 1.5, 3: 1.0, 4: 0.5, 5: 1.0}
-TIER_LABELS = {1: 'Dir', 2: 'NXC', 3: 'Xer', 4: 'Area', 5: ''}
+# TIER_MULTIPLIERS doubles as the score floor for a record: when an attendee
+# at a given tier is detected, the record's sentiment score is bumped up to
+# this value (unless sentiment was already higher or explicitly negative).
+# Tier 0 = no tier detected (no floor applied, sentiment drives everything).
+TIER_MULTIPLIERS = {0: 0, 1: 5, 2: 4, 3: 3, 4: 2, 5: 1}
+TIER_LABELS = {0: '', 1: 'GM', 2: 'Dir', 3: 'NXC', 4: 'X', 5: 'Area'}
 
-# Role → tier map for the org-review CSV columns. Anyone in this directory
-# mentioned by name in a message line is treated as T1.
+# Role → tier map for the org-review CSV columns. The very top (GM /
+# President of Baseball Ops) is T1; other director-level roles are T2.
 _ORG_ROLE_TIER = {
-    'president': 1, 'pres_baseball_ops': 1, 'gm': 1, 'asst_gm': 1,
-    'scouting_dir': 1, 'asst_scouting_dir': 1,
-    'pd_dir': 1, 'asst_pd_dir': 1,
-    'pitching_coord': 1, 'hitting_coord': 1,
+    'president': 1,           # corporate president (if at a game, huge)
+    'pres_baseball_ops': 1,   # baseball ops head — top-of-org signal
+    'gm': 1,
+    'asst_gm': 2,
+    'scouting_dir': 2,
+    'asst_scouting_dir': 2,
+    'pd_dir': 2,
+    'asst_pd_dir': 2,
+    'pitching_coord': 2,
+    'hitting_coord': 2,
 }
 
 def load_front_office():
@@ -510,68 +515,83 @@ def load_front_office():
 
 
 # Regex patterns for keyword-based tier detection.
-# Checked in priority order: T1 > T2 > T3 > T4. Highest tier detected wins.
+# Checked in priority order: T1 > T2 > T3 > T4 > T5. Highest tier detected wins.
+# T1 — GM / President of Baseball Ops (the absolute top).
+# `\bgm\b` uses negative lookbehinds so "Asst GM" / "Assistant GM" do NOT
+# match here (they fall through to T2 instead).
 _TIER1_PATTERNS = [
-    r'\bgm\b', r'\bagm\b', r'\basst\.?\s+gm\b', r'\bassistant\s+gm\b',
+    r'(?<!asst )(?<!asst\. )(?<!assistant )\bgm\b',
+    r'\bpres(?:ident)?\s+of\s+baseball\s+ops\b',
+    r'\bpres(?:ident)?\s+baseball\s+ops\b',
+    r'\bpobo\b',
+]
+# T2 — Director-level: SD / AGM / Special Asst / VP / Dir of Pro Scouting / PD Dir / Coords
+_TIER2_PATTERNS = [
+    r'\bagm\b', r'\basst\.?\s+gm\b', r'\bassistant\s+gm\b',
     r'\bsd\b', r'\basst\.?\s+sd\b',
     r'\bscouting\s+dir(?:ector)?\b', r'\basst\.?\s+scouting\s+dir(?:ector)?\b',
     r'\bvp\b', r'\bv\.p\.\b',
     r'\bdirector\s+of\s+pro\s+scouting\b', r'\bpro\s+scouting\s+dir(?:ector)?\b',
     r'\bhead\s+of\s+draft\s+ops\b',
     r'\bspecial\s+ass?t\b', r'\bspecial\s+assistant\b',
-    r'\bpres(?:ident)?\s+of\s+baseball\s+ops\b',
     r'\bdirector\s+of\s+player\s+development\b', r'\bdirector\s+player\s+dev\b',
     r'\bpitching\s+coord(?:inator)?\b', r'\bhitting\s+coord(?:inator)?\b',
 ]
-_TIER2_PATTERN = r'\bnational\s+x(?:er|\'er|-er)?\b|\bnxc\b|\bnational\s+cross[- ]?check(?:ers?)?\b'
-_TIER3_PATTERN = r'\bx(?:er|\'er|-er)\b|\bcross[- ]?check(?:ers?)?\b|\bregional\s+x(?:er|\'er|-er)?\b'
-_TIER4_PATTERN = r'\barea\s+(?:guy|scout)?\b|\bout\s+of\s+area\b'
+# T3 — National Cross-Checker
+_TIER3_PATTERN = r'\bnational\s+x(?:er|\'er|-er)?\b|\bnxc\b|\bnational\s+cross[- ]?check(?:ers?)?\b'
+# T4 — Regional Cross-Checker (bare X'er / Crosschecker, or explicit "Regional X")
+_TIER4_PATTERN = r'\bx(?:er|\'er|-er)\b|\bcross[- ]?check(?:ers?)?\b|\bregional\s+x(?:er|\'er|-er)?\b'
+# T5 — Area Scout
+_TIER5_PATTERN = r'\barea\s+(?:guy|scout)?\b|\bout\s+of\s+area\b'
 
 
 def detect_attendee_tier(line, team, directory):
-    """Returns (tier:int 1-5, multiplier:float, label:str).
+    """Returns (tier:int 0-5, points:int, label:str).
+    Tier 0 = nothing detected (no floor applied). 1-5 descending seniority.
     1. Name match against `directory[team]` → that role's tier.
     2. Keyword regex. Multiple hits → highest tier wins (lowest numeric).
-    3. Default T5 (×1.0, no label).
+    3. Default T0 (no boost).
     """
     if not line:
-        return 5, 1.0, ''
+        return 0, 0, ''
     tiers_seen = set()
-    role_labels = {}
     lower = line.lower()
 
-    # Name match against the team directory
+    # Name match against the team directory (roles assigned tier 1 or 2 per _ORG_ROLE_TIER).
     for name_lower, tier, role_col in directory.get(team, []):
-        # Require word-ish boundary so "kip fagg" doesn't match "kipfagg" etc.
         if re.search(r'\b' + re.escape(name_lower) + r'\b', lower):
             tiers_seen.add(tier)
-            role_labels[tier] = role_col
 
-    # Keyword fallbacks (run all — highest wins)
+    # T1 — GM / President of Baseball Ops
     for pat in _TIER1_PATTERNS:
         if re.search(pat, lower):
             tiers_seen.add(1)
             break
-    if re.search(_TIER2_PATTERN, lower):
-        tiers_seen.add(2)
-    # T3 "bare X'er" — only if no T2 match sharing the same span.
-    # Simplest: search for X'er positions and check the preceding word.
-    t3_hit = False
+    # T2 — Director-level
+    for pat in _TIER2_PATTERNS:
+        if re.search(pat, lower):
+            tiers_seen.add(2)
+            break
+    # T3 — National X'er / Crosschecker
+    if re.search(_TIER3_PATTERN, lower):
+        tiers_seen.add(3)
+    # T4 — bare X'er / Crosschecker (must not be preceded by "national")
+    t4_hit = False
     for m in re.finditer(r'\bx(?:er|\'er|-er)\b', lower):
         pre = lower[max(0, m.start()-15):m.start()]
         if 'national' not in pre:
-            t3_hit = True
+            t4_hit = True
             break
-    if t3_hit or re.search(r'\bcross[- ]?check(?:ers?)?\b', lower) or re.search(r'\bregional\s+x', lower):
-        tiers_seen.add(3)
-    if re.search(_TIER4_PATTERN, lower):
+    if t4_hit or re.search(r'\bcross[- ]?check(?:ers?)?\b', lower) or re.search(r'\bregional\s+x', lower):
         tiers_seen.add(4)
+    # T5 — Area
+    if re.search(_TIER5_PATTERN, lower):
+        tiers_seen.add(5)
 
     if not tiers_seen:
-        return 5, 1.0, ''
+        return 0, 0, ''
     tier = min(tiers_seen)
-    label = TIER_LABELS.get(tier, '')
-    return tier, TIER_MULTIPLIERS[tier], label
+    return tier, TIER_MULTIPLIERS[tier], TIER_LABELS.get(tier, '')
 
 
 def parse_messages(messages):
@@ -594,8 +614,8 @@ def parse_messages(messages):
         rec['tier_label'] = label
         sentiment = rec.get('score', 1)
         rec['raw_score'] = sentiment
-        if sentiment < 0 or t == 5:
-            # Explicit negative wins; T5 (no tier identified) keeps sentiment as-is.
+        if sentiment < 0 or t == 0:
+            # Explicit negative wins; T0 (no tier identified) keeps sentiment as-is.
             return
         tier_floor = mult
         if tier_floor > sentiment:
@@ -1255,10 +1275,11 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     padding: 2px 6px; border-radius: 3px; text-transform: uppercase;
     margin-left: 6px; vertical-align: middle;
 }}
-.tier-badge.t1 {{ background: #000000; color: white; }}
-.tier-badge.t2 {{ background: #ff2a22; color: white; }}
-.tier-badge.t3 {{ background: #f59e0b; color: white; }}
-.tier-badge.t4 {{ background: #888; color: white; }}
+.tier-badge.t1 {{ background: #000000; color: white; }}              /* GM / Pres Baseball Ops */
+.tier-badge.t2 {{ background: #ff2a22; color: white; }}              /* SD / AGM / Special Asst / VP */
+.tier-badge.t3 {{ background: #f59e0b; color: white; }}              /* National X'er */
+.tier-badge.t4 {{ background: #6b7280; color: white; }}              /* Regional X'er */
+.tier-badge.t5 {{ background: #9ca3af; color: white; }}              /* Area scout */
 .mr-wd-row {{ display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }}
 .mr-wd-row input[type="date"] {{ flex: 1; padding: 5px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
 .mr-wd-del {{
@@ -1934,10 +1955,11 @@ function renderMatrix() {{
     html += '</tr></thead><tbody>';
 
     // Cap at which a cell or total reaches peak color saturation. Past the cap,
-    // color is clamped; number still grows. Tuned so one SD (+2) is visibly green
-    // but not "max"; three SDs (+6) or equivalent saturates the cell.
-    const CELL_CAP = 4;
-    const TOTAL_CAP = 12;
+    // color is clamped; number still grows. Tuned for the 1-5 point scale:
+    // a single GM touch (+5) lands deep green on a cell; two senior touches
+    // fully saturate. TOTAL_CAP scales up for the cross-team rollup.
+    const CELL_CAP = 8;
+    const TOTAL_CAP = 25;
 
     sortedPlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
@@ -2031,7 +2053,7 @@ function renderDetail() {{
         // Tier badge — shows when we detected a senior attendee (T1-T4). No badge for T5.
         const tier = r.attendee_tier;
         const tierLabel = r.tier_label || '';
-        const tierBadge = (tier && tier >= 1 && tier <= 4 && tierLabel)
+        const tierBadge = (tier && tier >= 1 && tier <= 5 && tierLabel)
             ? '<span class="tier-badge t' + tier + '" title="Attendee tier: ' + tier + ' (×' + (r.tier_multiplier || 1) + ')">' + tierLabel + '</span>'
             : '';
         html += '<tr' + rowStyle + '><td>' + r.date + '</td><td>' + r.team + wBadge + tierBadge + '</td>' +
@@ -3409,10 +3431,10 @@ def load_manual_records():
                 'workout': bool(val.get('workout')),
                 'workout_dates': val.get('workout_dates') or [],
                 'is_manual': True,
-                # Manual entries default to T5 (no tier weighting) unless keyword
+                # Manual entries default to T0 (no tier weighting) unless keyword
                 # detection in the user-entered notes bumps them up.
-                'attendee_tier': 5,
-                'tier_multiplier': 1.0,
+                'attendee_tier': 0,
+                'tier_multiplier': 0,
                 'tier_label': '',
             })
         return out
