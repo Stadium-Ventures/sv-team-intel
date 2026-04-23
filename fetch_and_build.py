@@ -1878,21 +1878,34 @@ function fmtScore(s) {{
     return (s % 1 === 0) ? String(s) : s.toFixed(1);
 }}
 
-// Smooth color interpolation from white → green (positive) or white → red (negative).
-// `cap` is the value at which the color reaches full saturation; beyond that it's clamped.
-// This is the visual language: every intel touch nudges the cell away from white.
+// Smooth color interpolation. Positive side: white → yellow (early/uncertain)
+// → green (confirmed strong). Negative side: white → red. The yellow stop sits
+// at ~30% of cap, so low positives read as "yellow — early signal" and accumulation
+// matures into green.
 function interestColor(v, cap) {{
     if (typeof v !== 'number' || v === 0) return '';
     cap = cap || 4;
     const t = Math.min(1, Math.abs(v) / cap);
     if (v > 0) {{
-        // White (255,255,255) → saturated green (130,200,140)
-        const r = Math.round(255 - (255 - 130) * t);
-        const g = Math.round(255 - (255 - 200) * t);
-        const b = Math.round(255 - (255 - 140) * t);
-        return 'rgb(' + r + ',' + g + ',' + b + ')';
+        const YELLOW_T = 0.30;  // t at which the gradient is pure yellow
+        const white = [255, 255, 255];
+        const yellow = [252, 232, 130];
+        const green = [130, 200, 140];
+        let r, g, b;
+        if (t <= YELLOW_T) {{
+            const u = t / YELLOW_T;
+            r = white[0] + (yellow[0] - white[0]) * u;
+            g = white[1] + (yellow[1] - white[1]) * u;
+            b = white[2] + (yellow[2] - white[2]) * u;
+        }} else {{
+            const u = (t - YELLOW_T) / (1 - YELLOW_T);
+            r = yellow[0] + (green[0] - yellow[0]) * u;
+            g = yellow[1] + (green[1] - yellow[1]) * u;
+            b = yellow[2] + (green[2] - yellow[2]) * u;
+        }}
+        return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
     }}
-    // White → saturated red/salmon (225,110,105)
+    // Negative: white → saturated red/salmon.
     const r = Math.round(255 - (255 - 225) * t);
     const g = Math.round(255 - (255 - 110) * t);
     const b = Math.round(255 - (255 - 105) * t);
@@ -1914,11 +1927,12 @@ function renderMatrix() {{
 
     sortedPlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
+        const totalTouches = Object.values(playerTeamCounts[player] || {{}}).reduce((a,b) => a+b, 0);
         const totalBg = interestColor(total, TOTAL_CAP);
         const totalStyle = totalBg ? ' style="background:' + totalBg + ';"' : '';
-        const titleAttr = ' title="Cumulative interest points across all teams"';
+        const totalTitle = ' title="' + totalTouches + ' total touch' + (totalTouches === 1 ? '' : 'es') + ' \\u2022 ' + fmtScore(total) + ' interest points"';
         const esc = player.replace(/'/g, "\\\\'");
-        html += '<tr><td' + totalStyle + titleAttr + '>' + fmtScore(total) + '</td>';
+        html += '<tr><td' + totalStyle + totalTitle + '>' + (totalTouches || '') + '</td>';
         html += '<td class="clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + player + '</td>';
         ALL_TEAMS.forEach(team => {{
             const s = playerTeams[player] && playerTeams[player][team];
@@ -1926,10 +1940,11 @@ function renderMatrix() {{
             const wk = workoutMap[player + '|' + team];
             const hasData = (s !== undefined && s !== null && typeof s === 'number');
             if (hasData || wk) {{
+                // Color carries interest magnitude; number carries touch count.
                 const bg = interestColor(s, CELL_CAP);
                 const cellStyle = bg ? 'background:' + bg + ';' : '';
-                const display = hasData ? fmtScore(s) : '';
-                const title = 'Interest: ' + fmtScore(s || 0) + ' \\u2022 ' + cnt + ' touch' + (cnt === 1 ? '' : 'es');
+                const display = cnt > 0 ? String(cnt) : '';
+                const title = cnt + ' touch' + (cnt === 1 ? '' : 'es') + ' \\u2022 ' + fmtScore(s || 0) + ' interest points';
                 html += '<td class="score-cell clickable' + (wk ? ' workout' : '') + '" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + display + '</td>';
             }} else {{
                 html += '<td></td>';
