@@ -4,7 +4,7 @@ Fetch TeamIntel messages from Slack, parse, and build dashboard.html
 Runs locally or via GitHub Actions.
 """
 
-import json, re, os, time
+import json, re, os, time, csv, io, urllib.request
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from slack_sdk import WebClient
@@ -599,8 +599,9 @@ def parse_messages(messages):
 
 
 # --- STEP 3: BUILD HTML ---
-def build_html(records, password="SVintel2026"):
+def build_html(records, password="SVintel2026", games=None):
     records_js = json.dumps(records)
+    games_js = json.dumps(games or [])
     eastern = timezone(timedelta(hours=-4))
     now_str = datetime.now(eastern).strftime('%B %d, %Y %I:%M %p') + ' ET'
     all_2026_js = json.dumps(ALL_2026_PLAYERS)
@@ -1060,15 +1061,22 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 
 /* --- Event modal --- */
-#evOverlay, #mrOverlay {{
+#evOverlay, #mrOverlay, #gameDetailsOverlay {{
     position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
     display: none; align-items: center; justify-content: center;
 }}
-#evOverlay.open, #mrOverlay.open {{ display: flex; }}
-#evModal, #mrModal {{
+#evOverlay.open, #mrOverlay.open, #gameDetailsOverlay.open {{ display: flex; }}
+#evModal, #mrModal, #gameDetailsModal {{
     background: white; border-radius: 8px; padding: 20px 22px; width: 420px; max-width: 92vw;
     max-height: 90vh; overflow-y: auto; box-shadow: 0 6px 32px rgba(0,0,0,0.3);
 }}
+.gd-title {{ font-size: 16px; font-weight: 700; color: #12284b; margin-bottom: 4px; }}
+.gd-sub {{ font-size: 11px; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }}
+.gd-row {{ display: flex; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; color: #333; }}
+.gd-row:last-child {{ border-bottom: none; }}
+.gd-label {{ width: 95px; flex-shrink: 0; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; font-size: 10px; padding-top: 1px; }}
+.gd-close {{ margin-top: 14px; width: 100%; padding: 9px 14px; background: #2d5016; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
+.gd-close:hover {{ background: #3a6b1d; }}
 .mr-addentry-btn {{
     padding: 5px 12px; font-size: 12px; font-weight: 700;
     background: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer;
@@ -1287,6 +1295,7 @@ function checkPw() {{
             <select id="calTypeFilter" onchange="renderCalendar()">
                 <option value="">All</option>
                 <option value="workout">Workouts</option>
+                <option value="game">Games</option>
                 <option value="playoff">Playoffs</option>
                 <option value="travel">Travel</option>
                 <option value="other">Other</option>
@@ -1369,6 +1378,7 @@ function checkPw() {{
 
 <script>
 const RECORDS = {records_js};
+const GAMES_SCHEDULE = {games_js};
 const ALL_TEAMS = {json.dumps(ALL_TEAMS)};
 const ALL_2026_PLAYERS = {all_2026_js};
 const PLAYER_ALIASES = {player_aliases_js};
@@ -1831,7 +1841,7 @@ const TEAM_COLORS = {{
     'PHI':'#E81828','PIT':'#FDB827','SD':'#2F241D','SF':'#FD5A1E','SEA':'#0C2C56',
     'STL':'#C41E3A','TB':'#092C5C','TEX':'#003278','TOR':'#134A8E','WSH':'#AB0003'
 }};
-const TYPE_COLORS = {{ workout:null, playoff:'#6a3a9a', travel:'#555', other:'#999' }};
+const TYPE_COLORS = {{ workout:null, playoff:'#6a3a9a', travel:'#555', other:'#999', game:'#12284b' }};
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 var _calMonth = new Date(2026, 4, 1); // May 2026 default
@@ -1848,7 +1858,7 @@ var _calSelectedPlayersEverSeen = new Set();  // tracks which players we've show
 const _CAL_PLAYERS_LS_KEY = 'ti_cal_selected_players_v1';
 
 function _calComputeAllPlayers() {{
-    // Only players who have a PDW invite — honoring the matrix override:
+    // Players who have a PDW invite — honoring the matrix override:
     //   w|player|team === false -> force-off (hide regardless of r.workout)
     //   w|player|team === true  -> force-on (include even if r.workout is falsy)
     // This matches buildAutoEvents' eligibility logic so the chip row and grid agree.
@@ -1863,6 +1873,9 @@ function _calComputeAllPlayers() {{
     Object.values(_calEvents || {{}}).forEach(ev => {{
         if (ev && ev.type === 'workout' && ev.player && s.has(ev.player)) s.add(ev.player);
     }});
+    // Also include any player who has a game on the schedule — otherwise the per-player
+    // toggle filter would hide their games from the grid.
+    (GAMES_SCHEDULE || []).forEach(g => {{ if (g && g.player) s.add(g.player); }});
     return [...s].sort();
 }}
 
@@ -2045,14 +2058,18 @@ function _buildPdfAgendaHtml(players, eventsByDate, year, month) {{
                 const d = new Date(ev.date + 'T00:00:00');
                 const dateStr = (d.getMonth()+1) + '/' + d.getDate();
                 const isWorkout = ev.type === 'workout';
+                const isGame = ev.type === 'game';
                 let line = '';
                 if (isWorkout) {{
                     line = _escHtml(ev.team || '?') + (ev.confirmed ? ' (confirmed)' : ' invite') + (ev.tentative ? ' · T' : '');
+                }} else if (isGame) {{
+                    line = 'vs ' + _escHtml(ev.opponent || '?');
+                    if (ev.ballpark) line += ' @ ' + _escHtml(ev.ballpark);
                 }} else {{
                     line = _escHtml(ev.title || ev.type || 'Event');
                 }}
                 if (ev.time) line += ' · ' + _escHtml(ev.time);
-                if (ev.location) line += ' · ' + _escHtml(ev.location);
+                if (ev.location && !isGame) line += ' · ' + _escHtml(ev.location);
                 html += '<div style="font-size:10px;color:#333;padding:2px 0;">'
                      + '<span style="display:inline-block;width:34px;color:#888;font-weight:600;">' + dateStr + '</span>'
                      + line + '</div>';
@@ -2207,6 +2224,28 @@ function buildAutoEvents() {{
             if ((candidate._postDate || '') > (existing._postDate || '')) existing._postDate = candidate._postDate;
         }});
     }});
+    // Game schedule events — read-only, straight from the shared Google Sheet.
+    // Not deduped against workouts (games and workouts are distinct types).
+    (GAMES_SCHEDULE || []).forEach(g => {{
+        if (!g.player || !g.date) return;
+        byKey['GAME|' + g.player + '|' + g.date + '|' + (g.opponent || '')] = {{
+            auto: true,
+            readonly: true,
+            type: 'game',
+            date: g.date,
+            player: g.player,
+            team: g.team || null,
+            opponent: g.opponent || null,
+            ballpark: g.ballpark || null,
+            location: g.location || null,
+            time: g.time || null,
+            level: g.level || null,
+            title: null,
+            notes: null,
+            tentative: false,
+            confirmed: false,
+        }};
+    }});
     _calAutoEvents = Object.values(byKey);
     _calRecordsByPlayerTeam = byPT;
 }}
@@ -2253,6 +2292,10 @@ function _chipColor(ev) {{
 function _chipLabel(ev) {{
     if (ev.type === 'workout') {{
         return (ev.team || '?') + ' · ' + (ev.player || '?') + (ev.tentative ? ' (T)' : '');
+    }}
+    if (ev.type === 'game') {{
+        const opp = ev.opponent || '?';
+        return (ev.player || '?') + ' vs ' + opp;
     }}
     const t = ev.title || ({{playoff:'Playoff', travel:'Travel', other:'Event'}}[ev.type] || 'Event');
     return (ev.player || '?') + ' · ' + t;
@@ -2414,7 +2457,29 @@ var _mmReturnToEvent = null;       // if set, message modal shows "Back to Event
 function openEventChip(cid) {{
     const ev = _calChipIndex[cid];
     if (!ev) return;
+    // Games are read-only (source is the shared Google Sheet). Show a minimal
+    // details popup instead of the editable event modal.
+    if (ev.type === 'game') {{ openGameDetails(ev); return; }}
     openEventModal(ev.id || null, ev.date, ev);
+}}
+
+function openGameDetails(ev) {{
+    const fmt = v => (v == null || v === '') ? '—' : v;
+    const body = document.getElementById('gameDetailsBody');
+    if (!body) return;
+    body.innerHTML =
+        '<div class="gd-row"><span class="gd-label">Player</span><span>' + fmt(ev.player) + '</span></div>'
+      + '<div class="gd-row"><span class="gd-label">Date</span><span>' + fmt(ev.date) + '</span></div>'
+      + '<div class="gd-row"><span class="gd-label">Team</span><span>' + fmt(ev.team) + (ev.level ? ' · ' + fmt(ev.level) : '') + '</span></div>'
+      + '<div class="gd-row"><span class="gd-label">Opponent</span><span>vs ' + fmt(ev.opponent) + '</span></div>'
+      + '<div class="gd-row"><span class="gd-label">Time</span><span>' + fmt(ev.time) + '</span></div>'
+      + '<div class="gd-row"><span class="gd-label">Ballpark</span><span>' + fmt(ev.ballpark) + '</span></div>'
+      + '<div class="gd-row"><span class="gd-label">Location</span><span>' + fmt(ev.location) + '</span></div>';
+    document.getElementById('gameDetailsOverlay').classList.add('open');
+}}
+
+function closeGameDetails() {{
+    document.getElementById('gameDetailsOverlay').classList.remove('open');
 }}
 
 function openEventModal(id, isoDate, ev) {{
@@ -2891,6 +2956,15 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         </div>
     </div>
 </div>
+<!-- Game Details (read-only, sourced from the shared Google Sheet) -->
+<div id="gameDetailsOverlay" onclick="if(event.target===this) closeGameDetails()">
+    <div id="gameDetailsModal">
+        <div class="gd-title">Game Details</div>
+        <div class="gd-sub">Read-only &middot; sourced from schedule sheet</div>
+        <div id="gameDetailsBody"></div>
+        <button class="gd-close" onclick="closeGameDetails()">Close</button>
+    </div>
+</div>
 <div id="toast"></div>
 </body>
 </html>'''
@@ -2904,6 +2978,96 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 # KV blob shape (key = 'score_overrides'):
 #   "player|team|date" -> int (-2..2) or "NA"         (score edit / exclusion)
 #   "w|player|team"    -> true | false                 (PDW flag toggle)
+GAME_SCHEDULE_CSV_URL = (
+    'https://docs.google.com/spreadsheets/d/1PvPw1SKki7ZsSWwk2QIWrTp31yrgKvDvH8lbcHJCI24'
+    '/export?format=csv&gid=446091585'
+)
+
+
+def _parse_sheet_date(raw):
+    """Tolerant date parser — accepts 2026-04-23, 4/23/2026, 4/23/26, 04/23/2026.
+    Returns 'YYYY-MM-DD' string or None on failure.
+    """
+    if not raw:
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None
+    for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y', '%-m/%-d/%Y', '%-m/%-d/%y'):
+        try:
+            return datetime.strptime(s, fmt).strftime('%Y-%m-%d')
+        except Exception:
+            continue
+    return None
+
+
+def _build_alias_lookup():
+    """Map any known alias (lowercased) to its canonical roster name."""
+    lookup = {}
+    # Every canonical name maps to itself
+    for p in ALL_2026_PLAYERS:
+        lookup[p.lower()] = p
+    # All aliases map to their canonical
+    for canonical, aliases in PLAYER_ALIASES.items():
+        lookup[canonical.lower()] = canonical
+        for a in aliases:
+            lookup[a.lower()] = canonical
+    return lookup
+
+
+def fetch_game_schedule():
+    """Pull the game schedule Google Sheet (shared link-viewable) and return a list
+    of game dicts restricted to players on the current roster. Silently tolerant —
+    a fetch failure returns []. Dropped rows (name mismatch, missing date) are
+    logged but not fatal.
+    """
+    try:
+        req = urllib.request.Request(
+            GAME_SCHEDULE_CSV_URL,
+            headers={'User-Agent': 'sv-teamintel-build/1.0'},
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            text = resp.read().decode('utf-8', errors='replace')
+    except Exception as e:
+        print(f"WARN: Failed to fetch game schedule CSV: {e}")
+        return []
+
+    alias_lookup = _build_alias_lookup()
+    reader = csv.DictReader(io.StringIO(text))
+    games = []
+    dropped_names = set()
+    kept_rows = 0
+    total_rows = 0
+    for row in reader:
+        total_rows += 1
+        client_raw = (row.get('Client') or '').strip()
+        if not client_raw:
+            continue
+        canonical = alias_lookup.get(client_raw.lower())
+        if not canonical:
+            dropped_names.add(client_raw)
+            continue
+        iso_date = _parse_sheet_date(row.get('Date'))
+        if not iso_date:
+            continue
+        games.append({
+            'player': canonical,
+            'team': (row.get('Team') or '').strip() or None,
+            'level': (row.get('Level') or '').strip() or None,
+            'date': iso_date,
+            'location': (row.get('Location') or '').strip() or None,
+            'time': (row.get('Time (Local time)') or row.get('Time') or '').strip() or None,
+            'opponent': (row.get('Opponent') or '').strip() or None,
+            'ballpark': (row.get('Ballpark') or '').strip() or None,
+        })
+        kept_rows += 1
+
+    print(f"Game schedule: kept {kept_rows}/{total_rows} rows.")
+    if dropped_names:
+        print(f"Game schedule: dropped names not on roster: {sorted(dropped_names)}")
+    return games
+
+
 def load_kv_overrides():
     url = os.environ.get('REDIS_URL')
     if not url:
@@ -3064,7 +3228,10 @@ if __name__ == '__main__':
         print(f"Merging {len(manual)} manual record(s) into RECORDS.")
         records = records + manual
 
-    html = build_html(records, password)
+    # Pull game schedule from the shared Google Sheet. Read-only — filtered to roster.
+    games = fetch_game_schedule()
+
+    html = build_html(records, password, games=games)
 
     out_dir = os.environ.get('OUTPUT_DIR', os.path.join(os.path.dirname(__file__), 'public'))
     out_path = os.path.join(out_dir, 'index.html')
