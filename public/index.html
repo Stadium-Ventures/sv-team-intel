@@ -1482,10 +1482,12 @@ async function exportCalendarPDF() {
     const nowIso = _fmtIso(new Date());
 
     const container = document.createElement('div');
-    // Render in-viewport but invisible. html2canvas clones into an iframe and has trouble
-    // with `position:fixed; left:-10000px` (appears as blank output) — keeping the element
-    // inside the document flow at (0,0) with opacity:0 + pointer-events:none avoids that.
-    container.style.cssText = 'position:absolute;top:0;left:0;width:1100px;background:white;padding:26px 28px;font-family:Arial,sans-serif;color:#222;opacity:0;pointer-events:none;z-index:-1;';
+    // Hide by positioning far above the viewport (user never sees it, but it still has
+    // real layout dimensions so html2canvas can measure/capture). We must NOT use
+    // opacity:0 here — html2canvas composites opacity into the output canvas, which
+    // is then encoded as JPEG and flattened to white (looks like a blank page).
+    container.style.cssText = 'position:absolute;top:-100000px;left:0;width:1100px;background:white;padding:26px 28px;font-family:Arial,sans-serif;color:#222;';
+    container.setAttribute('data-pdf-root', '1');
     container.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #2d5016;padding-bottom:10px;margin-bottom:14px;">'
       +   '<div>'
@@ -1508,7 +1510,28 @@ async function exportCalendarPDF() {
             margin: [8, 8, 8, 8],
             filename: filename,
             image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 1200,
+                // html2canvas clones the DOM into an iframe before rasterizing. Reset
+                // the cloned root to visible, on-screen coordinates so any offscreen
+                // positioning on the live element can't produce a blank frame.
+                onclone: (clonedDoc) => {
+                    const el = clonedDoc.querySelector('[data-pdf-root]');
+                    if (el) {
+                        el.style.position = 'static';
+                        el.style.top = 'auto';
+                        el.style.left = 'auto';
+                        el.style.opacity = '1';
+                        el.style.visibility = 'visible';
+                        el.style.transform = 'none';
+                    }
+                }
+            },
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' },
             pagebreak: { mode: ['css', 'legacy'] }
         }).from(container).save();
