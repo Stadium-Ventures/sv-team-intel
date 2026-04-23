@@ -2064,11 +2064,11 @@ function _buildPdfAgendaHtml(players, eventsByDate, year, month) {{
     return html;
 }}
 
-async function exportCalendarPDF() {{
-    if (typeof html2pdf === 'undefined') {{
-        showToast('PDF library not loaded yet — try again in a second.', false);
-        return;
-    }}
+function exportCalendarPDF() {{
+    // Switched from html2canvas/html2pdf to the browser's native print-to-PDF
+    // pipeline. html2canvas kept producing blank canvases regardless of positioning
+    // tricks; the browser's own print engine handles layout + print-safe rendering
+    // reliably. UX cost: the user clicks "Save as PDF" in the print dialog (1 extra step).
     _calEnsureSelection();
     const players = [..._calSelectedPlayers].sort();
     if (!players.length) {{
@@ -2089,74 +2089,70 @@ async function exportCalendarPDF() {{
     const month = _calMonth.getMonth();
     const monthName = MONTH_NAMES[month];
     const nowIso = _fmtIso(new Date());
+    const filename = 'SV-TeamIntel-' + monthName + '-' + year
+        + (players.length <= 3 ? '-' + players.map(p => p.split(' ').pop()).join('-') : '');
 
-    const container = document.createElement('div');
-    // Render IN the viewport (html2canvas gets confused by offscreen positioning /
-    // opacity:0 and produces a blank canvas). Cover the user's view with a solid
-    // overlay during the render so the container stays hidden from them.
-    container.style.cssText = 'position:fixed;top:0;left:0;width:1100px;background:white;padding:26px 28px;font-family:Arial,sans-serif;color:#222;z-index:99990;';
-    container.setAttribute('data-pdf-root', '1');
-    container.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #2d5016;padding-bottom:10px;margin-bottom:14px;">'
+    const bodyHtml =
+        '<div class="pdf-header">'
       +   '<div>'
-      +     '<div style="font-size:22px;font-weight:800;color:#2d5016;letter-spacing:0.3px;">Stadium Ventures &middot; ' + monthName + ' ' + year + '</div>'
-      +     '<div style="font-size:11px;color:#555;margin-top:4px;">Players: ' + _escHtml(players.join(', ')) + '</div>'
+      +     '<div class="pdf-title">Stadium Ventures &middot; ' + monthName + ' ' + year + '</div>'
+      +     '<div class="pdf-sub">Players: ' + _escHtml(players.join(', ')) + '</div>'
       +   '</div>'
-      +   '<div style="font-size:10px;color:#888;text-align:right;">SV TeamIntel<br>Generated ' + nowIso + '</div>'
+      +   '<div class="pdf-gen">SV TeamIntel<br>Generated ' + nowIso + '</div>'
       + '</div>'
       + _buildPdfGridHtml(year, month, byDate)
       + _buildPdfAgendaHtml(players, byDate, year, month);
-    document.body.appendChild(container);
 
-    // Opaque overlay hides the briefly-visible container from the user.
-    // Sits on top of everything including the container (higher z-index).
-    const pdfOverlay = document.createElement('div');
-    pdfOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(20,30,20,0.94);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:white;font-family:Arial,sans-serif;';
-    pdfOverlay.innerHTML = '<div style="font-size:18px;font-weight:700;letter-spacing:0.5px;">Building PDF...</div>'
-        + '<div style="font-size:12px;opacity:0.75;">This takes a couple of seconds.</div>';
-    document.body.appendChild(pdfOverlay);
+    const doc = '<!DOCTYPE html>\\n<html><head><meta charset="utf-8"><title>' + filename + '</title>'
+      + '<style>'
+      +   '@page {{ size: letter landscape; margin: 10mm; }}'
+      +   '@media print {{ body {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }} }}'
+      +   'body {{ margin: 0; padding: 12px; font-family: Arial, sans-serif; color: #222; font-size: 10px; }}'
+      +   '.pdf-header {{ display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2d5016; padding-bottom: 8px; margin-bottom: 12px; }}'
+      +   '.pdf-title {{ font-size: 20px; font-weight: 800; color: #2d5016; letter-spacing: 0.3px; }}'
+      +   '.pdf-sub {{ font-size: 10px; color: #555; margin-top: 3px; }}'
+      +   '.pdf-gen {{ font-size: 9px; color: #888; text-align: right; }}'
+      + '</style></head><body>' + bodyHtml + '</body></html>';
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
 
     const btn = document.querySelector('.cal-pdfbtn');
-    if (btn) {{ btn.disabled = true; btn.textContent = 'Building...'; }}
-    try {{
-        const filename = 'SV-TeamIntel-' + monthName + '-' + year
-            + (players.length <= 3 ? '-' + players.map(p => p.split(' ').pop()).join('-') : '')
-            + '.pdf';
-        await html2pdf().set({{
-            margin: [8, 8, 8, 8],
-            filename: filename,
-            image: {{ type: 'jpeg', quality: 0.95 }},
-            html2canvas: {{
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                scrollX: 0,
-                scrollY: 0,
-                windowWidth: 1200,
-                // Belt-and-suspenders: even though the container is in-viewport, force
-                // the cloned root to static/visible in case the fixed positioning
-                // trips html2canvas's bounding-rect math on Safari / older Chrome.
-                onclone: (clonedDoc) => {{
-                    const el = clonedDoc.querySelector('[data-pdf-root]');
-                    if (el) {{
-                        el.style.position = 'static';
-                        el.style.opacity = '1';
-                        el.style.visibility = 'visible';
-                        el.style.transform = 'none';
-                    }}
-                }}
-            }},
-            jsPDF: {{ unit: 'mm', format: 'letter', orientation: 'landscape' }},
-            pagebreak: {{ mode: ['css', 'legacy'] }}
-        }}).from(container).save();
-        showToast('PDF downloaded: ' + filename, true);
-    }} catch(e) {{
-        console.error(e);
-        showToast('PDF failed: ' + e.message, false);
-    }} finally {{
-        document.body.removeChild(container);
-        if (pdfOverlay.parentNode) pdfOverlay.parentNode.removeChild(pdfOverlay);
+    if (btn) {{ btn.disabled = true; btn.textContent = 'Opening...'; }}
+
+    const restore = () => {{
         if (btn) {{ btn.disabled = false; btn.innerHTML = '&#x2B07; PDF'; }}
+        // Defer iframe removal: Safari/Chrome need the iframe alive through the print dialog.
+        setTimeout(() => {{ if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }}, 2000);
+    }};
+
+    // Write into the iframe and trigger print once it's ready. The user picks
+    // "Save as PDF" in the browser's print dialog — works on every browser.
+    const iwin = iframe.contentWindow;
+    const idoc = iwin.document;
+    idoc.open();
+    idoc.write(doc);
+    idoc.close();
+
+    const triggerPrint = () => {{
+        try {{
+            iwin.focus();
+            iwin.print();
+            showToast('Print dialog opened — choose "Save as PDF".', true);
+        }} catch(e) {{
+            console.error(e);
+            showToast('PDF failed: ' + e.message, false);
+        }} finally {{
+            restore();
+        }}
+    }};
+
+    // Give the iframe one paint cycle to layout before printing.
+    if (idoc.readyState === 'complete') {{
+        setTimeout(triggerPrint, 100);
+    }} else {{
+        iwin.addEventListener('load', () => setTimeout(triggerPrint, 100), {{ once: true }});
     }}
 }}
 
