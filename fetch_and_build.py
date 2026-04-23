@@ -1294,10 +1294,8 @@ function checkPw() {{
             <label for="calTypeFilter">Type:</label>
             <select id="calTypeFilter" onchange="renderCalendar()">
                 <option value="">All</option>
-                <option value="workout">Workouts</option>
+                <option value="workout" selected>Workouts</option>
                 <option value="game">Games</option>
-                <option value="playoff">Playoffs</option>
-                <option value="travel">Travel</option>
                 <option value="other">Other</option>
             </select>
         </div>
@@ -1328,8 +1326,6 @@ function checkPw() {{
             <label>Type</label>
             <select id="evType" onchange="evSyncType()">
                 <option value="workout">Pre-Draft Workout</option>
-                <option value="playoff">Playoff Game</option>
-                <option value="travel">Travel</option>
                 <option value="other">Other</option>
             </select>
         </div>
@@ -2096,7 +2092,13 @@ function exportCalendarPDF() {{
     const fType = document.getElementById('calTypeFilter').value;
     const merged = _getMergedEvents().filter(ev => {{
         if (!_calSelectedPlayers.has(ev.player)) return false;
-        if (fType && ev.type !== fType) return false;
+        if (fType) {{
+            // "other" buckets anything that isn't a workout or a game
+            // (keeps legacy playoff/travel events visible).
+            if (fType === 'other') {{
+                if (ev.type === 'workout' || ev.type === 'game') return false;
+            }} else if (ev.type !== fType) return false;
+        }}
         return true;
     }});
     const byDate = {{}};
@@ -2320,7 +2322,13 @@ function renderCalendar() {{
 
     const merged = _getMergedEvents().filter(ev => {{
         if (!_calSelectedPlayers.has(ev.player)) return false;
-        if (fType && ev.type !== fType) return false;
+        if (fType) {{
+            // "other" buckets anything that isn't a workout or a game
+            // (keeps legacy playoff/travel events visible).
+            if (fType === 'other') {{
+                if (ev.type === 'workout' || ev.type === 'game') return false;
+            }} else if (ev.type !== fType) return false;
+        }}
         return true;
     }});
     // Reset chip dispatch table for this render.
