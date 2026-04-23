@@ -909,8 +909,8 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #000000; outline-offset: -2px; }}
-td.workout {{ outline: 3px solid #ff2a22; outline-offset: -3px; }}
-.workout-badge {{ display: inline-block; background: #ff2a22; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
+td.workout {{ outline: 3px solid #d4a017; outline-offset: -3px; }}
+.workout-badge {{ display: inline-block; background: #d4a017; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
 td.overridden {{ position: relative; }}
 td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(0,0,0,0.4); }}
 
@@ -1413,7 +1413,7 @@ function checkPw() {{
     <div class="legend-item"><div class="legend-swatch" style="background:#fff2cc"></div>0 (Yellow / Neutral)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec"></div>-1 (Red / Cool/No Contact)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#f4c7c3"></div>-2 (Dark Red / Negative)</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #ff2a22"></div>Pre-Draft Workout</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
         <span style="font-size:11px;color:#999;">Tap a score to view details, then click any score badge to edit</span>
     </div>
