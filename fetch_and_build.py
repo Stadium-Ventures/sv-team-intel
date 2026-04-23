@@ -1060,15 +1060,38 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 
 /* --- Event modal --- */
-#evOverlay {{
+#evOverlay, #mrOverlay {{
     position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
     display: none; align-items: center; justify-content: center;
 }}
-#evOverlay.open {{ display: flex; }}
-#evModal {{
+#evOverlay.open, #mrOverlay.open {{ display: flex; }}
+#evModal, #mrModal {{
     background: white; border-radius: 8px; padding: 20px 22px; width: 420px; max-width: 92vw;
     max-height: 90vh; overflow-y: auto; box-shadow: 0 6px 32px rgba(0,0,0,0.3);
 }}
+.mr-addentry-btn {{
+    padding: 5px 12px; font-size: 12px; font-weight: 700;
+    background: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer;
+    margin-left: auto;
+}}
+.mr-addentry-btn:hover {{ background: #3a6b1d; }}
+.mr-wd-row {{ display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }}
+.mr-wd-row input[type="date"] {{ flex: 1; padding: 5px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
+.mr-wd-del {{
+    padding: 4px 9px; font-size: 12px; background: #eee; color: #666;
+    border: 1px solid #ccc; border-radius: 4px; cursor: pointer;
+}}
+.mr-wd-del:hover {{ background: #f5d5d5; color: #a83030; border-color: #c94040; }}
+.mr-wd-add {{
+    padding: 5px 10px; font-size: 11px; font-weight: 600;
+    background: #f0f7ec; color: #2d5016; border: 1px dashed #2d5016; border-radius: 4px; cursor: pointer;
+}}
+.mr-wd-add:hover {{ background: #e0efd6; }}
+.mm-edit-btn {{
+    padding: 4px 10px; font-size: 11px; font-weight: 600; background: #d4a017; color: white;
+    border: none; border-radius: 4px; cursor: pointer; margin-left: 8px;
+}}
+.mm-edit-btn:hover {{ background: #b8890f; }}
 .ev-title {{ font-size: 16px; font-weight: 700; color: #2d5016; margin-bottom: 14px; }}
 .ev-row {{ display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }}
 .ev-row label {{ font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }}
@@ -1223,6 +1246,7 @@ function checkPw() {{
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
         <button onclick="showView('matrix')" style="padding:6px 14px;font-size:13px;font-weight:600;background:#2d5016;color:white;border:none;border-radius:6px;cursor:pointer;">&#8592; Back</button>
         <button onclick="jumpToCalendarForCurrentPlayer()" style="padding:6px 14px;font-size:13px;font-weight:600;background:#d4a017;color:white;border:none;border-radius:6px;cursor:pointer;" title="Show this player's workouts on the calendar">&#x1F4C5; View Calendar</button>
+        <button onclick="openManualEntryForCurrentPlayer()" style="padding:6px 14px;font-size:13px;font-weight:600;background:#2d5016;color:white;border:none;border-radius:6px;cursor:pointer;" title="Add a manual entry for this player">&#x2B; Add Entry</button>
         <div class="player-select-wrapper" style="margin-bottom:0;">
             <label>Select Player:</label>
             <select class="player-select" id="playerSelect" onchange="_filterTeam=null; renderDetail()">
@@ -1442,22 +1466,35 @@ function _highlightMatches(text, phraseGroups) {{
 function openMessageModal(rowKey) {{
     const r = _modalIndex[rowKey];
     if (!r) return;
+    _mmCurrentRecord = r;
     // Default: no back button. openSlackFromEvent sets it after this call.
     _mmReturnToEvent = null;
     const bb = document.getElementById('mmBackBtn');
     if (bb) bb.style.display = 'none';
-    const body = (r.full_text && r.full_text.length > r.note.length) ? r.full_text : r.note;
+    const body = (r.full_text && r.full_text.length > (r.note || '').length) ? r.full_text : r.note;
     const isPDWrow = !!r.workout;
     const playerAliases = (PLAYER_ALIASES[r.player] || []).concat([r.player]);
     document.getElementById('mmTitle').textContent = r.player + ' · ' + r.team;
-    document.getElementById('mmMeta').textContent = r.date + ' · #' + (r.channel || 'unknown') +
-        (isPDWrow ? ' · PDW flagged' : '');
+    // Header: "Manual Entry" for manually-added records (with Edit button); otherwise the default Slack label.
+    const header = document.getElementById('mmHeader');
+    const editBtn = document.getElementById('mmEditBtn');
+    if (r.is_manual) {{
+        header.childNodes[0].nodeValue = 'Manual Entry ';
+        if (editBtn) editBtn.style.display = 'inline-block';
+        document.getElementById('mmMeta').textContent = r.date +
+            (isPDWrow ? ' · PDW flagged' : '');
+    }} else {{
+        header.childNodes[0].nodeValue = 'Full Slack Message ';
+        if (editBtn) editBtn.style.display = 'none';
+        document.getElementById('mmMeta').textContent = r.date + ' · #' + (r.channel || 'unknown') +
+            (isPDWrow ? ' · PDW flagged' : '');
+    }}
     const groups = [
         // Draw PDW highlight first (it takes priority on overlap).
         {{ phrases: r.workout_matches || [], cls: 'mm-hl', wholeWord: false }},
         {{ phrases: playerAliases, cls: 'mm-hl-player', wholeWord: true }},
     ];
-    document.getElementById('mmBody').innerHTML = _highlightMatches(body, groups);
+    document.getElementById('mmBody').innerHTML = _highlightMatches(body || '', groups);
     document.getElementById('mmLegend').innerHTML =
         '<span class="pill pill-player">' + r.player.split(' ')[0] + '</span> = player mentions' +
         (isPDWrow && (r.workout_matches || []).length
@@ -1691,7 +1728,8 @@ function renderMatrix() {{
         '<div class="stat-item"><span class="stat-label">Players:</span><span class="stat-value">' + sortedPlayers.length + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Intel Reports:</span><span class="stat-value">' + RECORDS.length + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Player-Team Connections:</span><span class="stat-value">' + uniquePairs + '</span></div>' +
-        '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">Aug 2025 - Present</span></div>';
+        '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">Aug 2025 - Present</span></div>' +
+        '<button class="mr-addentry-btn" onclick="openManualEntryModal(null, null, null)" title="Add a manual player-team connection">&#x2B;&nbsp;Add Entry</button>';
 }}
 
 function toggleHidden() {{
@@ -2531,8 +2569,205 @@ async function initCalendar() {{
     renderCalendar();
 }}
 
+// ================= Manual Entries =================
+// Manual player-team records (not from Slack). Backed by Redis key `manual_records`
+// via /api/manual-records. Server-side merges them into the embedded RECORDS on
+// build; client-side reloads the latest on init so adds/edits propagate without
+// waiting for a full rebuild.
+
+async function _mrApi(method, body) {{
+    const opts = {{ method: method, headers: {{'Content-Type':'application/json'}} }};
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch('/api/manual-records', opts);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+}}
+
+async function loadManualRecords() {{
+    // Fetch the latest manual records from Redis and replace any manual entries in RECORDS.
+    // (Server-side build may have embedded a slightly older snapshot; client fetch catches up.)
+    let blob;
+    try {{ blob = await _mrApi('GET', null); }}
+    catch(e) {{ console.warn('manual records load failed', e); return; }}
+    if (!blob || typeof blob !== 'object') return;
+    // Rebuild RECORDS without any `is_manual`, then push the fresh manual set.
+    RECORDS = RECORDS.filter(r => !r.is_manual);
+    Object.values(blob).forEach(val => {{
+        if (!val || !val.player || !val.team || !val.date) return;
+        const full = val.full_text || '';
+        RECORDS.push({{
+            id: val.id,
+            player: val.player,
+            team: val.team,
+            date: val.date,
+            score: Number(val.score),
+            note: full.slice(0, 200),
+            full_text: full,
+            channel: null,
+            workout: !!val.workout,
+            workout_dates: val.workout_dates || [],
+            is_manual: true,
+        }});
+    }});
+}}
+
+function _mrPopulatePlayerOptions(selectedPlayer) {{
+    const sel = document.getElementById('mrPlayer');
+    sel.innerHTML = '';
+    const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
+    players.forEach(p => {{
+        const o = document.createElement('option'); o.value = p; o.textContent = p;
+        sel.appendChild(o);
+    }});
+    if (selectedPlayer) sel.value = selectedPlayer;
+}}
+
+function _mrPopulateTeamOptions(selectedTeam) {{
+    const sel = document.getElementById('mrTeam');
+    sel.innerHTML = '';
+    ALL_TEAMS.forEach(t => {{
+        const o = document.createElement('option'); o.value = t; o.textContent = t;
+        sel.appendChild(o);
+    }});
+    if (selectedTeam) sel.value = selectedTeam;
+}}
+
+function _toggleWorkoutDatesVisibility() {{
+    const on = document.getElementById('mrWorkout').checked;
+    document.getElementById('mrWorkoutDatesWrap').style.display = on ? 'block' : 'none';
+    if (on && document.getElementById('mrWorkoutDates').children.length === 0) {{
+        addWorkoutDateRow();
+    }}
+}}
+
+function addWorkoutDateRow(preset) {{
+    const host = document.getElementById('mrWorkoutDates');
+    const row = document.createElement('div');
+    row.className = 'mr-wd-row';
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    if (preset && preset.date) dateInput.value = preset.date;
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'mr-wd-del';
+    del.innerHTML = '&times;';
+    del.title = 'Remove this date';
+    del.onclick = () => row.remove();
+    row.appendChild(dateInput);
+    row.appendChild(del);
+    host.appendChild(row);
+}}
+
+function _collectWorkoutDates() {{
+    const host = document.getElementById('mrWorkoutDates');
+    const out = [];
+    host.querySelectorAll('input[type="date"]').forEach(inp => {{
+        const v = (inp.value || '').trim();
+        if (v && /^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(v)) out.push({{ date: v, tentative: false }});
+    }});
+    return out;
+}}
+
+function openManualEntryModal(existingId, preselectPlayer, preselectTeam) {{
+    // Find existing manual record if editing.
+    let existing = null;
+    if (existingId) existing = RECORDS.find(r => r.is_manual && r.id === existingId);
+
+    _mrPopulatePlayerOptions((existing && existing.player) || preselectPlayer || null);
+    _mrPopulateTeamOptions((existing && existing.team) || preselectTeam || null);
+
+    const today = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const todayIso = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
+    document.getElementById('mrDate').value = (existing && existing.date) || todayIso;
+    document.getElementById('mrScore').value = String((existing && typeof existing.score === 'number') ? existing.score : 1);
+    document.getElementById('mrNotes').value = (existing && existing.full_text) || '';
+    document.getElementById('mrWorkout').checked = !!(existing && existing.workout);
+
+    // Seed workout-date rows
+    const host = document.getElementById('mrWorkoutDates');
+    host.innerHTML = '';
+    if (existing && existing.workout_dates && existing.workout_dates.length) {{
+        existing.workout_dates.forEach(wd => addWorkoutDateRow(wd));
+    }}
+    _toggleWorkoutDatesVisibility();
+
+    document.getElementById('mrTitle').textContent = existing ? 'Edit Manual Entry' : 'Add Manual Entry';
+    document.getElementById('mrDeleteBtn').style.display = existing ? 'inline-block' : 'none';
+    document.getElementById('mrOverlay').dataset.editId = existing ? existing.id : '';
+    document.getElementById('mrOverlay').classList.add('open');
+}}
+
+function openManualEntryForCurrentPlayer() {{
+    const p = document.getElementById('playerSelect').value;
+    openManualEntryModal(null, p || null, null);
+}}
+
+function closeManualEntryModal() {{
+    document.getElementById('mrOverlay').classList.remove('open');
+}}
+
+async function saveManualEntry() {{
+    const body = {{
+        player: document.getElementById('mrPlayer').value,
+        team: document.getElementById('mrTeam').value,
+        date: document.getElementById('mrDate').value,
+        score: Number(document.getElementById('mrScore').value),
+        full_text: document.getElementById('mrNotes').value || '',
+        workout: document.getElementById('mrWorkout').checked,
+        workout_dates: document.getElementById('mrWorkout').checked ? _collectWorkoutDates() : [],
+    }};
+    if (!body.player || !body.team || !body.date) {{
+        showToast('Player, team, and date are required.', false);
+        return;
+    }}
+    const editId = document.getElementById('mrOverlay').dataset.editId;
+    if (editId) body.id = editId;
+    try {{
+        await _mrApi('POST', body);
+        await loadManualRecords();
+        closeManualEntryModal();
+        renderMatrix();
+        if (document.getElementById('detailView').style.display !== 'none' && document.getElementById('playerSelect').value) {{
+            renderDetail();
+        }}
+        showToast('Manual entry saved', true);
+    }} catch(e) {{
+        showToast('Save failed: ' + e.message, false);
+    }}
+}}
+
+async function deleteManualEntry() {{
+    const id = document.getElementById('mrOverlay').dataset.editId;
+    if (!id) return;
+    if (!confirm('Delete this manual entry?')) return;
+    try {{
+        await _mrApi('DELETE', {{ id: id }});
+        await loadManualRecords();
+        closeManualEntryModal();
+        renderMatrix();
+        if (document.getElementById('detailView').style.display !== 'none' && document.getElementById('playerSelect').value) {{
+            renderDetail();
+        }}
+        showToast('Manual entry deleted', true);
+    }} catch(e) {{
+        showToast('Delete failed: ' + e.message, false);
+    }}
+}}
+
+// Track the record currently open in the message modal so "Edit" can route to the manual modal.
+var _mmCurrentRecord = null;
+
+function editManualFromMessage() {{
+    const r = _mmCurrentRecord;
+    if (!r || !r.is_manual || !r.id) return;
+    closeMessageModal();
+    openManualEntryModal(r.id, r.player, r.team);
+}}
+
 async function init() {{
     await loadOverrides();
+    await loadManualRecords();
     renderMatrix();
     const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
     const sel = document.getElementById('playerSelect');
@@ -2568,12 +2803,61 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
     <div id="messageModal">
         <button class="mm-close" onclick="closeMessageModal()">&times;</button>
         <button class="mm-back" id="mmBackBtn" onclick="returnToEvent()" style="display:none;">&#8592; Back to Event</button>
-        <div class="mm-header">Full Slack Message</div>
+        <div class="mm-header" id="mmHeader">Full Slack Message
+            <button class="mm-edit-btn" id="mmEditBtn" onclick="editManualFromMessage()" style="display:none;">Edit</button>
+        </div>
         <div class="mm-title" id="mmTitle"></div>
         <div class="mm-meta" id="mmMeta"></div>
         <div class="mm-body" id="mmBody"></div>
         <div class="mm-legend" id="mmLegend" style="display:none;">
             <span class="pill">highlighted</span> = text that triggered the PDW flag
+        </div>
+    </div>
+</div>
+
+<!-- Manual Entry modal (matrix "+ Add Entry" / detail view "+ Add Entry") -->
+<div id="mrOverlay" onclick="if(event.target===this) closeManualEntryModal()">
+    <div id="mrModal">
+        <div class="ev-title" id="mrTitle">Add Manual Entry</div>
+        <div class="ev-row">
+            <label for="mrPlayer">Player</label>
+            <select id="mrPlayer"></select>
+        </div>
+        <div class="ev-row">
+            <label for="mrTeam">Team</label>
+            <select id="mrTeam"></select>
+        </div>
+        <div class="ev-row">
+            <label for="mrDate">Date</label>
+            <input type="date" id="mrDate">
+        </div>
+        <div class="ev-row">
+            <label for="mrScore">Score</label>
+            <select id="mrScore">
+                <option value="2">+2 (Strong Interest)</option>
+                <option value="1" selected>+1 (Interest)</option>
+                <option value="0">0 (Neutral)</option>
+                <option value="-1">-1 (Cool / No Contact)</option>
+                <option value="-2">-2 (Negative)</option>
+            </select>
+        </div>
+        <div class="ev-row">
+            <label for="mrNotes">Notes (full message)</label>
+            <textarea id="mrNotes" rows="5" placeholder="Paste / type the intel context here..."></textarea>
+        </div>
+        <div class="ev-row cb">
+            <input type="checkbox" id="mrWorkout" onchange="_toggleWorkoutDatesVisibility()">
+            <label for="mrWorkout">Pre-Draft Workout (invite or confirmed)</label>
+        </div>
+        <div id="mrWorkoutDatesWrap" style="display:none;margin-bottom:10px;">
+            <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:6px;">Workout Dates</label>
+            <div id="mrWorkoutDates"></div>
+            <button type="button" class="mr-wd-add" onclick="addWorkoutDateRow()">+ Add Date</button>
+        </div>
+        <div class="ev-btns">
+            <button class="ev-delete" id="mrDeleteBtn" onclick="deleteManualEntry()" style="display:none;">Delete</button>
+            <button class="ev-cancel" onclick="closeManualEntryModal()">Cancel</button>
+            <button class="ev-save" onclick="saveManualEntry()">Save</button>
         </div>
     </div>
 </div>
@@ -2615,6 +2899,60 @@ def load_kv_overrides():
     except Exception as e:
         print(f"WARN: Failed to load overrides from Redis: {e}")
         return {}
+
+
+def load_manual_records():
+    """Read the `manual_records` Redis blob and return records in the same shape as
+    Slack-parsed records so they can be concatenated into the RECORDS list.
+    Each blob value becomes one record with {player, team, date, score, full_text,
+    workout, workout_dates, channel: None, is_manual: True, id}.
+    """
+    url = os.environ.get('REDIS_URL')
+    if not url:
+        return []
+    try:
+        import redis as _redis
+    except ImportError:
+        return []
+    try:
+        client = _redis.from_url(url, socket_connect_timeout=10, socket_timeout=8)
+        raw = client.get('manual_records')
+        try:
+            client.close()
+        except Exception:
+            pass
+        if not raw:
+            return []
+        if isinstance(raw, bytes):
+            raw = raw.decode('utf-8')
+        blob = json.loads(raw)
+        out = []
+        for rid, val in blob.items():
+            if not isinstance(val, dict):
+                continue
+            player = val.get('player')
+            team = val.get('team')
+            date = val.get('date')
+            if not (player and team and date):
+                continue
+            full = val.get('full_text') or ''
+            out.append({
+                'id': rid,
+                'player': player,
+                'team': team,
+                'date': date,
+                'score': int(val.get('score', 0)),
+                'note': full[:200],
+                'full_text': full,
+                'channel': None,
+                'workout': bool(val.get('workout')),
+                'workout_dates': val.get('workout_dates') or [],
+                'is_manual': True,
+            })
+        return out
+    except Exception as e:
+        print(f"WARN: Failed to load manual records from Redis: {e}")
+        return []
 
 
 def apply_overrides(records, overrides):
@@ -2687,6 +3025,15 @@ if __name__ == '__main__':
 
     messages = fetch_messages(token)
     records = parse_messages(messages)
+
+    # Merge manual records (matrix "+ Add Entry") before building HTML and JSON.
+    # Manual records live in Redis key `manual_records` and follow the same shape
+    # as Slack-parsed records so matrix/detail/calendar rendering needs no changes.
+    manual = load_manual_records()
+    if manual:
+        print(f"Merging {len(manual)} manual record(s) into RECORDS.")
+        records = records + manual
+
     html = build_html(records, password)
 
     out_dir = os.environ.get('OUTPUT_DIR', os.path.join(os.path.dirname(__file__), 'public'))
