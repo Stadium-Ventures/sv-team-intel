@@ -460,7 +460,12 @@ def score_line_for_team(line, full_text=""):
 # the message line. Tier 1 (SD / GM / VP / Special Asst) weighs 2×; T2 (National
 # X'er) 1.5×; T3 (plain X'er / regional) 1.25×; T4 (area scout) is baseline.
 
-TIER_MULTIPLIERS = {1: 2.0, 2: 1.5, 3: 1.25, 4: 1.0, 5: 1.0}
+# TIER_MULTIPLIERS doubles as the score floor for a record: when a senior
+# attendee is detected, the record's sentiment score is bumped up to this
+# value (floor) unless sentiment was already higher or explicitly negative.
+# T3 is 1.0 (baseline — no bump). T4 is 0.5 (area scouts weigh less than
+# a generic touch). T1/T2 actively bump the score.
+TIER_MULTIPLIERS = {1: 2.0, 2: 1.5, 3: 1.0, 4: 0.5, 5: 1.0}
 TIER_LABELS = {1: 'Dir', 2: 'NXC', 3: 'Xer', 4: 'Area', 5: ''}
 
 # Role → tier map for the org-review CSV columns. Anyone in this directory
@@ -518,8 +523,8 @@ _TIER1_PATTERNS = [
     r'\bdirector\s+of\s+player\s+development\b', r'\bdirector\s+player\s+dev\b',
     r'\bpitching\s+coord(?:inator)?\b', r'\bhitting\s+coord(?:inator)?\b',
 ]
-_TIER2_PATTERN = r'\bnational\s+x(?:er|\'er|-er)?\b|\bnxc\b|\bnational\s+cross[- ]?check(?:er)?\b'
-_TIER3_PATTERN = r'\bx(?:er|\'er|-er)\b|\bcross[- ]?check(?:er)?\b|\bregional\s+x(?:er|\'er|-er)?\b'
+_TIER2_PATTERN = r'\bnational\s+x(?:er|\'er|-er)?\b|\bnxc\b|\bnational\s+cross[- ]?check(?:ers?)?\b'
+_TIER3_PATTERN = r'\bx(?:er|\'er|-er)\b|\bcross[- ]?check(?:ers?)?\b|\bregional\s+x(?:er|\'er|-er)?\b'
 _TIER4_PATTERN = r'\barea\s+(?:guy|scout)?\b|\bout\s+of\s+area\b'
 
 
@@ -557,7 +562,7 @@ def detect_attendee_tier(line, team, directory):
         if 'national' not in pre:
             t3_hit = True
             break
-    if t3_hit or re.search(r'\bcross[- ]?check(?:er)?\b', lower) or re.search(r'\bregional\s+x', lower):
+    if t3_hit or re.search(r'\bcross[- ]?check(?:ers?)?\b', lower) or re.search(r'\bregional\s+x', lower):
         tiers_seen.add(3)
     if re.search(_TIER4_PATTERN, lower):
         tiers_seen.add(4)
@@ -575,11 +580,26 @@ def parse_messages(messages):
     _front_office = load_front_office()
 
     def _attach_tier(rec, line_text):
-        """Write attendee_tier / tier_multiplier / tier_label onto a record in place."""
+        """Write attendee_tier / tier_multiplier / tier_label / raw_score onto a
+        record in place, and bump rec['score'] to the tier floor when a senior
+        attendee was detected.
+        - Sentiment score stays visible as rec['raw_score'] (for audit / revert).
+        - Negative sentiment (-1, -2) always wins — an SD being there doesn't
+          override "didn't like".
+        - Otherwise: rec['score'] = max(sentiment, tier_floor).
+        """
         t, mult, label = detect_attendee_tier(line_text, rec.get('team'), _front_office)
         rec['attendee_tier'] = t
         rec['tier_multiplier'] = mult
         rec['tier_label'] = label
+        sentiment = rec.get('score', 1)
+        rec['raw_score'] = sentiment
+        if sentiment < 0 or t == 5:
+            # Explicit negative wins; T5 (no tier identified) keeps sentiment as-is.
+            return
+        tier_floor = mult
+        if tier_floor > sentiment:
+            rec['score'] = tier_floor
 
     for msg in sorted(messages, key=lambda m: m['ts']):
         text = msg['text']
@@ -1850,20 +1870,27 @@ function buildMatrix() {{
 }}
 
 function scoreClass(s) {{
-    if (s === 2) return 'score-2';
-    if (s === 1) return 'score-1';
-    if (s === 0) return 'score-0';
-    if (s === -1) return 'score-n1';
-    if (s === -2) return 'score-n2';
-    return '';
+    if (typeof s !== 'number') return '';
+    // Range-based buckets so fractional scores (e.g. tier floor 0.5 / 1.5) land right.
+    if (s >= 1.5) return 'score-2';
+    if (s >= 0.5) return 'score-1';
+    if (s >= -0.5) return 'score-0';
+    if (s >= -1.5) return 'score-n1';
+    return 'score-n2';
 }}
 function badgeClass(s) {{
-    if (s === 2) return 's2';
-    if (s === 1) return 's1';
-    if (s === 0) return 's0';
-    if (s === -1) return 'sn1';
-    if (s === -2) return 'sn2';
-    return '';
+    if (typeof s !== 'number') return '';
+    if (s >= 1.5) return 's2';
+    if (s >= 0.5) return 's1';
+    if (s >= -0.5) return 's0';
+    if (s >= -1.5) return 'sn1';
+    return 'sn2';
+}}
+function fmtScore(s) {{
+    if (s === 'NA') return 'NA';
+    if (typeof s !== 'number') return String(s);
+    // Drop trailing .0 so integers still render cleanly (1 not 1.0).
+    return (s % 1 === 0) ? String(s) : s.toFixed(1);
 }}
 
 function renderMatrix() {{
@@ -1893,7 +1920,7 @@ function renderMatrix() {{
             const wk = workoutMap[player + '|' + team];
             if (s !== undefined && s !== null && typeof s === 'number' && cnt > 0) {{
                 const touchLabel = _weightedMode ? 'weighted' : ('touch' + (cnt===1?'':'es'));
-                html += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + s + ' \\u2022 ' + fmtCnt(cnt) + ' ' + touchLabel + '">' + fmtCnt(cnt) + '</td>';
+                html += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + fmtScore(s) + ' \\u2022 ' + fmtCnt(cnt) + ' ' + touchLabel + '">' + fmtCnt(cnt) + '</td>';
             }} else {{
                 html += '<td></td>';
             }}
@@ -1965,7 +1992,7 @@ function renderDetail() {{
         const wBadge = !excluded && isPDW(r.player, r.team) ? '<span class="workout-badge">PDW</span>' : '';
         const rowKey = r.player + '|' + r.team + '|' + r.date + '|' + i;
         const rowStyle = excluded ? ' style="opacity:0.45;"' : '';
-        const scoreDisp = (s === 'NA') ? 'NA' : (s + (isOverridden ? ' *' : ''));
+        const scoreDisp = (s === 'NA') ? 'NA' : (fmtScore(s) + (isOverridden ? ' *' : ''));
         const badgeCls = (s === 'NA') ? 'score-na' : badgeClass(s);
         // Tier badge — shows when we detected a senior attendee (T1-T4). No badge for T5.
         const tier = r.attendee_tier;
