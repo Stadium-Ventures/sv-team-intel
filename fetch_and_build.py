@@ -1407,15 +1407,15 @@ function checkPw() {{
 </div>
 
 <div class="legend">
-    <span class="legend-title">Score Key:</span>
-    <div class="legend-item"><div class="legend-swatch" style="background:#c6efce"></div>2 (Green / Strong Interest)</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#e2efda"></div>1 (Light Green / Interest)</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fff2cc"></div>0 (Yellow / Neutral)</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec"></div>-1 (Red / Cool/No Contact)</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#f4c7c3"></div>-2 (Dark Red / Negative)</div>
+    <span class="legend-title">Interest Key:</span>
+    <div class="legend-item" style="gap:4px;align-items:center;">
+        <span style="font-size:11px;color:#999;">Not interested</span>
+        <div style="display:flex;height:18px;width:180px;border-radius:3px;border:1px solid rgba(0,0,0,0.1);background:linear-gradient(to right, rgb(225,110,105) 0%, #fff 50%, rgb(130,200,140) 100%);"></div>
+        <span style="font-size:11px;color:#999;">Really interested</span>
+    </div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:11px;color:#999;">Tap a score to view details, then click any score badge to edit</span>
+        <span style="font-size:11px;color:#999;">Tap a cell to view details &middot; click any score badge to edit</span>
     </div>
 </div>
 
@@ -1802,34 +1802,26 @@ function closeScorePopup() {{
     document.getElementById('scoreOverlay').style.display = 'none';
 }}
 
-// Toggleable matrix mode: false = raw touch count, true = weighted by attendee tier.
-// Persist across view swaps within a session (not across reloads).
-var _weightedMode = false;
-function toggleWeighted() {{
-    _weightedMode = !_weightedMode;
-    renderMatrix();
-}}
-
 function buildMatrix() {{
-    // Only count records that aren't manually flagged NA (false connections)
+    // Cumulative "interest points" model: each cell = sum of score across all records
+    // for that (player, team). Total = sum of cells across all teams. The visual
+    // story: every touch pushes the cell color further from white — green for
+    // positive signal, red for negative. Counts are tracked separately for tooltips.
     const activeRecords = RECORDS.filter(r => !isExcluded(r));
-    const latest = {{}};
-    const counts = {{}};
-    // When weighted mode is on, each record contributes its tier_multiplier
-    // (SD = 2×, National X = 1.5×, X = 1.25×, Area = 1×). Otherwise plain count.
-    activeRecords.forEach(r => {{
-        const key = r.player + '|' + r.team;
-        if (!latest[key] || r.date > latest[key].date) latest[key] = r;
-        const w = _weightedMode ? (typeof r.tier_multiplier === 'number' ? r.tier_multiplier : 1) : 1;
-        counts[key] = (counts[key] || 0) + w;
-    }});
-    // Track if any record for a player+team has a workout invite
+    const cellSums = {{}};     // key -> cumulative score
+    const counts = {{}};       // key -> touch count (for tooltip only)
     const workoutMap = {{}};
+
     activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
+        const s = getScore(r);
+        if (typeof s === 'number') {{
+            cellSums[key] = (cellSums[key] || 0) + s;
+        }}
+        counts[key] = (counts[key] || 0) + 1;
         if (r.workout) workoutMap[key] = true;
     }});
-    // Apply manual PDW overrides
+    // Manual PDW overrides (matrix popup) still apply to the workout map.
     Object.keys(scoreOverrides).forEach(k => {{
         if (k.startsWith('w|')) {{
             const parts = k.substring(2);
@@ -1837,36 +1829,29 @@ function buildMatrix() {{
             else delete workoutMap[parts];
         }}
     }});
-    const playerTeams = {{}}, playerTeamCounts = {{}}, playerAllScores = {{}};
-    Object.values(latest).forEach(r => {{
-        if (!playerTeams[r.player]) playerTeams[r.player] = {{}};
-        if (!playerTeamCounts[r.player]) playerTeamCounts[r.player] = {{}};
-        const score = getScore(r);
-        playerTeams[r.player][r.team] = score;
-        playerTeamCounts[r.player][r.team] = counts[r.player + '|' + r.team] || 0;
-        if (!playerAllScores[r.player]) playerAllScores[r.player] = [];
-        playerAllScores[r.player].push(score);
+
+    const playerTeams = {{}}, playerTeamCounts = {{}}, playerTotals = {{}};
+    Object.keys(cellSums).forEach(key => {{
+        const [player, team] = key.split('|');
+        if (!playerTeams[player]) playerTeams[player] = {{}};
+        if (!playerTeamCounts[player]) playerTeamCounts[player] = {{}};
+        playerTeams[player][team] = cellSums[key];
+        playerTeamCounts[player][team] = counts[key] || 0;
+        playerTotals[player] = (playerTotals[player] || 0) + cellSums[key];
     }});
+    // Ensure every roster player has an entry even if no records yet.
     ALL_2026_PLAYERS.forEach(p => {{
         if (!playerTeams[p]) playerTeams[p] = {{}};
         if (!playerTeamCounts[p]) playerTeamCounts[p] = {{}};
-        if (!playerAllScores[p]) playerAllScores[p] = [];
+        if (playerTotals[p] === undefined) playerTotals[p] = 0;
     }});
-    const playerAvgs = {{}};
-    Object.keys(playerAllScores).forEach(p => {{
-        const s = playerAllScores[p].filter(v => typeof v === 'number');
-        playerAvgs[p] = s.length > 0 ? s.reduce((a,b) => a+b, 0) / s.length : null;
-    }});
-    const playerTotals = {{}};
-    Object.keys(playerTeamCounts).forEach(p => {{
-        playerTotals[p] = Object.values(playerTeamCounts[p]).reduce((a,b) => a+b, 0);
-    }});
+    // Sort by cumulative total (descending), ties alphabetical.
     const sortedPlayers = Object.keys(playerTotals).sort((a,b) => {{
         const ta = playerTotals[a] || 0, tb = playerTotals[b] || 0;
         if (tb !== ta) return tb - ta;
         return a.localeCompare(b);
     }});
-    return {{ playerTeams, playerTeamCounts, playerAvgs, playerTotals, sortedPlayers, workoutMap }};
+    return {{ playerTeams, playerTeamCounts, playerTotals, sortedPlayers, workoutMap }};
 }}
 
 function scoreClass(s) {{
@@ -1893,34 +1878,59 @@ function fmtScore(s) {{
     return (s % 1 === 0) ? String(s) : s.toFixed(1);
 }}
 
+// Smooth color interpolation from white → green (positive) or white → red (negative).
+// `cap` is the value at which the color reaches full saturation; beyond that it's clamped.
+// This is the visual language: every intel touch nudges the cell away from white.
+function interestColor(v, cap) {{
+    if (typeof v !== 'number' || v === 0) return '';
+    cap = cap || 4;
+    const t = Math.min(1, Math.abs(v) / cap);
+    if (v > 0) {{
+        // White (255,255,255) → saturated green (130,200,140)
+        const r = Math.round(255 - (255 - 130) * t);
+        const g = Math.round(255 - (255 - 200) * t);
+        const b = Math.round(255 - (255 - 140) * t);
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }}
+    // White → saturated red/salmon (225,110,105)
+    const r = Math.round(255 - (255 - 225) * t);
+    const g = Math.round(255 - (255 - 110) * t);
+    const b = Math.round(255 - (255 - 105) * t);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+}}
+
 function renderMatrix() {{
-    const {{ playerTeams, playerTeamCounts, playerAvgs, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
+    const {{ playerTeams, playerTeamCounts, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
 
     var html = '<thead><tr><th>TOTAL</th><th>Client</th>';
     ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
     html += '</tr></thead><tbody>';
 
-    // In weighted mode, counts are floats — render with one decimal (trimming .0).
-    const fmtCnt = (n) => {{
-        if (!_weightedMode) return String(n);
-        const rounded = Math.round(n * 10) / 10;
-        return (rounded % 1 === 0) ? String(rounded) : rounded.toFixed(1);
-    }};
+    // Cap at which a cell or total reaches peak color saturation. Past the cap,
+    // color is clamped; number still grows. Tuned so one SD (+2) is visibly green
+    // but not "max"; three SDs (+6) or equivalent saturates the cell.
+    const CELL_CAP = 4;
+    const TOTAL_CAP = 12;
+
     sortedPlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
-        const avg = playerAvgs[player];
-        const avgClass = avg === null ? '' : avg >= 1.5 ? 'score-2' : avg >= 0.75 ? 'score-1' : avg >= 0 ? 'score-0' : avg >= -1 ? 'score-n1' : 'score-n2';
-        const titleAttr = avg !== null ? ' title="Avg score: ' + avg.toFixed(2) + (_weightedMode ? ' · weighted by attendee tier' : '') + '"' : '';
+        const totalBg = interestColor(total, TOTAL_CAP);
+        const totalStyle = totalBg ? ' style="background:' + totalBg + ';"' : '';
+        const titleAttr = ' title="Cumulative interest points across all teams"';
         const esc = player.replace(/'/g, "\\\\'");
-        html += '<tr><td class="' + avgClass + '"' + titleAttr + '>' + fmtCnt(total) + '</td>';
+        html += '<tr><td' + totalStyle + titleAttr + '>' + fmtScore(total) + '</td>';
         html += '<td class="clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + player + '</td>';
         ALL_TEAMS.forEach(team => {{
             const s = playerTeams[player] && playerTeams[player][team];
             const cnt = (playerTeamCounts[player] && playerTeamCounts[player][team]) || 0;
             const wk = workoutMap[player + '|' + team];
-            if (s !== undefined && s !== null && typeof s === 'number' && cnt > 0) {{
-                const touchLabel = _weightedMode ? 'weighted' : ('touch' + (cnt===1?'':'es'));
-                html += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + fmtScore(s) + ' \\u2022 ' + fmtCnt(cnt) + ' ' + touchLabel + '">' + fmtCnt(cnt) + '</td>';
+            const hasData = (s !== undefined && s !== null && typeof s === 'number');
+            if (hasData || wk) {{
+                const bg = interestColor(s, CELL_CAP);
+                const cellStyle = bg ? 'background:' + bg + ';' : '';
+                const display = hasData ? fmtScore(s) : '';
+                const title = 'Interest: ' + fmtScore(s || 0) + ' \\u2022 ' + cnt + ' touch' + (cnt === 1 ? '' : 'es');
+                html += '<td class="score-cell clickable' + (wk ? ' workout' : '') + '" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + display + '</td>';
             }} else {{
                 html += '<td></td>';
             }}
@@ -1932,16 +1942,11 @@ function renderMatrix() {{
 
     let uniquePairs = 0;
     Object.keys(playerTeams).forEach(p => uniquePairs += Object.keys(playerTeams[p]).length);
-    const weightBtnLabel = _weightedMode ? 'Weighted ×' : 'Raw';
-    const weightBtnTitle = _weightedMode
-        ? 'Weighted by attendee tier (SD 2×, National X 1.5×, X 1.25×, Area 1×). Click to revert.'
-        : 'Click to weight cells by attendee tier (SD 2×, National X 1.5×, X 1.25×, Area 1×).';
     document.getElementById('statsBar').innerHTML =
         '<div class="stat-item"><span class="stat-label">Players:</span><span class="stat-value">' + sortedPlayers.length + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Intel Reports:</span><span class="stat-value">' + RECORDS.length + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Player-Team Connections:</span><span class="stat-value">' + uniquePairs + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">Aug 2025 - Present</span></div>' +
-        '<button class="weight-toggle' + (_weightedMode ? ' on' : '') + '" onclick="toggleWeighted()" title="' + weightBtnTitle + '">' + weightBtnLabel + '</button>' +
         '<button class="mr-addentry-btn" onclick="openManualEntryModal(null, null, null)" title="Add a manual player-team connection">&#x2B;&nbsp;Add Entry</button>';
 }}
 
@@ -1958,13 +1963,13 @@ function renderDetail() {{
     const hiddenCount = allPr.filter(r => isExcluded(r)).length;
     const pr = _showHidden ? allPr : allPr.filter(r => !isExcluded(r));
     const teams = new Set(pr.filter(r => !isExcluded(r)).map(r => r.team));
-    const numScores = pr.filter(r => !isExcluded(r)).map(r => getScore(r));
-    const avg = numScores.length > 0 ? numScores.reduce((a,b) => a + b, 0) / numScores.length : 0;
+    const numScores = pr.filter(r => !isExcluded(r)).map(r => getScore(r)).filter(v => typeof v === 'number');
+    const totalInterest = numScores.reduce((a,b) => a + b, 0);
     document.getElementById('playerSummary').innerHTML =
         '<div class="summary-item"><span class="summary-label">Player</span><span class="summary-value">' + player + '</span></div>' +
         '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + numScores.length + '</span></div>' +
         '<div class="summary-item"><span class="summary-label">Teams Connected</span><span class="summary-value">' + teams.size + '</span></div>' +
-        '<div class="summary-item"><span class="summary-label">Avg Score</span><span class="summary-value">' + (numScores.length > 0 ? avg.toFixed(2) : '-') + '</span></div>';
+        '<div class="summary-item"><span class="summary-label">Total Interest</span><span class="summary-value">' + (numScores.length > 0 ? fmtScore(totalInterest) : '-') + '</span></div>';
 
     let hiddenBar = '';
     if (_filterTeam) {{
