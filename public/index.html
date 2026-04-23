@@ -2026,6 +2026,27 @@ function _mrPopulateTeamOptions(selectedTeam) {
     if (selectedTeam) sel.value = selectedTeam;
 }
 
+// Keep the collapsed mrScore select tinted to match its current value.
+// Chrome ignores `<option>` backgrounds on the closed select; coloring the select
+// element directly via JS is the reliable cross-browser path.
+const _MR_SCORE_COLORS = {
+    '2':  { bg: '#c6efce', fg: '#1a5e1a', weight: 700 },
+    '1':  { bg: '#e2efda', fg: '#3a6b30', weight: 600 },
+    '0':  { bg: '#fff2cc', fg: '#7a6b00', weight: 600 },
+    '-1': { bg: '#fce4ec', fg: '#9a2020', weight: 600 },
+    '-2': { bg: '#f4c7c3', fg: '#8b1a1a', weight: 700 },
+};
+
+function _mrSyncScoreColor() {
+    const sel = document.getElementById('mrScore');
+    if (!sel) return;
+    const c = _MR_SCORE_COLORS[sel.value];
+    if (!c) return;
+    sel.style.backgroundColor = c.bg;
+    sel.style.color = c.fg;
+    sel.style.fontWeight = c.weight;
+}
+
 function _toggleWorkoutDatesVisibility() {
     const on = document.getElementById('mrWorkout').checked;
     document.getElementById('mrWorkoutDatesWrap').style.display = on ? 'block' : 'none';
@@ -2075,6 +2096,7 @@ function openManualEntryModal(existingId, preselectPlayer, preselectTeam) {
     const todayIso = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
     document.getElementById('mrDate').value = (existing && existing.date) || todayIso;
     document.getElementById('mrScore').value = String((existing && typeof existing.score === 'number') ? existing.score : 1);
+    _mrSyncScoreColor();
     document.getElementById('mrNotes').value = (existing && existing.full_text) || '';
     document.getElementById('mrWorkout').checked = !!(existing && existing.workout);
 
@@ -2229,12 +2251,12 @@ if (sessionStorage.getItem('sv_auth') === '1') {
         </div>
         <div class="ev-row">
             <label for="mrScore">Score</label>
-            <select id="mrScore">
-                <option value="2">+2 (Strong Interest)</option>
-                <option value="1" selected>+1 (Interest)</option>
-                <option value="0">0 (Neutral)</option>
-                <option value="-1">-1 (Cool / No Contact)</option>
-                <option value="-2">-2 (Negative)</option>
+            <select id="mrScore" onchange="_mrSyncScoreColor()">
+                <option value="2" style="background:#c6efce;color:#1a5e1a;font-weight:700;">+2 (Strong Interest)</option>
+                <option value="1" selected style="background:#e2efda;color:#3a6b30;font-weight:600;">+1 (Interest)</option>
+                <option value="0" style="background:#fff2cc;color:#7a6b00;font-weight:600;">0 (Neutral)</option>
+                <option value="-1" style="background:#fce4ec;color:#9a2020;font-weight:600;">-1 (Cool / No Contact)</option>
+                <option value="-2" style="background:#f4c7c3;color:#8b1a1a;font-weight:700;">-2 (Negative)</option>
             </select>
         </div>
         <div class="ev-row">
