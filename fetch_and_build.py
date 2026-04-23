@@ -634,19 +634,21 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
     background: white; border-radius: 12px; padding: 40px; text-align: center;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3); min-width: 340px;
 }}
-.login-box .logo {{ font-size: 28px; font-weight: 800; color: #2d5016; margin-bottom: 4px; }}
-.login-box .tagline {{ font-size: 13px; color: #888; margin-bottom: 24px; }}
+.login-box .logo-img {{ height: 64px; width: auto; margin: 0 auto 8px; display: block; }}
+.login-box .brand-name {{ font-size: 20px; font-weight: 800; color: #000000; letter-spacing: 0.5px; margin-top: 4px; }}
+.login-box .brand-name .accent {{ color: #ff2a22; }}
+.login-box .tagline {{ font-size: 12px; color: #888; margin-bottom: 24px; margin-top: 4px; }}
 .login-box input {{
     width: 100%; padding: 12px 16px; font-size: 14px; border: 2px solid #ddd;
     border-radius: 8px; outline: none; margin-bottom: 12px; transition: border-color 0.2s;
 }}
-.login-box input:focus {{ border-color: #2d5016; }}
+.login-box input:focus {{ border-color: #000000; }}
 .login-box button {{
     width: 100%; padding: 12px; font-size: 14px; font-weight: 600;
-    background: #2d5016; color: white; border: none; border-radius: 8px;
+    background: #000000; color: white; border: none; border-radius: 8px;
     cursor: pointer; transition: background 0.2s;
 }}
-.login-box button:hover {{ background: #3a6b1e; }}
+.login-box button:hover {{ background: #222222; }}
 .login-error {{
     color: #c0392b; font-size: 13px; margin-top: 12px; display: none;
     background: #fce4ec; padding: 10px 14px; border-radius: 6px;
@@ -664,19 +666,19 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 
 /* --- DASHBOARD --- */
 .header {{
-    background: linear-gradient(135deg, #1a3a0a 0%, #2d5016 50%, #3a6b1e 100%);
+    background: #000000;
     color: white; padding: 18px 30px;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3); position: relative; z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3); position: relative; z-index: 100;
+    border-bottom: 3px solid #ff2a22;
 }}
 .header-left {{ display: flex; align-items: center; gap: 16px; }}
 .header h1 {{ font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }}
 .header .subtitle {{ font-size: 13px; opacity: 0.8; font-weight: 400; }}
 .logo-icon {{
-    width: 38px; height: 38px; background: rgba(255,255,255,0.15);
-    border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: bold;
+    height: 38px; width: auto; display: flex; align-items: center; justify-content: center;
 }}
+.logo-icon img {{ height: 38px; width: auto; display: block; }}
 .nav-tabs {{ display: flex; gap: 4px; }}
 .nav-tab {{
     padding: 8px 20px; border-radius: 6px; cursor: pointer;
@@ -693,7 +695,7 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 }}
 .stat-item {{ display: flex; gap: 6px; align-items: center; }}
 .stat-label {{ color: #888; font-weight: 500; }}
-.stat-value {{ font-weight: 700; color: #2d5016; }}
+.stat-value {{ font-weight: 700; color: #000000; }}
 
 .legend {{
     display: flex; gap: 16px; padding: 10px 30px; font-size: 12px;
@@ -719,8 +721,8 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
     white-space: nowrap; height: 32px; background: white;
 }}
 .matrix-table thead th {{
-    background: #2d5016; color: white; font-weight: 600; font-size: 11px;
-    letter-spacing: 0.3px; border-right-color: #3a6520; border-bottom: 2px solid #1a3a0a;
+    background: #000000; color: white; font-weight: 600; font-size: 11px;
+    letter-spacing: 0.3px; border-right-color: #3a6520; border-bottom: 2px solid #000000;
     position: sticky; top: 0; z-index: 3;
 }}
 /* Sticky first column (TOTAL) */
@@ -728,7 +730,7 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
     position: sticky; left: 0; z-index: 2;
     min-width: 50px; max-width: 50px;
 }}
-.matrix-table td:nth-child(1) {{ background: #f8faf6; color: #2d5016; font-size: 13px; font-weight: 700; }}
+.matrix-table td:nth-child(1) {{ background: #fafafa; color: #000000; font-size: 13px; font-weight: 700; }}
 /* Sticky second column (Client name) */
 .matrix-table th:nth-child(2), .matrix-table td:nth-child(2) {{
     position: sticky; left: 51px; z-index: 2;
@@ -741,7 +743,7 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .matrix-table thead th:nth-child(2) {{ box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1); }}
 /* Header corners stack above both row- and column-sticky */
 .matrix-table thead th:nth-child(1), .matrix-table thead th:nth-child(2) {{ z-index: 4; }}
-.matrix-table tbody tr:hover td {{ background-color: #f0f7ec !important; }}
+.matrix-table tbody tr:hover td {{ background-color: #fff5f5 !important; }}
 
 .score-2 {{ background-color: #c6efce !important; color: #1a5e1a; font-weight: 700; }}
 .score-1 {{ background-color: #e2efda !important; color: #3a6b30; font-weight: 600; }}
@@ -750,9 +752,9 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-na {{ background-color: #e0e0e0 !important; color: #666; font-weight: 600; font-style: italic; }}
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
-td.score-cell.clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
-td.workout {{ outline: 3px solid #d4a017; outline-offset: -3px; }}
-.workout-badge {{ display: inline-block; background: #d4a017; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
+td.score-cell.clickable:hover {{ outline: 2px solid #000000; outline-offset: -2px; }}
+td.workout {{ outline: 3px solid #ff2a22; outline-offset: -3px; }}
+.workout-badge {{ display: inline-block; background: #ff2a22; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
 td.overridden {{ position: relative; }}
 td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(0,0,0,0.4); }}
 
@@ -780,12 +782,12 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #scorePopup .popup-pdw {{
     display: flex; align-items: center; justify-content: center; gap: 6px;
-    margin-bottom: 8px; padding: 6px 0; border: 2px solid #d4a017; border-radius: 6px;
-    cursor: pointer; font-size: 12px; font-weight: 600; color: #d4a017; background: white;
+    margin-bottom: 8px; padding: 6px 0; border: 2px solid #ff2a22; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 600; color: #ff2a22; background: white;
     transition: all 0.15s;
 }}
 #scorePopup .popup-pdw:hover {{ background: #fdf6e3; }}
-#scorePopup .popup-pdw.active {{ background: #d4a017; color: white; }}
+#scorePopup .popup-pdw.active {{ background: #ff2a22; color: white; }}
 #scorePopup .popup-reset:hover {{ color: #c0392b; }}
 #scoreOverlay {{ display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 8999; }}
 
@@ -816,27 +818,27 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #messageModal .mm-close:hover {{ color: #c0392b; }}
 #messageModal .mm-back {{
     float: left; cursor: pointer; padding: 4px 10px; margin-right: 10px;
-    background: #d4a017; color: white; border: none; border-radius: 5px;
+    background: #ff2a22; color: white; border: none; border-radius: 5px;
     font-size: 12px; font-weight: 600;
 }}
-#messageModal .mm-back:hover {{ background: #b8890f; }}
+#messageModal .mm-back:hover {{ background: #d4221a; }}
 #messageModal .mm-header {{
     font-size: 12px; color: #666; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 4px;
     text-transform: uppercase;
 }}
 #messageModal .mm-title {{
-    font-size: 16px; font-weight: 700; color: #2d5016; margin-bottom: 2px;
+    font-size: 16px; font-weight: 700; color: #000000; margin-bottom: 2px;
 }}
 #messageModal .mm-meta {{
     font-size: 11px; color: #888; margin-bottom: 14px;
 }}
 #messageModal .mm-body {{
-    background: #f8faf6; border-left: 3px solid #2d5016; padding: 12px 14px;
+    background: #fafafa; border-left: 3px solid #000000; padding: 12px 14px;
     white-space: pre-wrap; line-height: 1.5; font-size: 13px;
     border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }}
 #messageModal mark.mm-hl {{
-    background: #fdf6c7; border-bottom: 2px solid #d4a017;
+    background: #fdf6c7; border-bottom: 2px solid #ff2a22;
     padding: 1px 2px; border-radius: 2px; color: #6a4c00; font-weight: 600;
 }}
 #messageModal mark.mm-hl-player {{
@@ -847,14 +849,14 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     font-size: 11px; color: #888; margin-top: 10px;
 }}
 #messageModal .mm-legend .pill {{
-    display: inline-block; background: #fdf6c7; border-bottom: 2px solid #d4a017;
+    display: inline-block; background: #fdf6c7; border-bottom: 2px solid #ff2a22;
     padding: 1px 6px; border-radius: 2px; margin-right: 4px; color: #6a4c00; font-weight: 600;
 }}
 #messageModal .mm-legend .pill-player {{
     background: #d6e7f7; border-bottom-color: #1f6bb8; color: #0d3b6a;
 }}
 .detail-table td.note-cell {{ cursor: pointer; }}
-.detail-table tr:hover td.note-cell {{ background: #f0f7ec; }}
+.detail-table tr:hover td.note-cell {{ background: #fff5f5; }}
 
 .detail-container {{ padding: 20px 30px; display: none; }}
 .player-select-wrapper {{ display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }}
@@ -863,7 +865,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     padding: 10px 14px; font-size: 14px; border: 2px solid #ccc;
     border-radius: 6px; background: white; min-width: 250px; cursor: pointer;
 }}
-.player-select:focus {{ outline: none; border-color: #2d5016; }}
+.player-select:focus {{ outline: none; border-color: #000000; }}
 
 .player-summary {{
     display: flex; gap: 24px; margin-bottom: 20px; background: white;
@@ -871,7 +873,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 .summary-item {{ display: flex; flex-direction: column; gap: 2px; }}
 .summary-label {{ font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
-.summary-value {{ font-size: 20px; font-weight: 700; color: #2d5016; }}
+.summary-value {{ font-size: 20px; font-weight: 700; color: #000000; }}
 
 .detail-table {{
     width: 100%; border-collapse: separate; border-spacing: 0;
@@ -879,7 +881,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     box-shadow: 0 1px 4px rgba(0,0,0,0.1); font-size: 13px;
 }}
 .detail-table th {{
-    background: #2d5016; color: white; font-weight: 600; padding: 12px 14px;
+    background: #000000; color: white; font-weight: 600; padding: 12px 14px;
     text-align: left; font-size: 12px; letter-spacing: 0.3px;
 }}
 .detail-table td {{ padding: 10px 14px; border-bottom: 1px solid #eee; vertical-align: top; }}
@@ -887,7 +889,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .detail-table td:nth-child(2) {{ white-space: nowrap; font-weight: 600; width: 60px; }}
 .detail-table td:nth-child(3) {{ line-height: 1.5; color: #555; max-width: 600px; }}
 .detail-table td:last-child {{ text-align: center; width: 70px; font-weight: 700; }}
-.detail-table tbody tr:hover {{ background: #f8faf6; }}
+.detail-table tbody tr:hover {{ background: #fafafa; }}
 
 .score-badge {{ display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }}
 .score-badge.s2 {{ background: #c6efce; color: #1a5e1a; }}
@@ -897,7 +899,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .score-badge.sn2 {{ background: #f4c7c3; color: #8b1a1a; }}
 
 .clickable {{ cursor: pointer; }}
-.clickable:hover {{ outline: 2px solid #2d5016; outline-offset: -2px; }}
+.clickable:hover {{ outline: 2px solid #000000; outline-offset: -2px; }}
 .last-updated {{ font-size: 11px; opacity: 0.7; margin-top: 2px; }}
 
 /* --- TABLET --- */
@@ -960,20 +962,20 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .cal-nav {{ display: flex; align-items: center; gap: 6px; }}
 .cal-nav button {{
     padding: 6px 12px; font-size: 13px; font-weight: 600;
-    background: #2d5016; color: white; border: none; border-radius: 6px; cursor: pointer;
+    background: #000000; color: white; border: none; border-radius: 6px; cursor: pointer;
 }}
-.cal-nav button:hover {{ background: #3a6b1d; }}
-.cal-month-label {{ font-size: 16px; font-weight: 700; min-width: 150px; text-align: center; color: #2d5016; }}
+.cal-nav button:hover {{ background: #222222; }}
+.cal-month-label {{ font-size: 16px; font-weight: 700; min-width: 150px; text-align: center; color: #000000; }}
 .cal-addbtn {{
     padding: 6px 14px; font-size: 13px; font-weight: 600;
-    background: #d4a017; color: white; border: none; border-radius: 6px; cursor: pointer;
+    background: #ff2a22; color: white; border: none; border-radius: 6px; cursor: pointer;
 }}
-.cal-addbtn:hover {{ background: #b8890f; }}
+.cal-addbtn:hover {{ background: #d4221a; }}
 .cal-pdfbtn {{
     padding: 6px 14px; font-size: 13px; font-weight: 600;
-    background: #2d5016; color: white; border: none; border-radius: 6px; cursor: pointer;
+    background: #000000; color: white; border: none; border-radius: 6px; cursor: pointer;
 }}
-.cal-pdfbtn:hover {{ background: #3a6b1d; }}
+.cal-pdfbtn:hover {{ background: #222222; }}
 .cal-pdfbtn:disabled {{ background: #888; cursor: wait; }}
 .cal-filter {{ display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }}
 .cal-filter select, .cal-filter input {{ padding: 4px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
@@ -984,7 +986,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     cursor: pointer; min-width: 140px; text-align: left;
     display: inline-flex; align-items: center; justify-content: space-between; gap: 6px;
 }}
-.cal-multi-btn:hover {{ border-color: #2d5016; }}
+.cal-multi-btn:hover {{ border-color: #000000; }}
 .cal-multi-btn .caret {{ font-size: 10px; color: #888; }}
 .cal-multi-panel {{
     display: none; position: absolute; top: 100%; left: 0; z-index: 20; margin-top: 4px;
@@ -998,36 +1000,36 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 .cal-multi-ctl {{
     padding: 3px 10px; font-size: 11px; font-weight: 700; border-radius: 12px;
-    border: 1.5px solid #d4a017; background: white; color: #d4a017; cursor: pointer; user-select: none;
+    border: 1.5px solid #ff2a22; background: white; color: #ff2a22; cursor: pointer; user-select: none;
 }}
 .cal-multi-ctl:hover {{ background: #fff7e0; }}
 .cal-multi-item {{
     display: flex; align-items: center; gap: 8px; padding: 5px 12px; cursor: pointer;
     font-size: 12px; color: #333; user-select: none;
 }}
-.cal-multi-item:hover {{ background: #f0f7ec; }}
-.cal-multi-item input[type="checkbox"] {{ margin: 0; cursor: pointer; accent-color: #2d5016; }}
+.cal-multi-item:hover {{ background: #fff5f5; }}
+.cal-multi-item input[type="checkbox"] {{ margin: 0; cursor: pointer; accent-color: #000000; }}
 .cal-multi-empty {{ padding: 10px 12px; font-size: 12px; color: #888; font-style: italic; }}
 .cal-grid {{
     display: grid; grid-template-columns: repeat(7, 1fr);
     border: 1px solid #d6d6d6; border-radius: 6px; overflow: hidden; background: #eee; gap: 1px;
 }}
 .cal-dow {{
-    background: #2d5016; color: white; padding: 6px 8px; font-size: 11px; font-weight: 600;
+    background: #000000; color: white; padding: 6px 8px; font-size: 11px; font-weight: 600;
     text-align: center; letter-spacing: 0.5px;
 }}
 .cal-cell {{
     background: white; min-height: 92px; padding: 4px 5px; position: relative;
     cursor: pointer; transition: background 0.12s;
 }}
-.cal-cell:hover {{ background: #f0f7ec; }}
+.cal-cell:hover {{ background: #fff5f5; }}
 .cal-cell.other-month {{ background: #fafafa; color: #aaa; }}
-.cal-cell.today {{ background: #fffbe6; }}
+.cal-cell.today {{ background: #fff0ed; }}
 .cal-cell.today::before {{
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #d4a017;
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #ff2a22;
 }}
 .cal-daynum {{ font-size: 11px; color: #888; font-weight: 600; margin-bottom: 2px; }}
-.cal-cell.today .cal-daynum {{ color: #d4a017; }}
+.cal-cell.today .cal-daynum {{ color: #ff2a22; }}
 .cal-chip {{
     display: block; font-size: 10px; padding: 2px 5px; margin-bottom: 2px;
     border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1051,12 +1053,12 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .cal-pad {{ background: #fafafa !important; cursor: default !important; }}
 .cal-pad:hover {{ background: #fafafa !important; }}
 .cal-cell.cal-draft {{ background: #fff5e0; }}
-.cal-cell.cal-today {{ background: #fffbe6; }}
+.cal-cell.cal-today {{ background: #fff0ed; }}
 .cal-cell.cal-today::before {{
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #d4a017;
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #ff2a22;
 }}
 .cal-drafttag {{
-    display: inline-block; font-size: 8px; padding: 1px 4px; background: #d4a017; color: white;
+    display: inline-block; font-size: 8px; padding: 1px 4px; background: #ff2a22; color: white;
     border-radius: 2px; vertical-align: middle; font-weight: 700; letter-spacing: 0.5px;
 }}
 
@@ -1075,14 +1077,14 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .gd-row {{ display: flex; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; color: #333; }}
 .gd-row:last-child {{ border-bottom: none; }}
 .gd-label {{ width: 95px; flex-shrink: 0; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; font-size: 10px; padding-top: 1px; }}
-.gd-close {{ margin-top: 14px; width: 100%; padding: 9px 14px; background: #2d5016; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
-.gd-close:hover {{ background: #3a6b1d; }}
+.gd-close {{ margin-top: 14px; width: 100%; padding: 9px 14px; background: #000000; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
+.gd-close:hover {{ background: #222222; }}
 .mr-addentry-btn {{
     padding: 5px 12px; font-size: 12px; font-weight: 700;
-    background: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer;
+    background: #000000; color: white; border: none; border-radius: 4px; cursor: pointer;
     margin-left: auto;
 }}
-.mr-addentry-btn:hover {{ background: #3a6b1d; }}
+.mr-addentry-btn:hover {{ background: #222222; }}
 .mr-wd-row {{ display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }}
 .mr-wd-row input[type="date"] {{ flex: 1; padding: 5px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
 .mr-wd-del {{
@@ -1092,15 +1094,15 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .mr-wd-del:hover {{ background: #f5d5d5; color: #a83030; border-color: #c94040; }}
 .mr-wd-add {{
     padding: 5px 10px; font-size: 11px; font-weight: 600;
-    background: #f0f7ec; color: #2d5016; border: 1px dashed #2d5016; border-radius: 4px; cursor: pointer;
+    background: #fff5f5; color: #000000; border: 1px dashed #000000; border-radius: 4px; cursor: pointer;
 }}
 .mr-wd-add:hover {{ background: #e0efd6; }}
 .mm-edit-btn {{
-    padding: 4px 10px; font-size: 11px; font-weight: 600; background: #d4a017; color: white;
+    padding: 4px 10px; font-size: 11px; font-weight: 600; background: #ff2a22; color: white;
     border: none; border-radius: 4px; cursor: pointer; margin-left: 8px;
 }}
-.mm-edit-btn:hover {{ background: #b8890f; }}
-.ev-title {{ font-size: 16px; font-weight: 700; color: #2d5016; margin-bottom: 14px; }}
+.mm-edit-btn:hover {{ background: #d4221a; }}
+.ev-title {{ font-size: 16px; font-weight: 700; color: #000000; margin-bottom: 14px; }}
 .ev-row {{ display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }}
 .ev-row label {{ font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }}
 .ev-row input[type="text"], .ev-row input[type="date"], .ev-row input[type="time"],
@@ -1112,15 +1114,15 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .ev-row.cb {{ flex-direction: row; align-items: center; gap: 6px; }}
 .ev-row.cb label {{ text-transform: none; letter-spacing: 0; margin: 0; }}
 .ev-btns {{ display: flex; gap: 8px; margin-top: 16px; }}
-.ev-save {{ flex: 1; padding: 9px 14px; background: #2d5016; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
-.ev-save:hover {{ background: #3a6b1d; }}
+.ev-save {{ flex: 1; padding: 9px 14px; background: #000000; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
+.ev-save:hover {{ background: #222222; }}
 .ev-cancel {{ padding: 9px 14px; background: #eee; color: #333; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }}
 .ev-delete {{ padding: 9px 14px; background: #c94040; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }}
 .ev-delete:hover {{ background: #a83030; }}
 .ev-slack {{ padding: 9px 14px; background: #4a154b; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }}
 .ev-slack:hover {{ background: #611f62; }}
-.ev-clear {{ padding: 9px 14px; background: #e8a317; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }}
-.ev-clear:hover {{ background: #c98c0e; }}
+.ev-clear {{ padding: 9px 14px; background: #ff2a22; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-right: auto; }}
+.ev-clear:hover {{ background: #d4221a; }}
 .ev-note {{ font-size: 11px; color: #888; margin-top: 6px; }}
 
 /* --- Mobile agenda view (calendar) --- */
@@ -1133,12 +1135,12 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .agenda-day.agenda-draft {{ background: #fff5e0; }}
 .agenda-date {{
     flex-shrink: 0; width: 52px; text-align: center; padding: 4px 0;
-    background: #f8faf6; border-radius: 6px;
+    background: #fafafa; border-radius: 6px;
 }}
 .agenda-dow {{ font-size: 10px; font-weight: 700; color: #888; letter-spacing: 0.5px; }}
-.agenda-dnum {{ font-size: 22px; font-weight: 800; color: #2d5016; line-height: 1; }}
+.agenda-dnum {{ font-size: 22px; font-weight: 800; color: #000000; line-height: 1; }}
 .agenda-drafttag {{
-    display: inline-block; font-size: 8px; padding: 1px 4px; background: #d4a017; color: white;
+    display: inline-block; font-size: 8px; padding: 1px 4px; background: #ff2a22; color: white;
     border-radius: 2px; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;
 }}
 .agenda-chips {{ flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }}
@@ -1173,8 +1175,9 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 <!-- PASSWORD GATE -->
 <div id="loginGate">
     <div class="login-box">
-        <div class="logo">SV TeamIntel</div>
-        <div class="tagline">Stadium Ventures &mdash; 2026 Draft Intelligence</div>
+        <img src="/sv-logo.svg" alt="Stadium Ventures" class="logo-img">
+        <div class="brand-name">Team<span class="accent">Intel</span></div>
+        <div class="tagline">2026 MLB Draft Intelligence</div>
         <input type="password" id="pwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPw()">
         <button onclick="checkPw()">Access Dashboard</button>
         <div class="login-error" id="loginError">Incorrect password. Try again.</div>
@@ -1215,7 +1218,7 @@ function checkPw() {{
 
 <div class="header">
     <div class="header-left">
-        <div class="logo-icon">SV</div>
+        <div class="logo-icon"><img src="/sv-logo-white.svg" alt="Stadium Ventures"></div>
         <div>
             <h1>TeamIntel Dashboard</h1>
             <div class="subtitle">Player Intelligence Score By Team &mdash; 2026 MLB Draft</div>
@@ -1236,7 +1239,7 @@ function checkPw() {{
     <div class="legend-item"><div class="legend-swatch" style="background:#fff2cc"></div>0 (Yellow / Neutral)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fce4ec"></div>-1 (Red / Cool/No Contact)</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#f4c7c3"></div>-2 (Dark Red / Negative)</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #ff2a22"></div>Pre-Draft Workout</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
         <span style="font-size:11px;color:#999;">Tap a score to view details, then click any score badge to edit</span>
     </div>
@@ -1252,9 +1255,9 @@ function checkPw() {{
 
 <div id="detailView" class="detail-container">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
-        <button onclick="showView('matrix')" style="padding:6px 14px;font-size:13px;font-weight:600;background:#2d5016;color:white;border:none;border-radius:6px;cursor:pointer;">&#8592; Back</button>
-        <button onclick="jumpToCalendarForCurrentPlayer()" style="padding:6px 14px;font-size:13px;font-weight:600;background:#d4a017;color:white;border:none;border-radius:6px;cursor:pointer;" title="Show this player's workouts on the calendar">&#x1F4C5; View Calendar</button>
-        <button onclick="openManualEntryForCurrentPlayer()" style="padding:6px 14px;font-size:13px;font-weight:600;background:#2d5016;color:white;border:none;border-radius:6px;cursor:pointer;" title="Add a manual entry for this player">&#x2B; Add Entry</button>
+        <button onclick="showView('matrix')" style="padding:6px 14px;font-size:13px;font-weight:600;background:#000000;color:white;border:none;border-radius:6px;cursor:pointer;">&#8592; Back</button>
+        <button onclick="jumpToCalendarForCurrentPlayer()" style="padding:6px 14px;font-size:13px;font-weight:600;background:#ff2a22;color:white;border:none;border-radius:6px;cursor:pointer;" title="Show this player's workouts on the calendar">&#x1F4C5; View Calendar</button>
+        <button onclick="openManualEntryForCurrentPlayer()" style="padding:6px 14px;font-size:13px;font-weight:600;background:#000000;color:white;border:none;border-radius:6px;cursor:pointer;" title="Add a manual entry for this player">&#x2B; Add Entry</button>
         <div class="player-select-wrapper" style="margin-bottom:0;">
             <label>Select Player:</label>
             <select class="player-select" id="playerSelect" onchange="_filterTeam=null; renderDetail()">
@@ -1306,8 +1309,8 @@ function checkPw() {{
     <div style="margin-top:10px;font-size:11px;color:#888;">
         Workouts are auto-parsed from Slack messages. Click a chip to view/edit; use <b>+ Add Event</b> for new entries.
         <span style="opacity:0.8;display:inline-block;margin-left:10px;">
-            <span style="display:inline-block;padding:1px 6px;border:1.5px dashed #2d5016;color:#2d5016;border-radius:3px;font-size:10px;font-weight:500;">DASHED</span> = invite &nbsp;·&nbsp;
-            <span style="display:inline-block;padding:1px 6px;background:#2d5016;color:white;border-radius:3px;font-size:10px;font-weight:800;">&#10003; SOLID</span> = confirmed going &nbsp;·&nbsp;
+            <span style="display:inline-block;padding:1px 6px;border:1.5px dashed #000000;color:#000000;border-radius:3px;font-size:10px;font-weight:500;">DASHED</span> = invite &nbsp;·&nbsp;
+            <span style="display:inline-block;padding:1px 6px;background:#000000;color:white;border-radius:3px;font-size:10px;font-weight:800;">&#10003; SOLID</span> = confirmed going &nbsp;·&nbsp;
             <span>"*" = manually edited</span>
         </span>
     </div>
@@ -1763,13 +1766,13 @@ function renderDetail() {{
     if (_filterTeam) {{
         hiddenBar += '<div style="padding:6px 10px;font-size:12px;color:#555;margin-bottom:6px;">' +
             'Filtered to <strong>' + _filterTeam + '</strong> \\u00b7 ' +
-            '<span style="text-decoration:underline;cursor:pointer;color:#2d5016;" onclick="clearTeamFilter()">show all teams</span></div>';
+            '<span style="text-decoration:underline;cursor:pointer;color:#000000;" onclick="clearTeamFilter()">show all teams</span></div>';
     }}
     if (hiddenCount > 0) {{
         const label = _showHidden ? 'hide' : 'show';
         hiddenBar += '<div style="padding:6px 10px;font-size:12px;color:#888;margin-bottom:6px;">' +
             hiddenCount + ' record' + (hiddenCount===1?'':'s') + ' hidden (marked NA) \\u00b7 ' +
-            '<span style="text-decoration:underline;cursor:pointer;color:#2d5016;" onclick="toggleHidden()">' + label + '</span></div>';
+            '<span style="text-decoration:underline;cursor:pointer;color:#000000;" onclick="toggleHidden()">' + label + '</span></div>';
     }}
 
     let html = '<thead><tr><th>Date</th><th>Team</th><th>Intel Note</th><th>Score</th></tr></thead><tbody>';
@@ -1993,7 +1996,7 @@ function _buildPdfGridHtml(year, month, eventsByDate) {{
     const cells = Math.ceil((startDow + daysInMonth) / 7) * 7;
     let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);border:1px solid #bbb;background:#ddd;gap:1px;border-radius:4px;overflow:hidden;">';
     ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {{
-        html += '<div style="background:#2d5016;color:white;padding:6px 0;font-size:11px;font-weight:700;text-align:center;letter-spacing:0.5px;">' + d + '</div>';
+        html += '<div style="background:#000000;color:white;padding:6px 0;font-size:11px;font-weight:700;text-align:center;letter-spacing:0.5px;">' + d + '</div>';
     }});
     for (let i = 0; i < cells; i++) {{
         const dayNum = i - startDow + 1;
@@ -2006,7 +2009,7 @@ function _buildPdfGridHtml(year, month, eventsByDate) {{
         const bg = isDraft ? '#fff5e0' : 'white';
         html += '<div style="background:' + bg + ';min-height:90px;padding:4px 5px;vertical-align:top;">';
         html += '<div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px;">' + dayNum
-            + (isDraft ? ' <span style="font-size:8px;padding:1px 4px;background:#d4a017;color:white;border-radius:2px;font-weight:700;">DRAFT</span>' : '')
+            + (isDraft ? ' <span style="font-size:8px;padding:1px 4px;background:#ff2a22;color:white;border-radius:2px;font-weight:700;">DRAFT</span>' : '')
             + '</div>';
         (eventsByDate[iso] || []).forEach(ev => {{
             const color = _chipColor(ev);
@@ -2046,7 +2049,7 @@ function _buildPdfAgendaHtml(players, eventsByDate, year, month) {{
     players.forEach(p => {{
         const evs = (byPlayer[p] || []).slice().sort((a,b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
         html += '<div style="border:1px solid #ddd;border-radius:4px;padding:8px 10px;break-inside:avoid;">';
-        html += '<div style="font-size:12px;font-weight:700;color:#2d5016;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
+        html += '<div style="font-size:12px;font-weight:700;color:#000000;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
         if (!evs.length) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No events this month.</div>';
         }} else {{
@@ -2127,8 +2130,8 @@ function exportCalendarPDF() {{
       +   '@page {{ size: letter landscape; margin: 10mm; }}'
       +   '@media print {{ body {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }} }}'
       +   'body {{ margin: 0; padding: 12px; font-family: Arial, sans-serif; color: #222; font-size: 10px; }}'
-      +   '.pdf-header {{ display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2d5016; padding-bottom: 8px; margin-bottom: 12px; }}'
-      +   '.pdf-title {{ font-size: 20px; font-weight: 800; color: #2d5016; letter-spacing: 0.3px; }}'
+      +   '.pdf-header {{ display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #ff2a22; padding-bottom: 8px; margin-bottom: 12px; }}'
+      +   '.pdf-title {{ font-size: 20px; font-weight: 800; color: #000000; letter-spacing: 0.3px; }}'
       +   '.pdf-sub {{ font-size: 10px; color: #555; margin-top: 3px; }}'
       +   '.pdf-gen {{ font-size: 9px; color: #888; text-align: right; }}'
       + '</style></head><body>' + bodyHtml + '</body></html>';
