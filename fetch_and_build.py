@@ -2703,7 +2703,9 @@ function openManualEntryModal(existingId, preselectPlayer, preselectTeam) {{
 
 function openManualEntryForCurrentPlayer() {{
     const p = document.getElementById('playerSelect').value;
-    openManualEntryModal(null, p || null, null);
+    // If the detail view is filtered to a specific team (user clicked that team's row),
+    // pre-select it too so "+ Add Entry" lands on the exact Player×Team the user is viewing.
+    openManualEntryModal(null, p || null, _filterTeam || null);
 }}
 
 function closeManualEntryModal() {{
