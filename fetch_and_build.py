@@ -1410,8 +1410,8 @@ function checkPw() {{
     <span class="legend-title">Interest Key:</span>
     <div class="legend-item" style="gap:4px;align-items:center;">
         <span style="font-size:11px;color:#999;">Not interested</span>
-        <div style="display:flex;height:18px;width:180px;border-radius:3px;border:1px solid rgba(0,0,0,0.1);background:linear-gradient(to right, rgb(225,110,105) 0%, #fff 50%, rgb(130,200,140) 100%);"></div>
-        <span style="font-size:11px;color:#999;">Really interested</span>
+        <div style="display:flex;height:18px;width:200px;border-radius:3px;border:1px solid rgba(0,0,0,0.1);background:linear-gradient(to right, rgb(225,110,105) 0%, #fff 50%, rgb(252,232,130) 65%, rgb(130,200,140) 100%);"></div>
+        <span style="font-size:11px;color:#999;">Strong interest</span>
     </div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
