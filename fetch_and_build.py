@@ -455,8 +455,131 @@ def score_line_for_team(line, full_text=""):
         return -1
     return 1
 
+# ======================== ATTENDEE TIER DETECTION ========================
+# Weight each TeamIntel record by the seniority of the attendee mentioned in
+# the message line. Tier 1 (SD / GM / VP / Special Asst) weighs 2×; T2 (National
+# X'er) 1.5×; T3 (plain X'er / regional) 1.25×; T4 (area scout) is baseline.
+
+TIER_MULTIPLIERS = {1: 2.0, 2: 1.5, 3: 1.25, 4: 1.0, 5: 1.0}
+TIER_LABELS = {1: 'Dir', 2: 'NXC', 3: 'Xer', 4: 'Area', 5: ''}
+
+# Role → tier map for the org-review CSV columns. Anyone in this directory
+# mentioned by name in a message line is treated as T1.
+_ORG_ROLE_TIER = {
+    'president': 1, 'pres_baseball_ops': 1, 'gm': 1, 'asst_gm': 1,
+    'scouting_dir': 1, 'asst_scouting_dir': 1,
+    'pd_dir': 1, 'asst_pd_dir': 1,
+    'pitching_coord': 1, 'hitting_coord': 1,
+}
+
+def load_front_office():
+    """Return {team_abbrev: [(name_lower, tier, role_label), ...]}.
+    Multi-person cells ("Name One / Name Two") split on ' / '. Silent fallback
+    to {} if the CSV isn't present (e.g. during local dry runs).
+    """
+    path = os.path.join(os.path.dirname(__file__), 'data', 'front_office_2026.csv')
+    if not os.path.exists(path):
+        print(f"INFO: {path} not found — tier detection will rely on keywords only.")
+        return {}
+    directory = {}
+    with open(path) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            abbrev = (row.get('abbrev') or '').strip().upper()
+            if not abbrev:
+                continue
+            entries = []
+            for col, tier in _ORG_ROLE_TIER.items():
+                raw = (row.get(col) or '').strip()
+                if not raw:
+                    continue
+                for name in re.split(r'\s*/\s*', raw):
+                    n = name.strip()
+                    if not n:
+                        continue
+                    entries.append((n.lower(), tier, col))
+            if entries:
+                directory[abbrev] = entries
+    print(f"Loaded front-office directory for {len(directory)} teams.")
+    return directory
+
+
+# Regex patterns for keyword-based tier detection.
+# Checked in priority order: T1 > T2 > T3 > T4. Highest tier detected wins.
+_TIER1_PATTERNS = [
+    r'\bgm\b', r'\bagm\b', r'\basst\.?\s+gm\b', r'\bassistant\s+gm\b',
+    r'\bsd\b', r'\basst\.?\s+sd\b',
+    r'\bscouting\s+dir(?:ector)?\b', r'\basst\.?\s+scouting\s+dir(?:ector)?\b',
+    r'\bvp\b', r'\bv\.p\.\b',
+    r'\bdirector\s+of\s+pro\s+scouting\b', r'\bpro\s+scouting\s+dir(?:ector)?\b',
+    r'\bhead\s+of\s+draft\s+ops\b',
+    r'\bspecial\s+ass?t\b', r'\bspecial\s+assistant\b',
+    r'\bpres(?:ident)?\s+of\s+baseball\s+ops\b',
+    r'\bdirector\s+of\s+player\s+development\b', r'\bdirector\s+player\s+dev\b',
+    r'\bpitching\s+coord(?:inator)?\b', r'\bhitting\s+coord(?:inator)?\b',
+]
+_TIER2_PATTERN = r'\bnational\s+x(?:er|\'er|-er)?\b|\bnxc\b|\bnational\s+cross[- ]?check(?:er)?\b'
+_TIER3_PATTERN = r'\bx(?:er|\'er|-er)\b|\bcross[- ]?check(?:er)?\b|\bregional\s+x(?:er|\'er|-er)?\b'
+_TIER4_PATTERN = r'\barea\s+(?:guy|scout)?\b|\bout\s+of\s+area\b'
+
+
+def detect_attendee_tier(line, team, directory):
+    """Returns (tier:int 1-5, multiplier:float, label:str).
+    1. Name match against `directory[team]` → that role's tier.
+    2. Keyword regex. Multiple hits → highest tier wins (lowest numeric).
+    3. Default T5 (×1.0, no label).
+    """
+    if not line:
+        return 5, 1.0, ''
+    tiers_seen = set()
+    role_labels = {}
+    lower = line.lower()
+
+    # Name match against the team directory
+    for name_lower, tier, role_col in directory.get(team, []):
+        # Require word-ish boundary so "kip fagg" doesn't match "kipfagg" etc.
+        if re.search(r'\b' + re.escape(name_lower) + r'\b', lower):
+            tiers_seen.add(tier)
+            role_labels[tier] = role_col
+
+    # Keyword fallbacks (run all — highest wins)
+    for pat in _TIER1_PATTERNS:
+        if re.search(pat, lower):
+            tiers_seen.add(1)
+            break
+    if re.search(_TIER2_PATTERN, lower):
+        tiers_seen.add(2)
+    # T3 "bare X'er" — only if no T2 match sharing the same span.
+    # Simplest: search for X'er positions and check the preceding word.
+    t3_hit = False
+    for m in re.finditer(r'\bx(?:er|\'er|-er)\b', lower):
+        pre = lower[max(0, m.start()-15):m.start()]
+        if 'national' not in pre:
+            t3_hit = True
+            break
+    if t3_hit or re.search(r'\bcross[- ]?check(?:er)?\b', lower) or re.search(r'\bregional\s+x', lower):
+        tiers_seen.add(3)
+    if re.search(_TIER4_PATTERN, lower):
+        tiers_seen.add(4)
+
+    if not tiers_seen:
+        return 5, 1.0, ''
+    tier = min(tiers_seen)
+    label = TIER_LABELS.get(tier, '')
+    return tier, TIER_MULTIPLIERS[tier], label
+
+
 def parse_messages(messages):
     records = []
+    # Load front-office directory once per build (tiny CSV, ~30 teams).
+    _front_office = load_front_office()
+
+    def _attach_tier(rec, line_text):
+        """Write attendee_tier / tier_multiplier / tier_label onto a record in place."""
+        t, mult, label = detect_attendee_tier(line_text, rec.get('team'), _front_office)
+        rec['attendee_tier'] = t
+        rec['tier_multiplier'] = mult
+        rec['tier_label'] = label
 
     for msg in sorted(messages, key=lambda m: m['ts']):
         text = msg['text']
@@ -484,6 +607,7 @@ def parse_messages(messages):
                         'score': score, 'note': ls[:200],
                         'channel': channel, 'full_text': text[:3000],
                     })
+                    _attach_tier(records[-1], ls)
 
         elif channel in CHANNEL_TO_PLAYER:
             player = CHANNEL_TO_PLAYER[channel]
@@ -494,12 +618,20 @@ def parse_messages(messages):
                 continue
             for team in all_teams:
                 best_score = 1
+                # Highest tier across all lines mentioning this team — gives the
+                # senior-most attendee credit for the team's score in this message.
+                best_tier_line = ''
+                best_tier = 5
                 for line in text.split('\n'):
                     line_teams = find_teams_in_line(line)
                     if team in line_teams:
                         s = score_line_for_team(line, text)
                         if s != 1:
                             best_score = s
+                        t, _, _ = detect_attendee_tier(line, team, _front_office)
+                        if t < best_tier:
+                            best_tier = t
+                            best_tier_line = line
                 tl = text.lower()
                 if any(w in tl for w in ['love', 'loves', 'absolutely', 'elite', 'high on']):
                     for line in text.split('\n'):
@@ -516,6 +648,7 @@ def parse_messages(messages):
                     'score': best_score, 'note': text.strip()[:200],
                     'channel': channel, 'full_text': text[:3000],
                 })
+                _attach_tier(records[-1], best_tier_line or text)
 
         else:
             players = find_players_in_text(text)
@@ -543,6 +676,7 @@ def parse_messages(messages):
                                 'score': score, 'note': ls[:200],
                                 'channel': channel, 'full_text': text[:3000],
                             })
+                            _attach_tier(records[-1], ls)
             elif players and all_teams:
                 for line in text.split('\n'):
                     ls = line.strip()
@@ -557,6 +691,7 @@ def parse_messages(messages):
                                     'score': score, 'note': ls[:200],
                                     'channel': channel, 'full_text': text[:3000],
                                 })
+                                _attach_tier(records[-1], ls)
                     elif lp and not lt and all_teams:
                         score = score_line_for_team(ls, text)
                         for p in lp:
@@ -566,6 +701,7 @@ def parse_messages(messages):
                                     'score': score, 'note': text.strip()[:200],
                                     'channel': channel, 'full_text': text[:3000],
                                 })
+                                _attach_tier(records[-1], ls)
 
     # Add workout flag + match details based on note/full_text
     # Also attach parsed workout_dates (pre-draft window, May–Jul 2026),
@@ -1085,6 +1221,24 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     margin-left: auto;
 }}
 .mr-addentry-btn:hover {{ background: #222222; }}
+.weight-toggle {{
+    padding: 5px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
+    background: white; color: #555; border: 1.5px solid #ccc; border-radius: 12px;
+    cursor: pointer; user-select: none;
+}}
+.weight-toggle:hover {{ border-color: #000000; color: #000000; }}
+.weight-toggle.on {{ background: #ff2a22; color: white; border-color: #ff2a22; }}
+.weight-toggle.on:hover {{ background: #d4221a; border-color: #d4221a; }}
+/* Attendee tier badge (detail-view rows) */
+.tier-badge {{
+    display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
+    padding: 2px 6px; border-radius: 3px; text-transform: uppercase;
+    margin-left: 6px; vertical-align: middle;
+}}
+.tier-badge.t1 {{ background: #000000; color: white; }}
+.tier-badge.t2 {{ background: #ff2a22; color: white; }}
+.tier-badge.t3 {{ background: #f59e0b; color: white; }}
+.tier-badge.t4 {{ background: #888; color: white; }}
 .mr-wd-row {{ display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }}
 .mr-wd-row input[type="date"] {{ flex: 1; padding: 5px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
 .mr-wd-del {{
@@ -1628,15 +1782,26 @@ function closeScorePopup() {{
     document.getElementById('scoreOverlay').style.display = 'none';
 }}
 
+// Toggleable matrix mode: false = raw touch count, true = weighted by attendee tier.
+// Persist across view swaps within a session (not across reloads).
+var _weightedMode = false;
+function toggleWeighted() {{
+    _weightedMode = !_weightedMode;
+    renderMatrix();
+}}
+
 function buildMatrix() {{
     // Only count records that aren't manually flagged NA (false connections)
     const activeRecords = RECORDS.filter(r => !isExcluded(r));
     const latest = {{}};
     const counts = {{}};
+    // When weighted mode is on, each record contributes its tier_multiplier
+    // (SD = 2×, National X = 1.5×, X = 1.25×, Area = 1×). Otherwise plain count.
     activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
         if (!latest[key] || r.date > latest[key].date) latest[key] = r;
-        counts[key] = (counts[key] || 0) + 1;
+        const w = _weightedMode ? (typeof r.tier_multiplier === 'number' ? r.tier_multiplier : 1) : 1;
+        counts[key] = (counts[key] || 0) + w;
     }});
     // Track if any record for a player+team has a workout invite
     const workoutMap = {{}};
@@ -1708,20 +1873,27 @@ function renderMatrix() {{
     ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
     html += '</tr></thead><tbody>';
 
+    // In weighted mode, counts are floats — render with one decimal (trimming .0).
+    const fmtCnt = (n) => {{
+        if (!_weightedMode) return String(n);
+        const rounded = Math.round(n * 10) / 10;
+        return (rounded % 1 === 0) ? String(rounded) : rounded.toFixed(1);
+    }};
     sortedPlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
         const avg = playerAvgs[player];
         const avgClass = avg === null ? '' : avg >= 1.5 ? 'score-2' : avg >= 0.75 ? 'score-1' : avg >= 0 ? 'score-0' : avg >= -1 ? 'score-n1' : 'score-n2';
-        const titleAttr = avg !== null ? ' title="Avg score: ' + avg.toFixed(2) + '"' : '';
+        const titleAttr = avg !== null ? ' title="Avg score: ' + avg.toFixed(2) + (_weightedMode ? ' · weighted by attendee tier' : '') + '"' : '';
         const esc = player.replace(/'/g, "\\\\'");
-        html += '<tr><td class="' + avgClass + '"' + titleAttr + '>' + total + '</td>';
+        html += '<tr><td class="' + avgClass + '"' + titleAttr + '>' + fmtCnt(total) + '</td>';
         html += '<td class="clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + player + '</td>';
         ALL_TEAMS.forEach(team => {{
             const s = playerTeams[player] && playerTeams[player][team];
             const cnt = (playerTeamCounts[player] && playerTeamCounts[player][team]) || 0;
             const wk = workoutMap[player + '|' + team];
             if (s !== undefined && s !== null && typeof s === 'number' && cnt > 0) {{
-                html += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + s + ' \\u2022 ' + cnt + ' touch' + (cnt===1?'':'es') + '">' + cnt + '</td>';
+                const touchLabel = _weightedMode ? 'weighted' : ('touch' + (cnt===1?'':'es'));
+                html += '<td class="' + scoreClass(s) + ' score-cell clickable' + (wk ? ' workout' : '') + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="Score: ' + s + ' \\u2022 ' + fmtCnt(cnt) + ' ' + touchLabel + '">' + fmtCnt(cnt) + '</td>';
             }} else {{
                 html += '<td></td>';
             }}
@@ -1733,11 +1905,16 @@ function renderMatrix() {{
 
     let uniquePairs = 0;
     Object.keys(playerTeams).forEach(p => uniquePairs += Object.keys(playerTeams[p]).length);
+    const weightBtnLabel = _weightedMode ? 'Weighted ×' : 'Raw';
+    const weightBtnTitle = _weightedMode
+        ? 'Weighted by attendee tier (SD 2×, National X 1.5×, X 1.25×, Area 1×). Click to revert.'
+        : 'Click to weight cells by attendee tier (SD 2×, National X 1.5×, X 1.25×, Area 1×).';
     document.getElementById('statsBar').innerHTML =
         '<div class="stat-item"><span class="stat-label">Players:</span><span class="stat-value">' + sortedPlayers.length + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Intel Reports:</span><span class="stat-value">' + RECORDS.length + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Player-Team Connections:</span><span class="stat-value">' + uniquePairs + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">Aug 2025 - Present</span></div>' +
+        '<button class="weight-toggle' + (_weightedMode ? ' on' : '') + '" onclick="toggleWeighted()" title="' + weightBtnTitle + '">' + weightBtnLabel + '</button>' +
         '<button class="mr-addentry-btn" onclick="openManualEntryModal(null, null, null)" title="Add a manual player-team connection">&#x2B;&nbsp;Add Entry</button>';
 }}
 
@@ -1790,7 +1967,13 @@ function renderDetail() {{
         const rowStyle = excluded ? ' style="opacity:0.45;"' : '';
         const scoreDisp = (s === 'NA') ? 'NA' : (s + (isOverridden ? ' *' : ''));
         const badgeCls = (s === 'NA') ? 'score-na' : badgeClass(s);
-        html += '<tr' + rowStyle + '><td>' + r.date + '</td><td>' + r.team + wBadge + '</td>' +
+        // Tier badge — shows when we detected a senior attendee (T1-T4). No badge for T5.
+        const tier = r.attendee_tier;
+        const tierLabel = r.tier_label || '';
+        const tierBadge = (tier && tier >= 1 && tier <= 4 && tierLabel)
+            ? '<span class="tier-badge t' + tier + '" title="Attendee tier: ' + tier + ' (×' + (r.tier_multiplier || 1) + ')">' + tierLabel + '</span>'
+            : '';
+        html += '<tr' + rowStyle + '><td>' + r.date + '</td><td>' + r.team + wBadge + tierBadge + '</td>' +
             '<td class="note-cell" onclick="openMessageModal(\\'' + rowKey + '\\')">' + note + '</td>' +
             '<td><span class="score-badge ' + badgeCls + '" style="cursor:pointer;" onclick="openScorePopup(\\'' + esc + '\\', \\'' + r.team + '\\', \\'' + r.date + '\\', event)">' + scoreDisp + '</span></td></tr>';
         _modalIndex[rowKey] = r;
@@ -3165,6 +3348,11 @@ def load_manual_records():
                 'workout': bool(val.get('workout')),
                 'workout_dates': val.get('workout_dates') or [],
                 'is_manual': True,
+                # Manual entries default to T5 (no tier weighting) unless keyword
+                # detection in the user-entered notes bumps them up.
+                'attendee_tier': 5,
+                'tier_multiplier': 1.0,
+                'tier_label': '',
             })
         return out
     except Exception as e:
