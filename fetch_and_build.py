@@ -968,8 +968,45 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     background: #d4a017; color: white; border: none; border-radius: 6px; cursor: pointer;
 }}
 .cal-addbtn:hover {{ background: #b8890f; }}
+.cal-pdfbtn {{
+    padding: 6px 14px; font-size: 13px; font-weight: 600;
+    background: #2d5016; color: white; border: none; border-radius: 6px; cursor: pointer;
+}}
+.cal-pdfbtn:hover {{ background: #3a6b1d; }}
+.cal-pdfbtn:disabled {{ background: #888; cursor: wait; }}
 .cal-filter {{ display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }}
 .cal-filter select, .cal-filter input {{ padding: 4px 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
+.cal-multi {{ position: relative; display: inline-block; }}
+.cal-multi-btn {{
+    padding: 5px 10px; font-size: 12px; font-weight: 600;
+    border: 1px solid #ccc; border-radius: 4px; background: white; color: #333;
+    cursor: pointer; min-width: 140px; text-align: left;
+    display: inline-flex; align-items: center; justify-content: space-between; gap: 6px;
+}}
+.cal-multi-btn:hover {{ border-color: #2d5016; }}
+.cal-multi-btn .caret {{ font-size: 10px; color: #888; }}
+.cal-multi-panel {{
+    display: none; position: absolute; top: 100%; left: 0; z-index: 20; margin-top: 4px;
+    background: white; border: 1px solid #ccc; border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12); min-width: 220px; max-height: 320px; overflow-y: auto;
+    padding: 6px 0;
+}}
+.cal-multi.open .cal-multi-panel {{ display: block; }}
+.cal-multi-header {{
+    display: flex; gap: 6px; padding: 6px 10px; border-bottom: 1px solid #eee; margin-bottom: 4px;
+}}
+.cal-multi-ctl {{
+    padding: 3px 10px; font-size: 11px; font-weight: 700; border-radius: 12px;
+    border: 1.5px solid #d4a017; background: white; color: #d4a017; cursor: pointer; user-select: none;
+}}
+.cal-multi-ctl:hover {{ background: #fff7e0; }}
+.cal-multi-item {{
+    display: flex; align-items: center; gap: 8px; padding: 5px 12px; cursor: pointer;
+    font-size: 12px; color: #333; user-select: none;
+}}
+.cal-multi-item:hover {{ background: #f0f7ec; }}
+.cal-multi-item input[type="checkbox"] {{ margin: 0; cursor: pointer; accent-color: #2d5016; }}
+.cal-multi-empty {{ padding: 10px 12px; font-size: 12px; color: #888; font-style: italic; }}
 .cal-grid {{
     display: grid; grid-template-columns: repeat(7, 1fr);
     border: 1px solid #d6d6d6; border-radius: 6px; overflow: hidden; background: #eee; gap: 1px;
@@ -1086,11 +1123,19 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     .cal-addbtn {{ padding: 8px 12px; }}
     .cal-filter {{ flex: 1 1 100%; }}
     .cal-filter select {{ flex: 1; min-width: 0; }}
+    .cal-filter.cal-multi {{ display: flex; align-items: center; gap: 6px; }}
+    .cal-multi {{ width: 100%; }}
+    .cal-multi-btn {{ flex: 1; min-width: 0; padding: 9px 12px; font-size: 13px; }}
+    .cal-multi-panel {{ left: 0; right: 0; min-width: 0; max-height: 60vh; }}
+    .cal-multi-item {{ padding: 10px 14px; font-size: 14px; }}
+    .cal-multi-item input[type="checkbox"] {{ width: 18px; height: 18px; }}
+    .cal-multi-ctl {{ padding: 6px 12px; font-size: 12px; }}
     .cal-grid {{ display: none; }}
     .cal-agenda {{ display: block; }}
     .cal-legend {{ padding: 0 12px; }}
 }}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -1199,9 +1244,19 @@ function checkPw() {{
             <button onclick="calJumpTo('today')" title="Jump to today" style="margin-left:6px;">Today</button>
         </div>
         <button class="cal-addbtn" onclick="openEventModal(null, null)">+ Add Event</button>
-        <div class="cal-filter">
-            <label for="calPlayerFilter">Player:</label>
-            <select id="calPlayerFilter" onchange="renderCalendar()"><option value="">All</option></select>
+        <button class="cal-pdfbtn" onclick="exportCalendarPDF()" title="Download this month as PDF">&#x2B07; PDF</button>
+        <div class="cal-filter cal-multi" id="calPlayerDropdown">
+            <label>Players:</label>
+            <button type="button" class="cal-multi-btn" onclick="event.stopPropagation(); toggleCalPlayerPanel()">
+                <span id="calPlayerBtnLabel">All</span><span class="caret">&#9662;</span>
+            </button>
+            <div class="cal-multi-panel" id="calPlayerPanel" onclick="event.stopPropagation()">
+                <div class="cal-multi-header">
+                    <span class="cal-multi-ctl" onclick="calSelectAllPlayers()">All</span>
+                    <span class="cal-multi-ctl" onclick="calSelectNoPlayers()">None</span>
+                </div>
+                <div id="calPlayerChips"></div>
+            </div>
         </div>
         <div class="cal-filter">
             <label for="calTypeFilter">Type:</label>
@@ -1748,6 +1803,292 @@ var _calRecordsByPlayerTeam = {{}};  // 'player|team' -> [records] for Slack lin
 var _calChipIndex = {{}};    // 'c5' -> ev, rebuilt each render (dispatch table for chip clicks)
 var _calChipCounter = 0;
 var _calInitialized = false;
+var _calSelectedPlayers = null;   // Set<player> currently toggled on. null = uninitialized.
+var _calAllPlayersCache = null;   // sorted list of every player that could appear
+var _calSelectedPlayersEverSeen = new Set();  // tracks which players we've shown a chip for
+
+const _CAL_PLAYERS_LS_KEY = 'ti_cal_selected_players_v1';
+
+function _calComputeAllPlayers() {{
+    // Only players who have a PDW invite — honoring the matrix override:
+    //   w|player|team === false -> force-off (hide regardless of r.workout)
+    //   w|player|team === true  -> force-on (include even if r.workout is falsy)
+    // This matches buildAutoEvents' eligibility logic so the chip row and grid agree.
+    const s = new Set();
+    RECORDS.forEach(r => {{
+        const ov = (typeof scoreOverrides !== 'undefined') ? scoreOverrides['w|' + r.player + '|' + r.team] : undefined;
+        const isPDW = (ov === false) ? false : (ov === true ? true : !!r.workout);
+        if (isPDW) s.add(r.player);
+    }});
+    // Surface manual workout events tied to an existing PDW player,
+    // so confirmed/edited entries don't vanish if the underlying r.workout is toggled later.
+    Object.values(_calEvents || {{}}).forEach(ev => {{
+        if (ev && ev.type === 'workout' && ev.player && s.has(ev.player)) s.add(ev.player);
+    }});
+    return [...s].sort();
+}}
+
+function _calLoadSelection(allPlayers) {{
+    try {{
+        const raw = localStorage.getItem(_CAL_PLAYERS_LS_KEY);
+        if (raw) {{
+            const saved = JSON.parse(raw);
+            if (Array.isArray(saved)) {{
+                const known = new Set(allPlayers);
+                const restored = new Set(saved.filter(p => known.has(p)));
+                if (restored.size > 0) return restored;
+            }}
+        }}
+    }} catch(e) {{ /* ignore */ }}
+    return new Set(allPlayers);
+}}
+
+function _calSaveSelection() {{
+    try {{
+        localStorage.setItem(_CAL_PLAYERS_LS_KEY, JSON.stringify([..._calSelectedPlayers]));
+    }} catch(e) {{ /* ignore */ }}
+}}
+
+function _calEnsureSelection() {{
+    _calAllPlayersCache = _calComputeAllPlayers();
+    if (_calSelectedPlayers === null) {{
+        _calSelectedPlayers = _calLoadSelection(_calAllPlayersCache);
+    }} else {{
+        // Auto-include any newly-appearing players so fresh Slack logs aren't silently hidden.
+        const prev = new Set(_calSelectedPlayers);
+        _calAllPlayersCache.forEach(p => {{ if (!prev.has(p) && !_calSelectedPlayersEverSeen.has(p)) _calSelectedPlayers.add(p); }});
+    }}
+    _calAllPlayersCache.forEach(p => _calSelectedPlayersEverSeen.add(p));
+}}
+
+function _calRenderPlayerChips() {{
+    const host = document.getElementById('calPlayerChips');
+    if (!host) return;
+    let html = '';
+    if (!_calAllPlayersCache.length) {{
+        html = '<div class="cal-multi-empty">No PDW invites yet.</div>';
+    }} else {{
+        _calAllPlayersCache.forEach(p => {{
+            const on = _calSelectedPlayers.has(p);
+            const safeAttr = p.replace(/'/g, "\\\\'").replace(/"/g, '&quot;');
+            const safeText = p.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            html += '<label class="cal-multi-item" onclick="event.stopPropagation()">'
+                +  '<input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="calTogglePlayer(\\'' + safeAttr + '\\')">'
+                +  '<span>' + safeText + '</span>'
+                +  '</label>';
+        }});
+    }}
+    host.innerHTML = html;
+    _calUpdatePlayerBtnLabel();
+}}
+
+function _calUpdatePlayerBtnLabel() {{
+    const el = document.getElementById('calPlayerBtnLabel');
+    if (!el) return;
+    const total = _calAllPlayersCache.length;
+    const sel = _calSelectedPlayers ? _calSelectedPlayers.size : 0;
+    let label;
+    if (total === 0) label = 'No players';
+    else if (sel === 0) label = 'None';
+    else if (sel === total) label = 'All (' + total + ')';
+    else if (sel === 1) label = [..._calSelectedPlayers][0];
+    else label = sel + ' selected';
+    el.textContent = label;
+}}
+
+function toggleCalPlayerPanel() {{
+    const el = document.getElementById('calPlayerDropdown');
+    if (!el) return;
+    el.classList.toggle('open');
+}}
+
+function _calClosePlayerPanel() {{
+    const el = document.getElementById('calPlayerDropdown');
+    if (el) el.classList.remove('open');
+}}
+
+document.addEventListener('click', function(e) {{
+    const dd = document.getElementById('calPlayerDropdown');
+    if (!dd || !dd.classList.contains('open')) return;
+    if (!dd.contains(e.target)) _calClosePlayerPanel();
+}});
+
+function calTogglePlayer(p) {{
+    if (_calSelectedPlayers.has(p)) _calSelectedPlayers.delete(p);
+    else _calSelectedPlayers.add(p);
+    _calSaveSelection();
+    _calRenderPlayerChips();
+    renderCalendar();
+}}
+
+function calSelectAllPlayers() {{
+    _calSelectedPlayers = new Set(_calAllPlayersCache);
+    _calSaveSelection();
+    _calRenderPlayerChips();
+    renderCalendar();
+}}
+
+function calSelectNoPlayers() {{
+    _calSelectedPlayers = new Set();
+    _calSaveSelection();
+    _calRenderPlayerChips();
+    renderCalendar();
+}}
+
+function _escHtml(s) {{
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}}
+
+function _buildPdfGridHtml(year, month, eventsByDate) {{
+    const first = new Date(year, month, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const cells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+    let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);border:1px solid #bbb;background:#ddd;gap:1px;border-radius:4px;overflow:hidden;">';
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {{
+        html += '<div style="background:#2d5016;color:white;padding:6px 0;font-size:11px;font-weight:700;text-align:center;letter-spacing:0.5px;">' + d + '</div>';
+    }});
+    for (let i = 0; i < cells; i++) {{
+        const dayNum = i - startDow + 1;
+        if (dayNum < 1 || dayNum > daysInMonth) {{
+            html += '<div style="background:#fafafa;min-height:90px;"></div>';
+            continue;
+        }}
+        const iso = year + '-' + String(month+1).padStart(2,'0') + '-' + String(dayNum).padStart(2,'0');
+        const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
+        const bg = isDraft ? '#fff5e0' : 'white';
+        html += '<div style="background:' + bg + ';min-height:90px;padding:4px 5px;vertical-align:top;">';
+        html += '<div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px;">' + dayNum
+            + (isDraft ? ' <span style="font-size:8px;padding:1px 4px;background:#d4a017;color:white;border-radius:2px;font-weight:700;">DRAFT</span>' : '')
+            + '</div>';
+        (eventsByDate[iso] || []).forEach(ev => {{
+            const color = _chipColor(ev);
+            const isWorkout = ev.type === 'workout';
+            const isConfirmed = isWorkout && !!ev.confirmed;
+            const label = _escHtml(_chipLabel(ev));
+            let style;
+            if (isWorkout && !isConfirmed) {{
+                style = 'display:block;font-size:9px;padding:2px 5px;margin-bottom:2px;border-radius:3px;'
+                    + 'border:1.5px dashed ' + color + ';color:' + color + ';font-weight:500;overflow:hidden;'
+                    + 'text-overflow:ellipsis;white-space:nowrap;' + (ev.tentative ? 'opacity:0.75;font-style:italic;' : '');
+                html += '<div style="' + style + '">' + label + '</div>';
+            }} else {{
+                const prefix = isConfirmed ? '&#10003; ' : '';
+                style = 'display:block;font-size:9px;padding:2px 5px;margin-bottom:2px;border-radius:3px;'
+                    + 'background:' + color + ';color:white;font-weight:' + (isConfirmed ? '800' : '600') + ';overflow:hidden;'
+                    + 'text-overflow:ellipsis;white-space:nowrap;';
+                html += '<div style="' + style + '">' + prefix + label + '</div>';
+            }}
+        }});
+        html += '</div>';
+    }}
+    html += '</div>';
+    return html;
+}}
+
+function _buildPdfAgendaHtml(players, eventsByDate, year, month) {{
+    const MONTH_KEY = year + '-' + String(month+1).padStart(2,'0');
+    const byPlayer = {{}};
+    Object.keys(eventsByDate).forEach(iso => {{
+        if (iso.slice(0,7) !== MONTH_KEY) return;
+        eventsByDate[iso].forEach(ev => {{
+            (byPlayer[ev.player] = byPlayer[ev.player] || []).push(ev);
+        }});
+    }});
+    let html = '<div style="margin-top:18px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">';
+    players.forEach(p => {{
+        const evs = (byPlayer[p] || []).slice().sort((a,b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:8px 10px;break-inside:avoid;">';
+        html += '<div style="font-size:12px;font-weight:700;color:#2d5016;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
+        if (!evs.length) {{
+            html += '<div style="font-size:10px;color:#999;font-style:italic;">No events this month.</div>';
+        }} else {{
+            evs.forEach(ev => {{
+                const d = new Date(ev.date + 'T00:00:00');
+                const dateStr = (d.getMonth()+1) + '/' + d.getDate();
+                const isWorkout = ev.type === 'workout';
+                let line = '';
+                if (isWorkout) {{
+                    line = _escHtml(ev.team || '?') + (ev.confirmed ? ' (confirmed)' : ' invite') + (ev.tentative ? ' · T' : '');
+                }} else {{
+                    line = _escHtml(ev.title || ev.type || 'Event');
+                }}
+                if (ev.time) line += ' · ' + _escHtml(ev.time);
+                if (ev.location) line += ' · ' + _escHtml(ev.location);
+                html += '<div style="font-size:10px;color:#333;padding:2px 0;">'
+                     + '<span style="display:inline-block;width:34px;color:#888;font-weight:600;">' + dateStr + '</span>'
+                     + line + '</div>';
+            }});
+        }}
+        html += '</div>';
+    }});
+    html += '</div>';
+    return html;
+}}
+
+async function exportCalendarPDF() {{
+    if (typeof html2pdf === 'undefined') {{
+        showToast('PDF library not loaded yet — try again in a second.', false);
+        return;
+    }}
+    _calEnsureSelection();
+    const players = [..._calSelectedPlayers].sort();
+    if (!players.length) {{
+        showToast('Select at least one player first.', false);
+        return;
+    }}
+
+    const fType = document.getElementById('calTypeFilter').value;
+    const merged = _getMergedEvents().filter(ev => {{
+        if (!_calSelectedPlayers.has(ev.player)) return false;
+        if (fType && ev.type !== fType) return false;
+        return true;
+    }});
+    const byDate = {{}};
+    merged.forEach(ev => {{ (byDate[ev.date] = byDate[ev.date] || []).push(ev); }});
+
+    const year = _calMonth.getFullYear();
+    const month = _calMonth.getMonth();
+    const monthName = MONTH_NAMES[month];
+    const nowIso = _fmtIso(new Date());
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-10000px;top:0;width:1100px;background:white;padding:26px 28px;font-family:Arial,sans-serif;color:#222;';
+    container.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #2d5016;padding-bottom:10px;margin-bottom:14px;">'
+      +   '<div>'
+      +     '<div style="font-size:22px;font-weight:800;color:#2d5016;letter-spacing:0.3px;">Stadium Ventures &middot; ' + monthName + ' ' + year + '</div>'
+      +     '<div style="font-size:11px;color:#555;margin-top:4px;">Players: ' + _escHtml(players.join(', ')) + '</div>'
+      +   '</div>'
+      +   '<div style="font-size:10px;color:#888;text-align:right;">SV TeamIntel<br>Generated ' + nowIso + '</div>'
+      + '</div>'
+      + _buildPdfGridHtml(year, month, byDate)
+      + _buildPdfAgendaHtml(players, byDate, year, month);
+    document.body.appendChild(container);
+
+    const btn = document.querySelector('.cal-pdfbtn');
+    if (btn) {{ btn.disabled = true; btn.textContent = 'Building...'; }}
+    try {{
+        const filename = 'SV-TeamIntel-' + monthName + '-' + year
+            + (players.length <= 3 ? '-' + players.map(p => p.split(' ').pop()).join('-') : '')
+            + '.pdf';
+        await html2pdf().set({{
+            margin: [8, 8, 8, 8],
+            filename: filename,
+            image: {{ type: 'jpeg', quality: 0.95 }},
+            html2canvas: {{ scale: 2, useCORS: true, backgroundColor: '#ffffff' }},
+            jsPDF: {{ unit: 'mm', format: 'letter', orientation: 'landscape' }},
+            pagebreak: {{ mode: ['css', 'legacy'] }}
+        }}).from(container).save();
+        showToast('PDF downloaded: ' + filename, true);
+    }} catch(e) {{
+        console.error(e);
+        showToast('PDF failed: ' + e.message, false);
+    }} finally {{
+        document.body.removeChild(container);
+        if (btn) {{ btn.disabled = false; btn.innerHTML = '&#x2B07; PDF'; }}
+    }}
+}}
 
 async function _calApi(method, body) {{
     const opts = {{ method: method, headers: {{'Content-Type':'application/json'}} }};
@@ -1854,18 +2195,8 @@ function _chipLabel(ev) {{
 function renderCalendar() {{
     document.getElementById('calMonthLabel').textContent = _fmtMonth(_calMonth);
 
-    const playerSel = document.getElementById('calPlayerFilter');
-    if (playerSel.options.length <= 1) {{
-        // Only players with a pre-draft workout invite (workout:true record) or a manual workout event.
-        const workoutPlayers = new Set(RECORDS.filter(r => r.workout).map(r => r.player));
-        Object.values(_calEvents || {{}}).forEach(ev => {{
-            if (ev.type === 'workout' && ev.player) workoutPlayers.add(ev.player);
-        }});
-        [...workoutPlayers].sort().forEach(p => {{
-            const o = document.createElement('option'); o.value = p; o.textContent = p; playerSel.appendChild(o);
-        }});
-    }}
-    const fPlayer = playerSel.value;
+    _calEnsureSelection();
+    _calRenderPlayerChips();
     const fType = document.getElementById('calTypeFilter').value;
 
     const year = _calMonth.getFullYear(), month = _calMonth.getMonth();
@@ -1879,7 +2210,7 @@ function renderCalendar() {{
     }});
 
     const merged = _getMergedEvents().filter(ev => {{
-        if (fPlayer && ev.player !== fPlayer) return false;
+        if (!_calSelectedPlayers.has(ev.player)) return false;
         if (fType && ev.type !== fType) return false;
         return true;
     }});
@@ -2032,9 +2363,12 @@ function openEventModal(id, isoDate, ev) {{
         const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
         players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; playerSel.appendChild(o); }});
     }}
-    // Default to the calendar's currently-filtered player when adding a new event.
-    const calFilterEl = document.getElementById('calPlayerFilter');
-    const calFilterPlayer = calFilterEl ? calFilterEl.value : '';
+    // Default to a currently-selected player when adding a new event.
+    let calFilterPlayer = '';
+    if (_calSelectedPlayers && _calSelectedPlayers.size >= 1) {{
+        const sel = [..._calSelectedPlayers].sort();
+        calFilterPlayer = sel[0];
+    }}
     playerSel.value = (ev && ev.player) || calFilterPlayer || playerSel.options[0].value;
     const teamSel = document.getElementById('evTeam');
     if (teamSel.options.length <= 1) {{
@@ -2105,15 +2439,13 @@ function returnToEvent() {{
 function jumpToCalendarForCurrentPlayer() {{
     const player = document.getElementById('playerSelect').value;
     if (!player) {{ showView('calendar'); return; }}
-    // Make sure calendar is initialized so filter dropdown is populated.
     (async () => {{
         if (!_calInitialized) {{ await initCalendar(); }}
-        const sel = document.getElementById('calPlayerFilter');
-        // Ensure option exists (players only-in-RECORDS go in at init)
-        let found = false;
-        for (let i = 0; i < sel.options.length; i++) {{ if (sel.options[i].value === player) {{ found = true; break; }} }}
-        if (!found) {{ const o = document.createElement('option'); o.value = player; o.textContent = player; sel.appendChild(o); }}
-        sel.value = player;
+        // Solo-focus this player on the master calendar.
+        _calEnsureSelection();
+        _calSelectedPlayers = new Set([player]);
+        _calSelectedPlayersEverSeen.add(player);
+        _calSaveSelection();
         // Jump to a month where this player has events if possible, else stay.
         const autoDates = _calAutoEvents.filter(e => e.player === player).map(e => e.date).sort();
         if (autoDates.length) {{
