@@ -1032,8 +1032,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .cal-cell.today .cal-daynum {{ color: #ff2a22; }}
 .cal-chip {{
     display: block; font-size: 10px; padding: 2px 5px; margin-bottom: 2px;
-    border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    cursor: pointer; font-weight: 600;
+    border-radius: 3px; color: white; white-space: normal; overflow-wrap: anywhere;
+    word-break: break-word; line-height: 1.25; cursor: pointer; font-weight: 600;
 }}
 /* Workout invites (default): lighter, hollow look */
 .cal-chip.workout-invite {{
@@ -2024,14 +2024,15 @@ function _buildPdfGridHtml(year, month, eventsByDate) {{
             let style;
             if (isWorkout && !isConfirmed) {{
                 style = 'display:block;font-size:9px;padding:2px 5px;margin-bottom:2px;border-radius:3px;'
-                    + 'border:1.5px dashed ' + color + ';color:' + color + ';font-weight:500;overflow:hidden;'
-                    + 'text-overflow:ellipsis;white-space:nowrap;' + (ev.tentative ? 'opacity:0.75;font-style:italic;' : '');
+                    + 'border:1.5px dashed ' + color + ';color:' + color + ';font-weight:500;'
+                    + 'white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;'
+                    + (ev.tentative ? 'opacity:0.75;font-style:italic;' : '');
                 html += '<div style="' + style + '">' + label + '</div>';
             }} else {{
                 const prefix = isConfirmed ? '&#10003; ' : '';
                 style = 'display:block;font-size:9px;padding:2px 5px;margin-bottom:2px;border-radius:3px;'
-                    + 'background:' + color + ';color:white;font-weight:' + (isConfirmed ? '800' : '600') + ';overflow:hidden;'
-                    + 'text-overflow:ellipsis;white-space:nowrap;';
+                    + 'background:' + color + ';color:white;font-weight:' + (isConfirmed ? '800' : '600') + ';'
+                    + 'white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;';
                 html += '<div style="' + style + '">' + prefix + label + '</div>';
             }}
         }});
@@ -2296,6 +2297,12 @@ function calJumpTo(which) {{
 
 function _chipColor(ev) {{
     if (ev.type === 'workout') {{ return TEAM_COLORS[ev.team] || '#888'; }}
+    if (ev.type === 'game') {{
+        // HS games get a teal chip; NCAA/JUCO (college) use the default navy.
+        const lvl = (ev.level || '').toUpperCase();
+        if (lvl === 'HS' || lvl.startsWith('HIGH')) return '#0d9488';
+        return TYPE_COLORS.game;
+    }}
     return TYPE_COLORS[ev.type] || '#888';
 }}
 
