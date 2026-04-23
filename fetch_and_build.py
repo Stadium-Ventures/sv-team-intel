@@ -2590,8 +2590,11 @@ async function loadManualRecords() {{
     try {{ blob = await _mrApi('GET', null); }}
     catch(e) {{ console.warn('manual records load failed', e); return; }}
     if (!blob || typeof blob !== 'object') return;
-    // Rebuild RECORDS without any `is_manual`, then push the fresh manual set.
-    RECORDS = RECORDS.filter(r => !r.is_manual);
+    // Drop any existing manual records (server-side-embedded snapshot) in place,
+    // then push the fresh set. RECORDS is `const`, so mutate — do not reassign.
+    for (let i = RECORDS.length - 1; i >= 0; i--) {{
+        if (RECORDS[i].is_manual) RECORDS.splice(i, 1);
+    }}
     Object.values(blob).forEach(val => {{
         if (!val || !val.player || !val.team || !val.date) return;
         const full = val.full_text || '';
