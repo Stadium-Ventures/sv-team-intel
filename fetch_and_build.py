@@ -953,19 +953,31 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 }}
 .matrix-table thead th {{
     background: #000000; color: white; font-weight: 600; font-size: 11px;
-    letter-spacing: 0.3px; border-right-color: #3a6520; border-bottom: 2px solid #000000;
+    letter-spacing: 0.3px; border-right: 1px solid #2a2a2a; border-bottom: 1px solid #2a2a2a;
     position: sticky; top: 0; z-index: 3;
 }}
-/* Sub-header row: 2026 bonus pool + first 5 picks per team. Sits under the
-   team-abbrev row and stays sticky just below it on scroll. */
+.matrix-table thead tr:first-child th {{ height: 26px; }}
+/* Sub-header row: 2026 bonus pool + first 5 picks per team. Top-aligned so the
+   pool $ stays in the same place across all columns regardless of how many
+   picks land in the cell below. */
 .matrix-table thead th.team-info {{
-    background: #1f1f1f; color: #e0e0e0; font-weight: 500; font-size: 9px;
-    line-height: 1.25; letter-spacing: 0.2px; padding: 4px 5px;
-    white-space: normal; height: auto; border-bottom: 2px solid #000000;
-    position: sticky; top: 30px; z-index: 3;
+    background: #1a1a1a; color: #d8d8d8; font-weight: 500;
+    padding: 5px 5px 6px; white-space: normal; vertical-align: top;
+    border-bottom: 2px solid #000000; min-width: 64px;
+    position: sticky; top: 26px; z-index: 3;
 }}
-.matrix-table thead th.team-info .ti-pool {{ color: #fff; font-weight: 700; font-size: 10px; }}
-.matrix-table thead th.team-info .ti-picks {{ color: #ff9d99; font-size: 9px; margin-top: 1px; }}
+.matrix-table thead th.team-info .ti-pool {{
+    color: #fff; font-weight: 700; font-size: 11px; line-height: 1.1;
+    letter-spacing: 0.2px; margin-bottom: 3px;
+}}
+.matrix-table thead th.team-info .ti-picks {{
+    color: #c8c8c8; font-size: 9px; line-height: 1.25;
+    font-weight: 500; letter-spacing: 0.1px;
+}}
+.matrix-table thead th.team-info .ti-picks-label {{
+    color: #888; font-size: 8px; font-weight: 600;
+    letter-spacing: 0.4px; text-transform: uppercase; margin-right: 3px;
+}}
 /* Sticky first column (TOTAL) */
 .matrix-table th:nth-child(1), .matrix-table td:nth-child(1) {{
     position: sticky; left: 0; z-index: 2;
@@ -1984,6 +1996,33 @@ const COLOR_BG = {{
     'red':         'rgb(225, 110, 105)'
 }};
 
+// Bonus-pool color scale: brighter green = more $ to spend, muted red = less.
+// 2026 MLB pool range is ~$3.95m (LAD) to ~$19.13m (PIT). Anchored to that
+// span so the gradient hugs the actual data; values outside clamp.
+function poolTextColor(poolStr) {{
+    if (!poolStr) return '#fff';
+    const m = String(poolStr).match(/([\\d.]+)/);
+    if (!m) return '#fff';
+    const v = parseFloat(m[1]);
+    const lo = 4, hi = 19;
+    const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+    if (t >= 0.5) {{
+        // mid → high: white → bright green
+        const u = (t - 0.5) * 2;
+        const r = Math.round(255 - 165 * u);
+        const g = 255;
+        const b = Math.round(255 - 145 * u);
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }} else {{
+        // mid → low: white → muted red
+        const u = (0.5 - t) * 2;
+        const r = 255;
+        const g = Math.round(255 - 130 * u);
+        const b = Math.round(255 - 130 * u);
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }}
+}}
+
 function buildMatrix() {{
     // Number = sum of attendee-tier points across all touches for that
     // (player, team) cell (GM=+5, Dir=+4, NXC=+3, X=+2, Area=+1, T0=0).
@@ -2073,7 +2112,11 @@ function renderMatrix() {{
         if (info) {{
             const pool = info.pool || '';
             const picks = (info.picks || []).slice(0, 5).join(', ');
-            html += '<th class="team-info"><div class="ti-pool">' + pool + '</div><div class="ti-picks">' + picks + '</div></th>';
+            const poolStyle = pool ? ' style="color:' + poolTextColor(pool) + ';"' : '';
+            const picksHtml = picks
+                ? '<div class="ti-picks"><span class="ti-picks-label">PICKS</span>' + picks + '</div>'
+                : '';
+            html += '<th class="team-info"><div class="ti-pool"' + poolStyle + '>' + pool + '</div>' + picksHtml + '</th>';
         }} else {{
             html += '<th class="team-info"></th>';
         }}
