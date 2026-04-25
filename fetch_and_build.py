@@ -58,7 +58,7 @@ TEAM_ABBR = {
     'KC': 'KC', 'KANSAS CITY': 'KC', 'ROYALS': 'KC',
     'LAA': 'LAA', 'ANGELS': 'LAA',
     'LAD': 'LAD', 'DODGERS': 'LAD',
-    'MIA': 'MIA', 'MIAMI': 'MIA', 'MARLINS': 'MIA',
+    'MIA': 'MIA', 'MIAMI': 'MIA', 'MARLINS': 'MIA', 'FL': 'MIA', 'FLA': 'MIA',
     'MIL': 'MIL', 'MILWAUKEE': 'MIL', 'BREWERS': 'MIL',
     'MIN': 'MIN', 'MINNESOTA': 'MIN', 'TWINS': 'MIN', 'MINN': 'MIN',
     'NYM': 'NYM', 'METS': 'NYM',
@@ -805,6 +805,30 @@ def parse_messages(messages):
 
 
 # --- STEP 3: BUILD HTML ---
+def load_team_draft_info():
+    """Read 2026 bonus pool + first picks per team from data/team_draft_2026.csv.
+    Returns { abbrev: { 'pool': str, 'picks': [int] } }. Empty dict if missing.
+    Source: `~/Desktop/claude/sv-org-review/Org.Review.2026.xlsx` "Review" sheet
+    rows 3 ("Pool Amount") + 4 ("Pick #"). Re-extract when org-review updates.
+    """
+    path = os.path.join(os.path.dirname(__file__), 'data', 'team_draft_2026.csv')
+    if not os.path.exists(path):
+        print(f"INFO: {path} not found — team draft info won't render.")
+        return {}
+    out = {}
+    with open(path) as f:
+        for row in csv.DictReader(f):
+            abbr = (row.get('abbrev') or '').strip().upper()
+            if not abbr:
+                continue
+            picks = [p.strip() for p in (row.get('picks') or '').split(',') if p.strip()]
+            out[abbr] = {
+                'pool': (row.get('pool_amount') or '').strip(),
+                'picks': picks,
+            }
+    return out
+
+
 def build_html(records, password="SVintel2026", games=None):
     records_js = json.dumps(records)
     games_js = json.dumps(games or [])
@@ -813,6 +837,7 @@ def build_html(records, password="SVintel2026", games=None):
     all_2026_js = json.dumps(ALL_2026_PLAYERS)
     # Serialize alias map (sets aren't JSON-safe — convert to lists)
     player_aliases_js = json.dumps({name: sorted(aliases) for name, aliases in PLAYER_ALIASES.items()})
+    team_draft_js = json.dumps(load_team_draft_info())
 
     html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -931,6 +956,16 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
     letter-spacing: 0.3px; border-right-color: #3a6520; border-bottom: 2px solid #000000;
     position: sticky; top: 0; z-index: 3;
 }}
+/* Sub-header row: 2026 bonus pool + first 5 picks per team. Sits under the
+   team-abbrev row and stays sticky just below it on scroll. */
+.matrix-table thead th.team-info {{
+    background: #1f1f1f; color: #e0e0e0; font-weight: 500; font-size: 9px;
+    line-height: 1.25; letter-spacing: 0.2px; padding: 4px 5px;
+    white-space: normal; height: auto; border-bottom: 2px solid #000000;
+    position: sticky; top: 30px; z-index: 3;
+}}
+.matrix-table thead th.team-info .ti-pool {{ color: #fff; font-weight: 700; font-size: 10px; }}
+.matrix-table thead th.team-info .ti-picks {{ color: #ff9d99; font-size: 9px; margin-top: 1px; }}
 /* Sticky first column (TOTAL) */
 .matrix-table th:nth-child(1), .matrix-table td:nth-child(1) {{
     position: sticky; left: 0; z-index: 2;
@@ -982,6 +1017,14 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup .popup-scores button.psn1 {{ background: #ffd9b3; color: #8a4500; border-color: #f5b97a; }}
 #scorePopup .popup-scores button.psn2 {{ background: #f4c7c3; color: #8b1a1a; border-color: #e8a8a3; }}
 #scorePopup .popup-scores button.psna {{ background: #e0e0e0; color: #666; border-color: #bbb; font-style: italic; font-size: 12px; }}
+#scorePopup .popup-team-info {{
+    background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 5px;
+    padding: 6px 9px; margin: 0 0 10px; font-size: 11px; line-height: 1.45;
+}}
+#scorePopup .popup-team-info .pti-row {{ display: flex; gap: 6px; }}
+#scorePopup .popup-team-info .pti-label {{ color: #888; font-weight: 600; min-width: 52px; }}
+#scorePopup .popup-team-info .pti-pool {{ color: #1a5e1a; font-weight: 700; }}
+#scorePopup .popup-team-info .pti-picks {{ color: #c0392b; font-weight: 600; }}
 #scorePopup .popup-points-label {{ font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 5px; text-transform: uppercase; }}
 #scorePopup .popup-points {{ display: flex; gap: 5px; margin-bottom: 10px; }}
 #scorePopup .popup-points button {{
@@ -1622,6 +1665,7 @@ const GAMES_SCHEDULE = {games_js};
 const ALL_TEAMS = {json.dumps(ALL_TEAMS)};
 const ALL_2026_PLAYERS = {all_2026_js};
 const PLAYER_ALIASES = {player_aliases_js};
+const TEAM_DRAFT = {team_draft_js};
 
 // --- Override system (Vercel KV) — per-record overrides ---
 var scoreOverrides = {{}};
@@ -1898,6 +1942,18 @@ function openScorePopup(player, team, date, event) {{
     _popupTeam = team;
     _popupDate = date;
     document.getElementById('popupTitle').textContent = player + ' \\u2014 ' + team + ' (' + date + ')';
+    // Render the team's 2026 bonus pool + first 5 picks (if available).
+    const tInfo = TEAM_DRAFT[team];
+    const tBox = document.getElementById('popupTeamInfo');
+    if (tInfo && (tInfo.pool || (tInfo.picks && tInfo.picks.length))) {{
+        const picks = (tInfo.picks || []).slice(0, 5).join(', ') || '—';
+        tBox.innerHTML =
+            '<div class="pti-row"><span class="pti-label">Pool:</span><span class="pti-pool">' + (tInfo.pool || '—') + '</span></div>' +
+            '<div class="pti-row"><span class="pti-label">Picks:</span><span class="pti-picks">' + picks + '</span></div>';
+        tBox.style.display = 'block';
+    }} else {{
+        tBox.style.display = 'none';
+    }}
     updatePDWButton();
     var popup = document.getElementById('scorePopup');
     var overlay = document.getElementById('scoreOverlay');
@@ -1908,7 +1964,7 @@ function openScorePopup(player, team, date, event) {{
     var y = rect.bottom + 6;
     if (x < 8) x = 8;
     if (x + 220 > window.innerWidth) x = window.innerWidth - 228;
-    if (y + 120 > window.innerHeight) y = rect.top - 120;
+    if (y + 280 > window.innerHeight) y = Math.max(8, rect.top - 280);
     popup.style.left = x + 'px';
     popup.style.top = y + 'px';
 }}
@@ -2009,8 +2065,19 @@ function fmtScore(s) {{
 function renderMatrix() {{
     const {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
 
-    var html = '<thead><tr><th>TOTAL</th><th>Client</th>';
+    var html = '<thead><tr><th rowspan="2">TOTAL</th><th rowspan="2">Client</th>';
     ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
+    html += '</tr><tr>';
+    ALL_TEAMS.forEach(t => {{
+        const info = TEAM_DRAFT[t];
+        if (info) {{
+            const pool = info.pool || '';
+            const picks = (info.picks || []).slice(0, 5).join(', ');
+            html += '<th class="team-info"><div class="ti-pool">' + pool + '</div><div class="ti-picks">' + picks + '</div></th>';
+        }} else {{
+            html += '<th class="team-info"></th>';
+        }}
+    }});
     html += '</tr></thead><tbody>';
 
     sortedPlayers.forEach(player => {{
@@ -3225,6 +3292,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 <div id="scoreOverlay" onclick="closeScorePopup()"></div>
 <div id="scorePopup">
     <div class="popup-title" id="popupTitle"></div>
+    <div class="popup-team-info" id="popupTeamInfo" style="display:none;"></div>
     <div class="popup-points-label">Set points</div>
     <div class="popup-points">
         <button class="pp5" onclick="savePoints(5)" title="GM / POBO / President">5</button>
