@@ -895,25 +895,28 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 #appContent {{ display: none; visibility: hidden; }}
 #appContent.visible {{ display: block; visibility: visible; }}
 
-/* --- DASHBOARD --- */
+/* --- DASHBOARD ---
+   Density pass (2026-04-25): the dashboard targets information-dense scanning
+   for a small group of users. Defaults trimmed to a compact desktop layout;
+   mobile breakpoint stacks sensibly below 768px. */
 .header {{
     background: #000000;
-    color: white; padding: 18px 30px;
+    color: white; padding: 10px 22px;
     display: flex; align-items: center; justify-content: space-between;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3); position: relative; z-index: 100;
-    border-bottom: 3px solid #ff2a22;
+    border-bottom: 2px solid #ff2a22;
 }}
-.header-left {{ display: flex; align-items: center; gap: 16px; }}
-.header h1 {{ font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }}
-.header .subtitle {{ font-size: 13px; opacity: 0.8; font-weight: 400; }}
+.header-left {{ display: flex; align-items: center; gap: 14px; }}
+.header h1 {{ font-size: 17px; font-weight: 700; letter-spacing: 0.4px; }}
+.header .subtitle {{ font-size: 11px; opacity: 0.8; font-weight: 400; }}
 .logo-icon {{
-    height: 38px; width: auto; display: flex; align-items: center; justify-content: center;
+    height: 30px; width: auto; display: flex; align-items: center; justify-content: center;
 }}
-.logo-icon img {{ height: 38px; width: auto; display: block; }}
+.logo-icon img {{ height: 30px; width: auto; display: block; }}
 .nav-tabs {{ display: flex; gap: 4px; }}
 .nav-tab {{
-    padding: 8px 20px; border-radius: 6px; cursor: pointer;
-    font-size: 13px; font-weight: 600; transition: all 0.2s;
+    padding: 5px 14px; border-radius: 5px; cursor: pointer;
+    font-size: 12px; font-weight: 600; transition: all 0.2s;
     border: 1px solid rgba(255,255,255,0.2);
     background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8);
 }}
@@ -921,53 +924,53 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .nav-tab.active {{ background: rgba(255,255,255,0.25); color: white; border-color: rgba(255,255,255,0.4); }}
 
 .stats-bar {{
-    background: white; padding: 12px 30px; display: flex; gap: 30px;
-    border-bottom: 1px solid #e0e0e0; font-size: 13px;
+    background: white; padding: 6px 22px; display: flex; gap: 22px;
+    border-bottom: 1px solid #e8e8e8; font-size: 11px; align-items: center;
 }}
-.stat-item {{ display: flex; gap: 6px; align-items: center; }}
+.stat-item {{ display: flex; gap: 5px; align-items: center; }}
 .stat-label {{ color: #888; font-weight: 500; }}
 .stat-value {{ font-weight: 700; color: #000000; }}
 
 .legend {{
-    display: flex; gap: 16px; padding: 10px 30px; font-size: 12px;
-    align-items: center; background: white; border-bottom: 1px solid #e0e0e0;
+    display: flex; gap: 14px; padding: 5px 22px; font-size: 11px;
+    align-items: center; background: white; border-bottom: 1px solid #e8e8e8;
 }}
 .legend-title {{ font-weight: 600; color: #666; }}
 .legend-item {{ display: flex; align-items: center; gap: 5px; }}
-.legend-swatch {{ width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }}
+.legend-swatch {{ width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }}
 
-.matrix-container {{ padding: 20px 30px; }}
+.matrix-container {{ padding: 10px 14px; }}
 .matrix-scroll {{
     /* Fill the page below the sticky header + slim legend + statsBar so the
-       matrix doesn't feel cut off. ~70px header + ~32px legend + ~52px stats
-       + ~60px paddings. */
-    max-height: calc(100vh - 215px); overflow: auto;
+       matrix doesn't feel cut off. Compact desktop chrome: ~46px header +
+       ~24px legend + ~28px stats + ~30px paddings ≈ 130px. */
+    max-height: calc(100vh - 145px); overflow: auto;
     -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-    border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); background: white;
+    border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); background: white;
 }}
 .matrix-table {{
-    border-collapse: separate; border-spacing: 0; font-size: 12px;
+    border-collapse: separate; border-spacing: 0; font-size: 11px;
     width: auto; min-width: 100%; background: white;
 }}
 .matrix-table th, .matrix-table td {{
-    padding: 8px 6px; text-align: center;
-    border-right: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8;
-    white-space: nowrap; height: 32px; background: white;
+    padding: 4px 5px; text-align: center;
+    border-right: 1px solid #ececec; border-bottom: 1px solid #ececec;
+    white-space: nowrap; height: 26px; background: white;
 }}
 .matrix-table thead th {{
-    background: #000000; color: white; font-weight: 600; font-size: 11px;
+    background: #000000; color: white; font-weight: 600; font-size: 10px;
     letter-spacing: 0.3px; border-right: 1px solid #2a2a2a; border-bottom: 1px solid #2a2a2a;
     position: sticky; top: 0; z-index: 3;
 }}
-.matrix-table thead tr:first-child th {{ height: 26px; }}
+.matrix-table thead tr:first-child th {{ height: 22px; }}
 /* Sub-header row: 2026 bonus pool + first 5 picks per team. Top-aligned so the
    pool $ stays in the same place across all columns regardless of how many
    picks land in the cell below. */
 .matrix-table thead th.team-info {{
     background: #1a1a1a; color: #d8d8d8; font-weight: 500;
-    padding: 5px 5px 6px; white-space: normal; vertical-align: top;
-    border-bottom: 2px solid #000000; min-width: 64px;
-    position: sticky; top: 26px; z-index: 3;
+    padding: 4px 5px 5px; white-space: normal; vertical-align: top;
+    border-bottom: 2px solid #000000; min-width: 60px;
+    position: sticky; top: 22px; z-index: 3;
 }}
 .matrix-table thead th.team-info .ti-pool {{
     color: #fff; font-weight: 700; font-size: 11px; line-height: 1.1;
@@ -985,12 +988,12 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
    so the team-info sub-header's first cell isn't also stuck to the left edge. */
 .matrix-table thead tr:first-child th:nth-child(1), .matrix-table tbody td:nth-child(1) {{
     position: sticky; left: 0; z-index: 2;
-    min-width: 140px; max-width: 140px;
+    min-width: 132px; max-width: 132px;
 }}
 .matrix-table tbody td:nth-child(1) {{
-    background: white; text-align: left; padding-left: 10px; font-size: 12px; font-weight: 600;
+    background: white; text-align: left; padding-left: 9px; font-size: 11px; font-weight: 600;
     color: #000000;
-    box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 3px -1px rgba(0,0,0,0.08);
 }}
 .matrix-table thead tr:first-child th:nth-child(1) {{
     z-index: 4; box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1);
@@ -1134,33 +1137,33 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .detail-table td.note-cell {{ cursor: pointer; }}
 .detail-table tr:hover td.note-cell {{ background: #fff5f5; }}
 
-.detail-container {{ padding: 20px 30px; display: none; }}
-.player-select-wrapper {{ display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }}
-.player-select-wrapper label {{ font-weight: 600; font-size: 14px; color: #555; }}
+.detail-container {{ padding: 12px 18px; display: none; }}
+.player-select-wrapper {{ display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }}
+.player-select-wrapper label {{ font-weight: 600; font-size: 12px; color: #555; }}
 .player-select {{
-    padding: 10px 14px; font-size: 14px; border: 2px solid #ccc;
-    border-radius: 6px; background: white; min-width: 250px; cursor: pointer;
+    padding: 7px 12px; font-size: 13px; border: 1px solid #ccc;
+    border-radius: 6px; background: white; min-width: 230px; cursor: pointer;
 }}
 .player-select:focus {{ outline: none; border-color: #000000; }}
 
 .player-summary {{
-    display: flex; gap: 24px; margin-bottom: 20px; background: white;
-    padding: 16px 24px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: flex; gap: 22px; margin-bottom: 12px; background: white;
+    padding: 12px 18px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }}
 .summary-item {{ display: flex; flex-direction: column; gap: 2px; }}
-.summary-label {{ font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
-.summary-value {{ font-size: 20px; font-weight: 700; color: #000000; }}
+.summary-label {{ font-size: 10px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
+.summary-value {{ font-size: 17px; font-weight: 700; color: #000000; }}
 
 .detail-table {{
     width: 100%; border-collapse: separate; border-spacing: 0;
-    background: white; border-radius: 8px; overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1); font-size: 13px;
+    background: white; border-radius: 6px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 12px;
 }}
 .detail-table th {{
-    background: #000000; color: white; font-weight: 600; padding: 12px 14px;
-    text-align: left; font-size: 12px; letter-spacing: 0.3px;
+    background: #000000; color: white; font-weight: 600; padding: 8px 12px;
+    text-align: left; font-size: 11px; letter-spacing: 0.3px;
 }}
-.detail-table td {{ padding: 10px 14px; border-bottom: 1px solid #eee; vertical-align: top; }}
+.detail-table td {{ padding: 7px 12px; border-bottom: 1px solid #eee; vertical-align: top; }}
 .detail-table td:first-child {{ white-space: nowrap; font-weight: 500; width: 100px; }}
 .detail-table td:nth-child(2) {{ white-space: nowrap; font-weight: 600; width: 60px; }}
 .detail-table td:nth-child(3) {{ line-height: 1.5; color: #555; max-width: 600px; }}
@@ -1179,15 +1182,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .last-updated {{ font-size: 11px; opacity: 0.7; margin-top: 2px; }}
 
 /* --- TABLET --- */
-@media (max-width: 1024px) and (min-width: 769px) {{
-    .header {{ padding: 14px 20px; }}
-    .header h1 {{ font-size: 20px; }}
-    .matrix-container {{ padding: 15px 10px; }}
-    .matrix-table {{ font-size: 11px; }}
-    .matrix-table th, .matrix-table td {{ padding: 7px 5px; }}
-    .legend {{ padding: 8px 20px; font-size: 11px; }}
-    .stats-bar {{ padding: 10px 20px; font-size: 12px; }}
-}}
+/* The 769–1024px breakpoint was removed: the compact desktop default now
+   works comfortably at tablet width without further override. */
 
 /* --- MOBILE --- */
 @media (max-width: 768px) {{
