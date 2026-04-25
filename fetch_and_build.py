@@ -938,10 +938,9 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 
 .matrix-container {{ padding: 20px 30px; }}
 .matrix-scroll {{
-    /* Fill the page below the sticky header / legend / statsBar so the matrix
-       doesn't feel cut off mid-row. The 200px reserve accounts for header
-       (~70px) + legend (~32px) + statsBar (~52px) + paddings (~46px). */
-    max-height: calc(100vh - 220px); overflow: auto;
+    /* Fill the page below the sticky header + statsBar so the matrix doesn't
+       feel cut off mid-row. ~70px header + ~52px statsBar + ~60px paddings. */
+    max-height: calc(100vh - 185px); overflow: auto;
     -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
     border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); background: white;
 }}
@@ -1520,21 +1519,6 @@ function checkPw() {{
         <div class="nav-tab active" onclick="showView('matrix')">Matrix View</div>
         <div class="nav-tab" onclick="showView('detail')">Detail View</div>
         <div class="nav-tab" onclick="showView('calendar')">Calendar</div>
-    </div>
-</div>
-
-<div class="legend">
-    <span class="legend-title">Color (most recent):</span>
-    <div class="legend-item"><div class="legend-swatch" style="background:rgb(225,110,105)"></div>Red</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:rgb(245,160,95)"></div>Orange</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:rgb(252,232,130)"></div>Yellow</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:rgb(200,230,180)"></div>Light Green</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:rgb(130,200,140)"></div>Green</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
-    <span class="legend-title" style="margin-left:14px;">Points:</span>
-    <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:11px;color:#999;">Tap a cell to view details</span>
     </div>
 </div>
 
