@@ -978,26 +978,23 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
     color: #888; font-size: 8px; font-weight: 600;
     letter-spacing: 0.4px; text-transform: uppercase; margin-right: 3px;
 }}
-/* Sticky first column (TOTAL) — scoped to the first header row + body so the
-   team-info sub-header's first two cells aren't also stuck to the left edge. */
+/* Sticky first column (Client name) — scoped to the first header row + body
+   so the team-info sub-header's first cell isn't also stuck to the left edge. */
 .matrix-table thead tr:first-child th:nth-child(1), .matrix-table tbody td:nth-child(1) {{
     position: sticky; left: 0; z-index: 2;
-    min-width: 50px; max-width: 50px;
-}}
-.matrix-table tbody td:nth-child(1) {{ background: #fafafa; color: #000000; font-size: 13px; font-weight: 700; }}
-/* Sticky second column (Client name) */
-.matrix-table thead tr:first-child th:nth-child(2), .matrix-table tbody td:nth-child(2) {{
-    position: sticky; left: 51px; z-index: 2;
     min-width: 140px; max-width: 140px;
 }}
-.matrix-table tbody td:nth-child(2) {{
+.matrix-table tbody td:nth-child(1) {{
     background: white; text-align: left; padding-left: 10px; font-size: 12px; font-weight: 600;
+    color: #000000;
     box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1);
 }}
-.matrix-table thead tr:first-child th:nth-child(2) {{ box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1); }}
-/* Header corners stack above both row- and column-sticky */
-.matrix-table thead tr:first-child th:nth-child(1), .matrix-table thead tr:first-child th:nth-child(2) {{ z-index: 4; }}
-.matrix-table tbody tr:hover td {{ background-color: #fff5f5 !important; }}
+.matrix-table thead tr:first-child th:nth-child(1) {{
+    z-index: 4; box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1);
+}}
+/* Row hover: drop !important so the inline cell-color (literal color word) wins.
+   Empty cells still get a subtle pink wash; colored cells keep their color. */
+.matrix-table tbody tr:hover td {{ background-color: #fff5f5; }}
 
 .score-2 {{ background-color: #c6efce !important; color: #1a5e1a; font-weight: 700; }}
 .score-1 {{ background-color: #e2efda !important; color: #3a6b30; font-weight: 600; }}
@@ -1214,12 +1211,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     .matrix-scroll {{ max-height: 72vh; }}
     .matrix-table {{ font-size: 10px; }}
     .matrix-table th, .matrix-table td {{ padding: 5px 3px; height: 26px; }}
-    .matrix-table th:nth-child(1), .matrix-table td:nth-child(1) {{
-        min-width: 36px; max-width: 36px; font-size: 10px;
-    }}
-    .matrix-table th:nth-child(2), .matrix-table td:nth-child(2) {{
-        min-width: 90px; max-width: 90px; font-size: 10px; padding-left: 4px;
-        left: 37px;  /* col 1 width + 1px border */
+    .matrix-table thead tr:first-child th:nth-child(1), .matrix-table tbody td:nth-child(1) {{
+        min-width: 100px; max-width: 100px; font-size: 10px; padding-left: 4px;
     }}
 
     .detail-container {{ padding: 12px 16px; }}
@@ -2114,7 +2107,7 @@ function fmtScore(s) {{
 function renderMatrix() {{
     const {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
 
-    var html = '<thead><tr><th rowspan="2">TOTAL</th><th rowspan="2">Client</th>';
+    var html = '<thead><tr><th rowspan="2">Client</th>';
     ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
     html += '</tr><tr>';
     ALL_TEAMS.forEach(t => {{
@@ -2135,9 +2128,9 @@ function renderMatrix() {{
 
     sortedPlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
-        const totalTitle = ' title="' + total + ' total point' + (total === 1 ? '' : 's') + ' (GM=5, Dir=4, NXC=3, X=2, Area=1)"';
+        const rowTitle = ' title="' + total + ' total point' + (total === 1 ? '' : 's') + ' (GM=5, Dir=4, NXC=3, X=2, Area=1)"';
         const esc = player.replace(/'/g, "\\\\'");
-        html += '<tr><td' + totalTitle + '>' + (total || '') + '</td>';
+        html += '<tr' + rowTitle + '>';
         html += '<td class="clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + player + '</td>';
         ALL_TEAMS.forEach(team => {{
             const pts = playerTeams[player] && playerTeams[player][team];
