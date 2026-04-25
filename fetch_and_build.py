@@ -938,7 +938,10 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 
 .matrix-container {{ padding: 20px 30px; }}
 .matrix-scroll {{
-    max-height: 75vh; overflow: auto;
+    /* Fill the page below the sticky header / legend / statsBar so the matrix
+       doesn't feel cut off mid-row. The 200px reserve accounts for header
+       (~70px) + legend (~32px) + statsBar (~52px) + paddings (~46px). */
+    max-height: calc(100vh - 220px); overflow: auto;
     -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
     border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); background: white;
 }}
