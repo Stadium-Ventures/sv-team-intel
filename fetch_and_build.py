@@ -630,8 +630,14 @@ def parse_messages(messages):
         - rec['color'] = literal color word (red/orange/yellow/light green/green)
           extracted from the line, or None. Drives matrix cell color directly
           (no aggregation / sentiment translation).
+        - **T0 → T5 floor**: if no tier keyword is detected, default to T5 (Area
+          scout, +1 pt). The team being named in the message is itself evidence
+          that at least an area scout was tracking this player. Manual point
+          overrides (popup) can dial this down to 0 if needed.
         """
         t, mult, label = detect_attendee_tier(line_text, rec.get('team'), _front_office)
+        if t == 0:
+            t, mult, label = 5, TIER_MULTIPLIERS[5], TIER_LABELS[5]
         rec['attendee_tier'] = t
         rec['tier_multiplier'] = mult
         rec['tier_label'] = label
@@ -976,6 +982,20 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup .popup-scores button.psn1 {{ background: #ffd9b3; color: #8a4500; border-color: #f5b97a; }}
 #scorePopup .popup-scores button.psn2 {{ background: #f4c7c3; color: #8b1a1a; border-color: #e8a8a3; }}
 #scorePopup .popup-scores button.psna {{ background: #e0e0e0; color: #666; border-color: #bbb; font-style: italic; font-size: 12px; }}
+#scorePopup .popup-points-label {{ font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 5px; text-transform: uppercase; }}
+#scorePopup .popup-points {{ display: flex; gap: 5px; margin-bottom: 10px; }}
+#scorePopup .popup-points button {{
+    flex: 1; padding: 6px 0; font-size: 13px; font-weight: 700; cursor: pointer;
+    border-radius: 5px; border: 1px solid #ccc; background: #f5f5f5; color: #333;
+    transition: transform 0.1s;
+}}
+#scorePopup .popup-points button:hover {{ transform: scale(1.08); }}
+#scorePopup .popup-points button.pp5 {{ background: #c6efce; color: #1a5e1a; border-color: #a3d9a5; }}
+#scorePopup .popup-points button.pp4 {{ background: #d8f0d4; color: #2a6e2a; border-color: #b8dfb0; }}
+#scorePopup .popup-points button.pp3 {{ background: #e2efda; color: #3a6b30; border-color: #c5deb8; }}
+#scorePopup .popup-points button.pp2 {{ background: #f1f6e6; color: #4a6b1f; border-color: #d4e0b5; }}
+#scorePopup .popup-points button.pp1 {{ background: #fafafa; color: #555; border-color: #ddd; }}
+#scorePopup .popup-points button.pp0 {{ background: #f0f0f0; color: #888; border-color: #ccc; }}
 #scorePopup .popup-reset {{
     font-size: 11px; color: #888; cursor: pointer; text-decoration: underline;
     text-align: center; display: block;
@@ -1638,6 +1658,21 @@ function getScore(r) {{
     return scoreOverrides.hasOwnProperty(ok) ? scoreOverrides[ok] : r.score;
 }}
 
+// Manual tier-points override key: 't|player|team|date' → integer 0-5.
+// Falls back to the parser's auto-detected r.tier_multiplier.
+function getPoints(r) {{
+    const tk = 't|' + r.player + '|' + r.team + '|' + r.date;
+    if (scoreOverrides.hasOwnProperty(tk)) {{
+        const v = scoreOverrides[tk];
+        if (typeof v === 'number') return v;
+    }}
+    return (typeof r.tier_multiplier === 'number') ? r.tier_multiplier : 0;
+}}
+
+function isPointsOverridden(r) {{
+    return scoreOverrides.hasOwnProperty('t|' + r.player + '|' + r.team + '|' + r.date);
+}}
+
 function isExcluded(r) {{
     return getScore(r) === 'NA';
 }}
@@ -1748,6 +1783,8 @@ document.addEventListener('keydown', function(e) {{
 async function saveScore(score) {{
     const player = _popupPlayer, team = _popupTeam, date = _popupDate;
     const key = player + '|' + team + '|' + date;
+    const tKey = 't|' + key;
+    const isReset = (score === null);
     closeScorePopup();
     try {{
         const res = await fetch('/api/overrides', {{
@@ -1760,11 +1797,43 @@ async function saveScore(score) {{
             showToast('Save failed (' + res.status + '). ' + body.slice(0, 120));
             return;
         }}
-        if (score === null) {{
+        if (isReset) {{
             delete scoreOverrides[key];
         }} else {{
             scoreOverrides[key] = score;
         }}
+        // "Reset to original" should also clear any manual points override.
+        if (isReset && scoreOverrides.hasOwnProperty(tKey)) {{
+            await fetch('/api/overrides', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{ key: tKey, score: null }})
+            }});
+            delete scoreOverrides[tKey];
+        }}
+        showToast('Saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
+    renderMatrix();
+    renderDetail();
+}}
+
+// Manual tier-points override (popup buttons 5/4/3/2/1/0).
+async function savePoints(points) {{
+    const player = _popupPlayer, team = _popupTeam, date = _popupDate;
+    const tKey = 't|' + player + '|' + team + '|' + date;
+    closeScorePopup();
+    try {{
+        const res = await fetch('/api/overrides', {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ key: tKey, score: points }})
+        }});
+        if (!res.ok) {{
+            const body = await res.text();
+            showToast('Save failed (' + res.status + '). ' + body.slice(0, 120));
+            return;
+        }}
+        scoreOverrides[tKey] = points;
         showToast('Saved', true);
     }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
     renderMatrix();
@@ -1872,8 +1941,7 @@ function buildMatrix() {{
 
     activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
-        const pts = (typeof r.tier_multiplier === 'number') ? r.tier_multiplier : 0;
-        cellPoints[key] = (cellPoints[key] || 0) + pts;
+        cellPoints[key] = (cellPoints[key] || 0) + getPoints(r);
         if (r.color) {{
             const cur = cellLatestColor[key];
             if (!cur || (r.date || '') > (cur.date || '')) {{
@@ -1989,7 +2057,8 @@ function renderDetail() {{
     const visible = pr.filter(r => !isExcluded(r));
     const teams = new Set(visible.map(r => r.team));
     // Each touch contributes its tier-point value (GM=5, Dir=4, NXC=3, X=2, Area=1, T0=0).
-    const totalPoints = visible.reduce((a, r) => a + (typeof r.tier_multiplier === 'number' ? r.tier_multiplier : 0), 0);
+    // Honors any manual point overrides (set via the score popup).
+    const totalPoints = visible.reduce((a, r) => a + getPoints(r), 0);
     document.getElementById('playerSummary').innerHTML =
         '<div class="summary-item"><span class="summary-label">Player</span><span class="summary-value">' + player + '</span></div>' +
         '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + visible.length + '</span></div>' +
@@ -2023,8 +2092,9 @@ function renderDetail() {{
         const rowStyle = excluded ? ' style="opacity:0.45;"' : '';
         // Score column = tier points for THIS touch (5/4/3/2/1/0). Plain badge
         // — color is decoupled from the matrix grid (which keys off color words).
-        const tierPts = (typeof r.tier_multiplier === 'number') ? r.tier_multiplier : 0;
-        const scoreDisp = excluded ? 'NA' : String(tierPts);
+        const tierPts = getPoints(r);
+        const ptsOverridden = isPointsOverridden(r);
+        const scoreDisp = excluded ? 'NA' : (String(tierPts) + (ptsOverridden ? ' *' : ''));
         const badgeCls = excluded ? 'score-na' : '';
         // Tier badge — shows when we detected a senior attendee (T1-T4). No badge for T5.
         const tier = r.attendee_tier;
@@ -3148,6 +3218,15 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 <div id="scoreOverlay" onclick="closeScorePopup()"></div>
 <div id="scorePopup">
     <div class="popup-title" id="popupTitle"></div>
+    <div class="popup-points-label">Set points</div>
+    <div class="popup-points">
+        <button class="pp5" onclick="savePoints(5)" title="GM / POBO / President">5</button>
+        <button class="pp4" onclick="savePoints(4)" title="Director / SD / AGM / VP">4</button>
+        <button class="pp3" onclick="savePoints(3)" title="National Cross-Checker">3</button>
+        <button class="pp2" onclick="savePoints(2)" title="Cross-Checker / Regional X">2</button>
+        <button class="pp1" onclick="savePoints(1)" title="Area Scout">1</button>
+        <button class="pp0" onclick="savePoints(0)" title="No tier credit">0</button>
+    </div>
     <div class="popup-scores">
         <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
@@ -3409,11 +3488,12 @@ def load_manual_records():
                 'workout': bool(val.get('workout')),
                 'workout_dates': val.get('workout_dates') or [],
                 'is_manual': True,
-                # Manual entries default to T0 (no tier weighting) unless keyword
-                # detection in the user-entered notes bumps them up.
-                'attendee_tier': 0,
-                'tier_multiplier': 0,
-                'tier_label': '',
+                # Manual entries default to T5 (Area scout, +1 pt) — same floor
+                # as Slack records: a team being on file for this player implies
+                # at least an area scout was tracking. Adjustable via popup.
+                'attendee_tier': 5,
+                'tier_multiplier': TIER_MULTIPLIERS[5],
+                'tier_label': TIER_LABELS[5],
                 'color': color,
             })
         return out
@@ -3428,11 +3508,16 @@ def apply_overrides(records, overrides):
 
     score_ov = {}
     pdw_ov = {}
+    points_ov = {}  # 't|player|team|date' → manual tier_multiplier override
     for key, val in overrides.items():
         if key.startswith('w|'):
             parts = key.split('|', 2)
             if len(parts) == 3:
                 pdw_ov[(parts[1], parts[2])] = val
+        elif key.startswith('t|'):
+            parts = key.split('|')
+            if len(parts) == 4:
+                points_ov[(parts[1], parts[2], parts[3])] = val
         else:
             parts = key.split('|')
             if len(parts) == 3:
@@ -3440,6 +3525,7 @@ def apply_overrides(records, overrides):
 
     out = []
     applied_score = 0
+    applied_points = 0
     excluded = 0
     for r in records:
         rkey = (r.get('player'), r.get('team'), r.get('date'))
@@ -3452,6 +3538,12 @@ def apply_overrides(records, overrides):
             copy['score'] = val
             copy['score_overridden'] = True
             applied_score += 1
+        if rkey in points_ov:
+            v = points_ov[rkey]
+            if isinstance(v, (int, float)):
+                copy['tier_multiplier'] = int(v)
+                copy['points_overridden'] = True
+                applied_points += 1
         out.append(copy)
 
     pdw_flipped = set()
@@ -3466,8 +3558,9 @@ def apply_overrides(records, overrides):
         (pdw_flipped if matched else pdw_missing).add((player, team))
 
     print(
-        f"Applied overrides: {applied_score} score edits, {excluded} excluded, "
-        f"{len(pdw_flipped)} PDW pairs flipped, {len(pdw_missing)} PDW with no records"
+        f"Applied overrides: {applied_score} score edits, {applied_points} point edits, "
+        f"{excluded} excluded, {len(pdw_flipped)} PDW pairs flipped, "
+        f"{len(pdw_missing)} PDW with no records"
     )
     for p, t in sorted(pdw_missing):
         print(f"  (skipped PDW override {p}/{t} — no records for pair)")
