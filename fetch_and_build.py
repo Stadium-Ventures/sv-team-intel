@@ -1519,7 +1519,7 @@ function checkPw() {{
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="showView('matrix')">Matrix View</div>
         <div class="nav-tab" onclick="showView('detail')">Detail View</div>
-        <div class="nav-tab" onclick="showView('calendar')">Calendar</div>
+        <div class="nav-tab" onclick="goToCalendar()">Calendar</div>
     </div>
 </div>
 
@@ -2245,6 +2245,15 @@ function jumpToDetail(player, team) {{
 function clearTeamFilter() {{
     _filterTeam = null;
     renderDetail();
+}}
+
+// Calendar tab click — always snap to the current month so a fresh look at
+// the calendar starts "today", not wherever a prior detail-jump landed it.
+function goToCalendar() {{
+    const now = new Date();
+    _calMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    showView('calendar');
+    if (window._calInitialized) renderCalendar();
 }}
 
 function showView(view) {{
