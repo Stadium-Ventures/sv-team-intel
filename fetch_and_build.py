@@ -1154,6 +1154,22 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .summary-label {{ font-size: 10px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
 .summary-value {{ font-size: 17px; font-weight: 700; color: #000000; }}
 
+/* Per-player color breakdown — at-a-glance "who's hot, who's cold". Each row
+   is the literal cell color so the eye can scan; empty buckets dim out so the
+   active colors pop without removing the structural overview. */
+.color-breakdown {{
+    display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px;
+}}
+.cb-row {{
+    display: flex; align-items: center; gap: 14px;
+    padding: 6px 12px; border-radius: 5px; font-size: 12px;
+    border: 1px solid rgba(0,0,0,0.08); min-height: 28px;
+}}
+.cb-empty-row {{ opacity: 0.4; }}
+.cb-label {{ font-weight: 700; min-width: 110px; color: #1a1a1a; }}
+.cb-teams {{ color: #1a1a1a; font-weight: 600; letter-spacing: 0.4px; }}
+.cb-empty {{ opacity: 0.5; font-weight: 500; font-style: italic; }}
+
 .detail-table {{
     width: 100%; border-collapse: separate; border-spacing: 0;
     background: white; border-radius: 6px; overflow: hidden;
@@ -2179,6 +2195,42 @@ function renderDetail() {{
         '<div class="summary-item"><span class="summary-label">Total Points</span><span class="summary-value">' + (visible.length > 0 ? totalPoints : '-') + '</span></div>';
 
     let hiddenBar = '';
+    // Color breakdown (only visible when looking at the player across all teams):
+    // group every team they have a literal color from, by that most-recent color.
+    if (!_filterTeam && visible.length > 0) {{
+        const latestByTeam = {{}};
+        visible.forEach(r => {{
+            if (!r.color) return;
+            const cur = latestByTeam[r.team];
+            if (!cur || (r.date || '') > (cur.date || '')) {{
+                latestByTeam[r.team] = {{ date: r.date, color: r.color }};
+            }}
+        }});
+        const buckets = {{ 'green': [], 'light green': [], 'yellow': [], 'orange': [], 'red': [] }};
+        Object.keys(latestByTeam).forEach(team => {{
+            const c = latestByTeam[team].color;
+            if (buckets[c]) buckets[c].push(team);
+        }});
+        const order = ['green', 'light green', 'yellow', 'orange', 'red'];
+        const labels = {{ 'green':'Green', 'light green':'Light Green', 'yellow':'Yellow', 'orange':'Orange', 'red':'Red' }};
+        const totalColored = order.reduce((a, c) => a + buckets[c].length, 0);
+        if (totalColored > 0) {{
+            let rows = '';
+            order.forEach(c => {{
+                const teams = buckets[c].sort();
+                const bg = COLOR_BG[c];
+                const teamsHtml = teams.length
+                    ? teams.join(' \\u00b7 ')
+                    : '<span class="cb-empty">none</span>';
+                const emptyCls = teams.length === 0 ? ' cb-empty-row' : '';
+                rows += '<div class="cb-row' + emptyCls + '" style="background:' + bg + ';">' +
+                    '<span class="cb-label">' + labels[c] + ' <span style="color:#555;font-weight:600;">(' + teams.length + ')</span></span>' +
+                    '<span class="cb-teams">' + teamsHtml + '</span>' +
+                    '</div>';
+            }});
+            hiddenBar += '<div class="color-breakdown">' + rows + '</div>';
+        }}
+    }}
     if (_filterTeam) {{
         const tInfo = TEAM_DRAFT[_filterTeam];
         if (tInfo && (tInfo.pool || (tInfo.picks && tInfo.picks.length))) {{
