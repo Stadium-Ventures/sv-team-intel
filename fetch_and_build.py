@@ -1974,13 +1974,20 @@ function buildMatrix() {{
         if (!playerTeamColors[p]) playerTeamColors[p] = {{}};
         if (playerTotals[p] === undefined) playerTotals[p] = 0;
     }});
-    // Sort by cumulative total (descending), ties alphabetical.
+    // Sort primarily by # of teams the player has a color from (more colored
+    // cells = more concrete signal). Tiebreak by total points, then alpha.
+    const coloredTeamCount = {{}};
+    Object.keys(playerTeamColors).forEach(p => {{
+        coloredTeamCount[p] = Object.keys(playerTeamColors[p] || {{}}).length;
+    }});
     const sortedPlayers = Object.keys(playerTotals).sort((a,b) => {{
+        const ca = coloredTeamCount[a] || 0, cb = coloredTeamCount[b] || 0;
+        if (cb !== ca) return cb - ca;
         const ta = playerTotals[a] || 0, tb = playerTotals[b] || 0;
         if (tb !== ta) return tb - ta;
         return a.localeCompare(b);
     }});
-    return {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap }};
+    return {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap, coloredTeamCount }};
 }}
 
 function scoreClass(s) {{
