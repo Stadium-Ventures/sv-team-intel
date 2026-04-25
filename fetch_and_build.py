@@ -1519,13 +1519,14 @@ function checkPw() {{
     </div>
 </div>
 
+<div id="statsBar" class="stats-bar"></div>
+
 <div class="legend">
+    <span class="legend-title">Key:</span>
     <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
-    <span class="legend-title" style="margin-left:18px;">Points:</span>
+    <span class="legend-title" style="margin-left:14px;">Points</span>
     <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
 </div>
-
-<div id="statsBar" class="stats-bar"></div>
 
 <div id="matrixView" class="matrix-container">
     <div class="matrix-scroll" id="matrixScroll">
