@@ -2176,7 +2176,9 @@ function renderDetail() {{
     document.getElementById('playerSummary').innerHTML =
         '<div class="summary-item"><span class="summary-label">Player</span><span class="summary-value">' + player + '</span></div>' +
         '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + visible.length + '</span></div>' +
-        '<div class="summary-item"><span class="summary-label">Teams Connected</span><span class="summary-value">' + teams.size + '</span></div>' +
+        // "Teams Connected" only matters when looking at the player as a whole;
+        // when filtered to one team it's always 1. Hide in that case.
+        (_filterTeam ? '' : '<div class="summary-item"><span class="summary-label">Teams Connected</span><span class="summary-value">' + teams.size + '</span></div>') +
         '<div class="summary-item"><span class="summary-label">Total Points</span><span class="summary-value">' + (visible.length > 0 ? totalPoints : '-') + '</span></div>';
 
     let hiddenBar = '';
@@ -2184,10 +2186,19 @@ function renderDetail() {{
         const tInfo = TEAM_DRAFT[_filterTeam];
         if (tInfo && (tInfo.pool || (tInfo.picks && tInfo.picks.length))) {{
             const picks = (tInfo.picks || []).slice(0, 5).join(', ');
-            hiddenBar += '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:6px;padding:9px 13px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;font-size:12px;">' +
-                '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;">' + _filterTeam + ' \\u2014 2026 Draft</span>' +
-                (tInfo.pool ? '<div><span style="color:#888;font-weight:600;margin-right:6px;">Pool:</span><span style="font-weight:700;color:#1a5e1a;font-size:13px;">' + fmtPool(tInfo.pool) + '</span></div>' : '') +
-                (picks ? '<div><span style="color:#888;font-weight:600;margin-right:6px;">Picks:</span><span style="font-weight:600;color:#222;letter-spacing:0.3px;">' + picks + '</span></div>' : '') +
+            hiddenBar += '<div style="background:white;border:1px solid #e0e0e0;border-radius:8px;padding:16px 22px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:36px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">' +
+                '<div style="display:flex;flex-direction:column;gap:2px;">' +
+                    '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">2026 Draft</span>' +
+                    '<span style="color:#000;font-weight:800;font-size:20px;letter-spacing:0.3px;">' + _filterTeam + '</span>' +
+                '</div>' +
+                (tInfo.pool ? '<div style="display:flex;flex-direction:column;gap:2px;">' +
+                    '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">Bonus Pool</span>' +
+                    '<span style="color:#1a5e1a;font-weight:800;font-size:22px;letter-spacing:0.3px;">' + fmtPool(tInfo.pool) + '</span>' +
+                '</div>' : '') +
+                (picks ? '<div style="display:flex;flex-direction:column;gap:2px;">' +
+                    '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">First Picks</span>' +
+                    '<span style="color:#222;font-weight:700;font-size:18px;letter-spacing:0.4px;">' + picks + '</span>' +
+                '</div>' : '') +
                 '</div>';
         }}
         hiddenBar += '<div style="padding:6px 10px;font-size:12px;color:#555;margin-bottom:6px;">' +
