@@ -455,6 +455,26 @@ def score_line_for_team(line, full_text=""):
         return -1
     return 1
 
+
+# Matrix-cell color = literal color word from the message line. No sentiment
+# weighting, no aggregation. Most-recent record's color wins per (player, team).
+# Check 'light green' before 'green' — order matters.
+def detect_color_word(text):
+    if not text:
+        return None
+    ll = text.lower()
+    if re.search(r'\blight\s+green\b', ll):
+        return 'light green'
+    if re.search(r'\bgreen\b', ll):
+        return 'green'
+    if re.search(r'\byellow\b', ll):
+        return 'yellow'
+    if re.search(r'\borange\b', ll):
+        return 'orange'
+    if re.search(r'\bred\b', ll):
+        return 'red'
+    return None
+
 # ======================== ATTENDEE TIER DETECTION ========================
 # Weight each TeamIntel record by the seniority of the attendee mentioned in
 # the message line. Tier 1 (SD / GM / VP / Special Asst) weighs 2×; T2 (National
@@ -600,18 +620,22 @@ def parse_messages(messages):
     _front_office = load_front_office()
 
     def _attach_tier(rec, line_text):
-        """Write attendee_tier / tier_multiplier / tier_label / raw_score onto a
-        record in place, and bump rec['score'] to the tier floor when a senior
-        attendee was detected.
+        """Write attendee_tier / tier_multiplier / tier_label / raw_score / color
+        onto a record in place, and bump rec['score'] to the tier floor when a
+        senior attendee was detected.
         - Sentiment score stays visible as rec['raw_score'] (for audit / revert).
         - Negative sentiment (-1, -2) always wins — an SD being there doesn't
           override "didn't like".
         - Otherwise: rec['score'] = max(sentiment, tier_floor).
+        - rec['color'] = literal color word (red/orange/yellow/light green/green)
+          extracted from the line, or None. Drives matrix cell color directly
+          (no aggregation / sentiment translation).
         """
         t, mult, label = detect_attendee_tier(line_text, rec.get('team'), _front_office)
         rec['attendee_tier'] = t
         rec['tier_multiplier'] = mult
         rec['tier_label'] = label
+        rec['color'] = detect_color_word(line_text)
         sentiment = rec.get('score', 1)
         rec['raw_score'] = sentiment
         if sentiment < 0 or t == 0:
@@ -1428,15 +1452,17 @@ function checkPw() {{
 </div>
 
 <div class="legend">
-    <span class="legend-title">Interest Key:</span>
-    <div class="legend-item" style="gap:4px;align-items:center;">
-        <span style="font-size:11px;color:#999;">Not interested</span>
-        <div style="display:flex;height:18px;width:220px;border-radius:3px;border:1px solid rgba(0,0,0,0.1);background:linear-gradient(to right, rgb(225,110,105) 0%, rgb(245,160,95) 35%, #fff 50%, rgb(252,232,130) 65%, rgb(130,200,140) 100%);"></div>
-        <span style="font-size:11px;color:#999;">Strong interest</span>
-    </div>
+    <span class="legend-title">Color (most recent):</span>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgb(225,110,105)"></div>Red</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgb(245,160,95)"></div>Orange</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgb(252,232,130)"></div>Yellow</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgb(200,230,180)"></div>Light Green</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgb(130,200,140)"></div>Green</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
+    <span class="legend-title" style="margin-left:14px;">Points:</span>
+    <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:11px;color:#999;">Tap a cell to view details &middot; click any score badge to edit</span>
+        <span style="font-size:11px;color:#999;">Tap a cell to view details</span>
     </div>
 </div>
 
@@ -1823,23 +1849,37 @@ function closeScorePopup() {{
     document.getElementById('scoreOverlay').style.display = 'none';
 }}
 
+// Matrix-cell color comes from the literal color word in the most recent
+// message for that (player, team). No sentiment aggregation. No gradient.
+const COLOR_BG = {{
+    'green':       'rgb(130, 200, 140)',
+    'light green': 'rgb(200, 230, 180)',
+    'yellow':      'rgb(252, 232, 130)',
+    'orange':      'rgb(245, 160, 95)',
+    'red':         'rgb(225, 110, 105)'
+}};
+
 function buildMatrix() {{
-    // Cumulative "interest points" model: each cell = sum of score across all records
-    // for that (player, team). Total = sum of cells across all teams. The visual
-    // story: every touch pushes the cell color further from white — green for
-    // positive signal, red for negative. Counts are tracked separately for tooltips.
+    // Number = sum of attendee-tier points across all touches for that
+    // (player, team) cell (GM=+5, Dir=+4, NXC=+3, X=+2, Area=+1, T0=0).
+    // Color = literal color word from the most recent record with one set.
+    // Total column = sum of points across teams; ranks players by who has been
+    // seen the most by the most senior people.
     const activeRecords = RECORDS.filter(r => !isExcluded(r));
-    const cellSums = {{}};     // key -> cumulative score
-    const counts = {{}};       // key -> touch count (for tooltip only)
+    const cellPoints = {{}};       // key -> sum of tier points
+    const cellLatestColor = {{}};  // key -> {{date, color}} of most-recent colored record
     const workoutMap = {{}};
 
     activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
-        const s = getScore(r);
-        if (typeof s === 'number') {{
-            cellSums[key] = (cellSums[key] || 0) + s;
+        const pts = (typeof r.tier_multiplier === 'number') ? r.tier_multiplier : 0;
+        cellPoints[key] = (cellPoints[key] || 0) + pts;
+        if (r.color) {{
+            const cur = cellLatestColor[key];
+            if (!cur || (r.date || '') > (cur.date || '')) {{
+                cellLatestColor[key] = {{ date: r.date || '', color: r.color }};
+            }}
         }}
-        counts[key] = (counts[key] || 0) + 1;
         if (r.workout) workoutMap[key] = true;
     }});
     // Manual PDW overrides (matrix popup) still apply to the workout map.
@@ -1851,19 +1891,19 @@ function buildMatrix() {{
         }}
     }});
 
-    const playerTeams = {{}}, playerTeamCounts = {{}}, playerTotals = {{}};
-    Object.keys(cellSums).forEach(key => {{
+    const playerTeams = {{}}, playerTeamColors = {{}}, playerTotals = {{}};
+    Object.keys(cellPoints).forEach(key => {{
         const [player, team] = key.split('|');
         if (!playerTeams[player]) playerTeams[player] = {{}};
-        if (!playerTeamCounts[player]) playerTeamCounts[player] = {{}};
-        playerTeams[player][team] = cellSums[key];
-        playerTeamCounts[player][team] = counts[key] || 0;
-        playerTotals[player] = (playerTotals[player] || 0) + cellSums[key];
+        if (!playerTeamColors[player]) playerTeamColors[player] = {{}};
+        playerTeams[player][team] = cellPoints[key];
+        if (cellLatestColor[key]) playerTeamColors[player][team] = cellLatestColor[key].color;
+        playerTotals[player] = (playerTotals[player] || 0) + cellPoints[key];
     }});
     // Ensure every roster player has an entry even if no records yet.
     ALL_2026_PLAYERS.forEach(p => {{
         if (!playerTeams[p]) playerTeams[p] = {{}};
-        if (!playerTeamCounts[p]) playerTeamCounts[p] = {{}};
+        if (!playerTeamColors[p]) playerTeamColors[p] = {{}};
         if (playerTotals[p] === undefined) playerTotals[p] = 0;
     }});
     // Sort by cumulative total (descending), ties alphabetical.
@@ -1872,7 +1912,7 @@ function buildMatrix() {{
         if (tb !== ta) return tb - ta;
         return a.localeCompare(b);
     }});
-    return {{ playerTeams, playerTeamCounts, playerTotals, sortedPlayers, workoutMap }};
+    return {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap }};
 }}
 
 function scoreClass(s) {{
@@ -1884,14 +1924,6 @@ function scoreClass(s) {{
     if (s >= -1.5) return 'score-n1';
     return 'score-n2';
 }}
-function badgeClass(s) {{
-    if (typeof s !== 'number') return '';
-    if (s >= 1.5) return 's2';
-    if (s >= 0.5) return 's1';
-    if (s >= -0.5) return 's0';
-    if (s >= -1.5) return 'sn1';
-    return 'sn2';
-}}
 function fmtScore(s) {{
     if (s === 'NA') return 'NA';
     if (typeof s !== 'number') return String(s);
@@ -1899,88 +1931,29 @@ function fmtScore(s) {{
     return (s % 1 === 0) ? String(s) : s.toFixed(1);
 }}
 
-// Smooth color interpolation. Positive side: white → yellow (early/uncertain)
-// → green (confirmed strong). Negative side: white → red. The yellow stop sits
-// at ~30% of cap, so low positives read as "yellow — early signal" and accumulation
-// matures into green.
-function interestColor(v, cap) {{
-    if (typeof v !== 'number' || v === 0) return '';
-    cap = cap || 4;
-    const t = Math.min(1, Math.abs(v) / cap);
-    if (v > 0) {{
-        const YELLOW_T = 0.30;  // t at which the gradient is pure yellow
-        const white = [255, 255, 255];
-        const yellow = [252, 232, 130];
-        const green = [130, 200, 140];
-        let r, g, b;
-        if (t <= YELLOW_T) {{
-            const u = t / YELLOW_T;
-            r = white[0] + (yellow[0] - white[0]) * u;
-            g = white[1] + (yellow[1] - white[1]) * u;
-            b = white[2] + (yellow[2] - white[2]) * u;
-        }} else {{
-            const u = (t - YELLOW_T) / (1 - YELLOW_T);
-            r = yellow[0] + (green[0] - yellow[0]) * u;
-            g = yellow[1] + (green[1] - yellow[1]) * u;
-            b = yellow[2] + (green[2] - yellow[2]) * u;
-        }}
-        return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
-    }}
-    // Negative side: white → orange (early/mild cool) → red (strong cool).
-    // Mirrors the positive-side transition through yellow.
-    const ORANGE_T = 0.30;
-    const white = [255, 255, 255];
-    const orange = [245, 160, 95];
-    const red = [225, 110, 105];
-    let r, g, b;
-    if (t <= ORANGE_T) {{
-        const u = t / ORANGE_T;
-        r = white[0] + (orange[0] - white[0]) * u;
-        g = white[1] + (orange[1] - white[1]) * u;
-        b = white[2] + (orange[2] - white[2]) * u;
-    }} else {{
-        const u = (t - ORANGE_T) / (1 - ORANGE_T);
-        r = orange[0] + (red[0] - orange[0]) * u;
-        g = orange[1] + (red[1] - orange[1]) * u;
-        b = orange[2] + (red[2] - orange[2]) * u;
-    }}
-    return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
-}}
-
 function renderMatrix() {{
-    const {{ playerTeams, playerTeamCounts, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
+    const {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
 
     var html = '<thead><tr><th>TOTAL</th><th>Client</th>';
     ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
     html += '</tr></thead><tbody>';
 
-    // Cap at which a cell or total reaches peak color saturation. Past the cap,
-    // color is clamped; number still grows. Tuned for the 1-5 point scale:
-    // a single GM touch (+5) lands deep green on a cell; two senior touches
-    // fully saturate. TOTAL_CAP scales up for the cross-team rollup.
-    const CELL_CAP = 8;
-    const TOTAL_CAP = 25;
-
     sortedPlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
-        const totalTouches = Object.values(playerTeamCounts[player] || {{}}).reduce((a,b) => a+b, 0);
-        const totalBg = interestColor(total, TOTAL_CAP);
-        const totalStyle = totalBg ? ' style="background:' + totalBg + ';"' : '';
-        const totalTitle = ' title="' + totalTouches + ' total touch' + (totalTouches === 1 ? '' : 'es') + ' \\u2022 ' + fmtScore(total) + ' interest points"';
+        const totalTitle = ' title="' + total + ' total point' + (total === 1 ? '' : 's') + ' (GM=5, Dir=4, NXC=3, X=2, Area=1)"';
         const esc = player.replace(/'/g, "\\\\'");
-        html += '<tr><td' + totalStyle + totalTitle + '>' + (totalTouches || '') + '</td>';
+        html += '<tr><td' + totalTitle + '>' + (total || '') + '</td>';
         html += '<td class="clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + player + '</td>';
         ALL_TEAMS.forEach(team => {{
-            const s = playerTeams[player] && playerTeams[player][team];
-            const cnt = (playerTeamCounts[player] && playerTeamCounts[player][team]) || 0;
+            const pts = playerTeams[player] && playerTeams[player][team];
+            const colorWord = playerTeamColors[player] && playerTeamColors[player][team];
             const wk = workoutMap[player + '|' + team];
-            const hasData = (s !== undefined && s !== null && typeof s === 'number');
-            if (hasData || wk) {{
-                // Color carries interest magnitude; number carries touch count.
-                const bg = interestColor(s, CELL_CAP);
+            const hasData = (typeof pts === 'number' && pts > 0);
+            if (hasData || colorWord || wk) {{
+                const bg = colorWord ? COLOR_BG[colorWord] : '';
                 const cellStyle = bg ? 'background:' + bg + ';' : '';
-                const display = cnt > 0 ? String(cnt) : '';
-                const title = cnt + ' touch' + (cnt === 1 ? '' : 'es') + ' \\u2022 ' + fmtScore(s || 0) + ' interest points';
+                const display = (typeof pts === 'number' && pts > 0) ? String(pts) : '';
+                const title = (pts || 0) + ' point' + (pts === 1 ? '' : 's') + (colorWord ? ' \\u2022 latest: ' + colorWord : '');
                 html += '<td class="score-cell clickable' + (wk ? ' workout' : '') + '" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + display + '</td>';
             }} else {{
                 html += '<td></td>';
@@ -2013,14 +1986,15 @@ function renderDetail() {{
     if (_filterTeam) allPr = allPr.filter(r => r.team === _filterTeam);
     const hiddenCount = allPr.filter(r => isExcluded(r)).length;
     const pr = _showHidden ? allPr : allPr.filter(r => !isExcluded(r));
-    const teams = new Set(pr.filter(r => !isExcluded(r)).map(r => r.team));
-    const numScores = pr.filter(r => !isExcluded(r)).map(r => getScore(r)).filter(v => typeof v === 'number');
-    const totalInterest = numScores.reduce((a,b) => a + b, 0);
+    const visible = pr.filter(r => !isExcluded(r));
+    const teams = new Set(visible.map(r => r.team));
+    // Each touch contributes its tier-point value (GM=5, Dir=4, NXC=3, X=2, Area=1, T0=0).
+    const totalPoints = visible.reduce((a, r) => a + (typeof r.tier_multiplier === 'number' ? r.tier_multiplier : 0), 0);
     document.getElementById('playerSummary').innerHTML =
         '<div class="summary-item"><span class="summary-label">Player</span><span class="summary-value">' + player + '</span></div>' +
-        '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + numScores.length + '</span></div>' +
+        '<div class="summary-item"><span class="summary-label">Intel Reports</span><span class="summary-value">' + visible.length + '</span></div>' +
         '<div class="summary-item"><span class="summary-label">Teams Connected</span><span class="summary-value">' + teams.size + '</span></div>' +
-        '<div class="summary-item"><span class="summary-label">Total Interest</span><span class="summary-value">' + (numScores.length > 0 ? fmtScore(totalInterest) : '-') + '</span></div>';
+        '<div class="summary-item"><span class="summary-label">Total Points</span><span class="summary-value">' + (visible.length > 0 ? totalPoints : '-') + '</span></div>';
 
     let hiddenBar = '';
     if (_filterTeam) {{
@@ -2041,15 +2015,17 @@ function renderDetail() {{
     }}
     pr.forEach((r, i) => {{
         const note = r.note.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\n/g,'<br>').replace(/&amp;/g,'&');
-        const s = getScore(r);
         const esc = r.player.replace(/'/g, "\\\\'");
         const isOverridden = scoreOverrides.hasOwnProperty(r.player + '|' + r.team + '|' + r.date);
         const excluded = isExcluded(r);
         const wBadge = !excluded && isPDW(r.player, r.team) ? '<span class="workout-badge">PDW</span>' : '';
         const rowKey = r.player + '|' + r.team + '|' + r.date + '|' + i;
         const rowStyle = excluded ? ' style="opacity:0.45;"' : '';
-        const scoreDisp = (s === 'NA') ? 'NA' : (fmtScore(s) + (isOverridden ? ' *' : ''));
-        const badgeCls = (s === 'NA') ? 'score-na' : badgeClass(s);
+        // Score column = tier points for THIS touch (5/4/3/2/1/0). Plain badge
+        // — color is decoupled from the matrix grid (which keys off color words).
+        const tierPts = (typeof r.tier_multiplier === 'number') ? r.tier_multiplier : 0;
+        const scoreDisp = excluded ? 'NA' : String(tierPts);
+        const badgeCls = excluded ? 'score-na' : '';
         // Tier badge — shows when we detected a senior attendee (T1-T4). No badge for T5.
         const tier = r.attendee_tier;
         const tierLabel = r.tier_label || '';
@@ -3173,11 +3149,6 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 <div id="scorePopup">
     <div class="popup-title" id="popupTitle"></div>
     <div class="popup-scores">
-        <button class="ps2" onclick="saveScore(2)">2</button>
-        <button class="ps1" onclick="saveScore(1)">1</button>
-        <button class="ps0" onclick="saveScore(0)">0</button>
-        <button class="psn1" onclick="saveScore(-1)">-1</button>
-        <button class="psn2" onclick="saveScore(-2)">-2</button>
         <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
@@ -3419,12 +3390,19 @@ def load_manual_records():
             if not (player and team and date):
                 continue
             full = val.get('full_text') or ''
+            score_val = int(val.get('score', 0))
+            # Color: prefer literal word in note text; fall back to mapping the
+            # legacy numeric score so existing manual entries keep their cell color.
+            color = detect_color_word(full)
+            if not color:
+                color = {2: 'green', 1: 'light green', 0: 'yellow',
+                         -1: 'orange', -2: 'red'}.get(score_val)
             out.append({
                 'id': rid,
                 'player': player,
                 'team': team,
                 'date': date,
-                'score': int(val.get('score', 0)),
+                'score': score_val,
                 'note': full[:200],
                 'full_text': full,
                 'channel': None,
@@ -3436,6 +3414,7 @@ def load_manual_records():
                 'attendee_tier': 0,
                 'tier_multiplier': 0,
                 'tier_label': '',
+                'color': color,
             })
         return out
     except Exception as e:
