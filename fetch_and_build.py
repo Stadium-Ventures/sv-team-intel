@@ -938,9 +938,10 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 
 .matrix-container {{ padding: 20px 30px; }}
 .matrix-scroll {{
-    /* Fill the page below the sticky header + statsBar so the matrix doesn't
-       feel cut off mid-row. ~70px header + ~52px statsBar + ~60px paddings. */
-    max-height: calc(100vh - 185px); overflow: auto;
+    /* Fill the page below the sticky header + slim legend + statsBar so the
+       matrix doesn't feel cut off. ~70px header + ~32px legend + ~52px stats
+       + ~60px paddings. */
+    max-height: calc(100vh - 215px); overflow: auto;
     -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
     border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); background: white;
 }}
@@ -1520,6 +1521,12 @@ function checkPw() {{
         <div class="nav-tab" onclick="showView('detail')">Detail View</div>
         <div class="nav-tab" onclick="showView('calendar')">Calendar</div>
     </div>
+</div>
+
+<div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
+    <span class="legend-title" style="margin-left:18px;">Points:</span>
+    <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
 </div>
 
 <div id="statsBar" class="stats-bar"></div>
