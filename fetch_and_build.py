@@ -1960,7 +1960,7 @@ function openScorePopup(player, team, date, event) {{
     if (tInfo && (tInfo.pool || (tInfo.picks && tInfo.picks.length))) {{
         const picks = (tInfo.picks || []).slice(0, 5).join(', ') || '—';
         tBox.innerHTML =
-            '<div class="pti-row"><span class="pti-label">Pool:</span><span class="pti-pool">' + (tInfo.pool || '—') + '</span></div>' +
+            '<div class="pti-row"><span class="pti-label">Pool:</span><span class="pti-pool">' + (tInfo.pool ? fmtPool(tInfo.pool) : '—') + '</span></div>' +
             '<div class="pti-row"><span class="pti-label">Picks:</span><span class="pti-picks">' + picks + '</span></div>';
         tBox.style.display = 'block';
     }} else {{
@@ -1995,6 +1995,15 @@ const COLOR_BG = {{
     'orange':      'rgb(245, 160, 95)',
     'red':         'rgb(225, 110, 105)'
 }};
+
+// Pool amounts come from the org-review xlsx as "$13.60m" etc. — trim to one
+// decimal for display ("$13.6m"). Color math still uses the raw value.
+function fmtPool(s) {{
+    if (!s) return '';
+    const m = String(s).match(/^\\$?([\\d.]+)\\s*([a-z]*)$/i);
+    if (!m) return s;
+    return '$' + parseFloat(m[1]).toFixed(1) + (m[2] || 'm');
+}}
 
 // Bonus-pool color scale: brighter green = more $ to spend, muted red = less.
 // 2026 MLB pool range is ~$3.95m (LAD) to ~$19.13m (PIT). Anchored to that
@@ -2116,7 +2125,7 @@ function renderMatrix() {{
             const picksHtml = picks
                 ? '<div class="ti-picks"><span class="ti-picks-label">PICKS</span>' + picks + '</div>'
                 : '';
-            html += '<th class="team-info"><div class="ti-pool"' + poolStyle + '>' + pool + '</div>' + picksHtml + '</th>';
+            html += '<th class="team-info"><div class="ti-pool"' + poolStyle + '>' + fmtPool(pool) + '</div>' + picksHtml + '</th>';
         }} else {{
             html += '<th class="team-info"></th>';
         }}
@@ -2184,6 +2193,15 @@ function renderDetail() {{
 
     let hiddenBar = '';
     if (_filterTeam) {{
+        const tInfo = TEAM_DRAFT[_filterTeam];
+        if (tInfo && (tInfo.pool || (tInfo.picks && tInfo.picks.length))) {{
+            const picks = (tInfo.picks || []).slice(0, 5).join(', ');
+            hiddenBar += '<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:6px;padding:9px 13px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;font-size:12px;">' +
+                '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;">' + _filterTeam + ' \\u2014 2026 Draft</span>' +
+                (tInfo.pool ? '<div><span style="color:#888;font-weight:600;margin-right:6px;">Pool:</span><span style="font-weight:700;color:#1a5e1a;font-size:13px;">' + fmtPool(tInfo.pool) + '</span></div>' : '') +
+                (picks ? '<div><span style="color:#888;font-weight:600;margin-right:6px;">Picks:</span><span style="font-weight:600;color:#222;letter-spacing:0.3px;">' + picks + '</span></div>' : '') +
+                '</div>';
+        }}
         hiddenBar += '<div style="padding:6px 10px;font-size:12px;color:#555;margin-bottom:6px;">' +
             'Filtered to <strong>' + _filterTeam + '</strong> \\u00b7 ' +
             '<span style="text-decoration:underline;cursor:pointer;color:#000000;" onclick="clearTeamFilter()">show all teams</span></div>';
