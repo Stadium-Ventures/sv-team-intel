@@ -978,24 +978,25 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
     color: #888; font-size: 8px; font-weight: 600;
     letter-spacing: 0.4px; text-transform: uppercase; margin-right: 3px;
 }}
-/* Sticky first column (TOTAL) */
-.matrix-table th:nth-child(1), .matrix-table td:nth-child(1) {{
+/* Sticky first column (TOTAL) — scoped to the first header row + body so the
+   team-info sub-header's first two cells aren't also stuck to the left edge. */
+.matrix-table thead tr:first-child th:nth-child(1), .matrix-table tbody td:nth-child(1) {{
     position: sticky; left: 0; z-index: 2;
     min-width: 50px; max-width: 50px;
 }}
-.matrix-table td:nth-child(1) {{ background: #fafafa; color: #000000; font-size: 13px; font-weight: 700; }}
+.matrix-table tbody td:nth-child(1) {{ background: #fafafa; color: #000000; font-size: 13px; font-weight: 700; }}
 /* Sticky second column (Client name) */
-.matrix-table th:nth-child(2), .matrix-table td:nth-child(2) {{
+.matrix-table thead tr:first-child th:nth-child(2), .matrix-table tbody td:nth-child(2) {{
     position: sticky; left: 51px; z-index: 2;
     min-width: 140px; max-width: 140px;
 }}
-.matrix-table td:nth-child(2) {{
+.matrix-table tbody td:nth-child(2) {{
     background: white; text-align: left; padding-left: 10px; font-size: 12px; font-weight: 600;
     box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1);
 }}
-.matrix-table thead th:nth-child(2) {{ box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1); }}
+.matrix-table thead tr:first-child th:nth-child(2) {{ box-shadow: 2px 0 3px -1px rgba(0,0,0,0.1); }}
 /* Header corners stack above both row- and column-sticky */
-.matrix-table thead th:nth-child(1), .matrix-table thead th:nth-child(2) {{ z-index: 4; }}
+.matrix-table thead tr:first-child th:nth-child(1), .matrix-table thead tr:first-child th:nth-child(2) {{ z-index: 4; }}
 .matrix-table tbody tr:hover td {{ background-color: #fff5f5 !important; }}
 
 .score-2 {{ background-color: #c6efce !important; color: #1a5e1a; font-weight: 700; }}
@@ -2002,7 +2003,7 @@ function fmtPool(s) {{
     if (!s) return '';
     const m = String(s).match(/^\\$?([\\d.]+)\\s*([a-z]*)$/i);
     if (!m) return s;
-    return '$' + parseFloat(m[1]).toFixed(1) + (m[2] || 'm');
+    return '$' + parseFloat(m[1]).toFixed(1) + (m[2] ? m[2].toUpperCase() : 'M');
 }}
 
 // Bonus-pool color scale: brighter green = more $ to spend, muted red = less.
