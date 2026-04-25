@@ -1033,6 +1033,16 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup .popup-scores button.psn1 {{ background: #ffd9b3; color: #8a4500; border-color: #f5b97a; }}
 #scorePopup .popup-scores button.psn2 {{ background: #f4c7c3; color: #8b1a1a; border-color: #e8a8a3; }}
 #scorePopup .popup-scores button.psna {{ background: #e0e0e0; color: #666; border-color: #bbb; font-style: italic; font-size: 12px; }}
+#scorePopup .popup-color {{
+    display: flex; align-items: center; gap: 7px;
+    padding: 5px 9px; margin: 0 0 8px; font-size: 11px;
+    border-radius: 5px; border: 1px solid rgba(0,0,0,0.08);
+}}
+#scorePopup .popup-color .pc-swatch {{
+    width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.15);
+}}
+#scorePopup .popup-color .pc-label {{ color: #444; font-weight: 600; }}
+#scorePopup .popup-color .pc-value {{ color: #1a1a1a; font-weight: 700; text-transform: capitalize; }}
 #scorePopup .popup-team-info {{
     background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 5px;
     padding: 6px 9px; margin: 0 0 10px; font-size: 11px; line-height: 1.45;
@@ -1955,6 +1965,28 @@ function openScorePopup(player, team, date, event) {{
     _popupTeam = team;
     _popupDate = date;
     document.getElementById('popupTitle').textContent = player + ' \\u2014 ' + team + ' (' + date + ')';
+    // Most-recent literal color for this (player, team) pair — same signal the
+    // matrix cell shows. Skips records the user marked NA.
+    let _latestColor = null, _latestDate = '';
+    RECORDS.forEach(r => {{
+        if (r.player !== player || r.team !== team || !r.color) return;
+        if (isExcluded(r)) return;
+        if ((r.date || '') > _latestDate) {{
+            _latestDate = r.date || '';
+            _latestColor = r.color;
+        }}
+    }});
+    const cBox = document.getElementById('popupColor');
+    if (_latestColor) {{
+        const cBg = COLOR_BG[_latestColor] || '#ccc';
+        cBox.innerHTML = '<span class="pc-swatch" style="background:' + cBg + ';"></span>' +
+            '<span class="pc-label">Most recent:</span>' +
+            '<span class="pc-value">' + _latestColor + '</span>';
+        cBox.style.background = cBg;
+        cBox.style.display = 'flex';
+    }} else {{
+        cBox.style.display = 'none';
+    }}
     // Render the team's 2026 bonus pool + first 5 picks (if available).
     const tInfo = TEAM_DRAFT[team];
     const tBox = document.getElementById('popupTeamInfo');
@@ -3410,6 +3442,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 <div id="scoreOverlay" onclick="closeScorePopup()"></div>
 <div id="scorePopup">
     <div class="popup-title" id="popupTitle"></div>
+    <div class="popup-color" id="popupColor" style="display:none;"></div>
     <div class="popup-team-info" id="popupTeamInfo" style="display:none;"></div>
     <div class="popup-points-label">Set points</div>
     <div class="popup-points">
