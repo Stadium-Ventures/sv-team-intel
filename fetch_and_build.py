@@ -2265,14 +2265,33 @@ function renderDetail() {{
     }}
     if (_filterTeam) {{
         const tInfo = TEAM_DRAFT[_filterTeam];
-        if (tInfo && (tInfo.pool || (tInfo.picks && tInfo.picks.length))) {{
-            const picks = (tInfo.picks || []).slice(0, 5).join(', ');
+        // Most-recent literal color word for this (player, team) — same signal
+        // the matrix shows. Skips NA-excluded records.
+        let _fcLatest = null, _fcDate = '';
+        visible.forEach(r => {{
+            if (!r.color) return;
+            if ((r.date || '') > _fcDate) {{
+                _fcDate = r.date || '';
+                _fcLatest = r.color;
+            }}
+        }});
+        const colorBlock = _fcLatest
+            ? '<div style="display:flex;flex-direction:column;gap:4px;">' +
+                  '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">Most Recent</span>' +
+                  '<span style="display:flex;align-items:center;gap:8px;">' +
+                      '<span style="display:inline-block;width:24px;height:24px;border-radius:5px;background:' + (COLOR_BG[_fcLatest] || '#ccc') + ';border:1px solid rgba(0,0,0,0.15);"></span>' +
+                      '<span style="color:#1a1a1a;font-weight:800;font-size:18px;text-transform:capitalize;letter-spacing:0.3px;">' + _fcLatest + '</span>' +
+                  '</span>' +
+              '</div>'
+            : '';
+        if (tInfo && (tInfo.pool || (tInfo.picks && tInfo.picks.length)) || _fcLatest) {{
+            const picks = ((tInfo && tInfo.picks) || []).slice(0, 5).join(', ');
             hiddenBar += '<div style="background:white;border:1px solid #e0e0e0;border-radius:8px;padding:16px 22px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:36px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">' +
                 '<div style="display:flex;flex-direction:column;gap:2px;">' +
                     '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">2026 Draft</span>' +
                     '<span style="color:#000;font-weight:800;font-size:20px;letter-spacing:0.3px;">' + _filterTeam + '</span>' +
                 '</div>' +
-                (tInfo.pool ? '<div style="display:flex;flex-direction:column;gap:2px;">' +
+                (tInfo && tInfo.pool ? '<div style="display:flex;flex-direction:column;gap:2px;">' +
                     '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">Bonus Pool</span>' +
                     '<span style="color:#1a5e1a;font-weight:800;font-size:22px;letter-spacing:0.3px;">' + fmtPool(tInfo.pool) + '</span>' +
                 '</div>' : '') +
@@ -2280,6 +2299,7 @@ function renderDetail() {{
                     '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">First Picks</span>' +
                     '<span style="color:#222;font-weight:700;font-size:18px;letter-spacing:0.4px;">' + picks + '</span>' +
                 '</div>' : '') +
+                colorBlock +
                 '</div>';
         }}
         hiddenBar += '<div style="padding:6px 10px;font-size:12px;color:#555;margin-bottom:6px;">' +
