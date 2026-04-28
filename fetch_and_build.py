@@ -194,6 +194,10 @@ def find_teams_in_line(line):
             # Skip location references like "Metro Atl.", "Atl. area"
             if key == 'ATL' and re.search(r'METRO\s+ATL|ATL\.', lu):
                 continue
+            # Skip 2-letter abbrevs that look like state codes (",<space>XX" pattern):
+            # 'Florida Southern, FL', 'Phoenix, AZ', 'Tampa, FL' should not register as a team.
+            if len(key) == 2 and re.search(r',\s*' + re.escape(key) + r'\b', lu):
+                continue
             found.add(TEAM_ABBR[key])
     if lu in TEAM_ABBR:
         found.add(TEAM_ABBR[lu])
@@ -332,7 +336,71 @@ _WD_MAX = datetime(2026, 7, 13)
 _WD_TENTATIVE_RE = re.compile(r'\b(tentative|likely|maybe|possibly|tbd|possible|hopefully|might)\b', re.I)
 _WD_TIME_RE = re.compile(r'\b(\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM))\b')
 _WD_LOC_RE = re.compile(
-    r'(?:\bin|\bat|@)\s+([A-Z][\w\.\- ]+?)(?=[\.,\n]|\s+or\s+|\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\s+\d|\Z)',
+    r'(?:\bin|\bat|@)\s+([A-Z][\w\.\- ]+?)(?=[\.,;:\n]|\s*[\(\)\[\]]|\s+or\s+|\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\s+\d|\Z)',
+    re.I,
+)
+# Words that disqualify a line from being a "standalone location" (notes/intent words
+# that sometimes appear in PDW invite blocks).
+_WD_LOC_BAD_SUBSTR = (
+    'workout', 'invite', 'tentative', 'maybe', 'likely', 'possible', 'pending',
+    'cancelled', 'canceled', 'confirmed', 'declined', 'declining', 'pre-draft',
+    'predraft', 'pdw', 'team intel', 'in the mix', 'follow up', 'follow-up',
+    'will be', "won't", 'not going', 'just signed', 'note:', 'update:',
+)
+
+
+def _wd_is_standalone_location(line):
+    """Heuristic: does this line look like a place name on its own, with no date/team-header/notes?
+    City names like 'Atlanta'/'Lakeland' that collide with TEAM_ABBR full-name keys are allowed
+    here — caller must skip team-header lines so 'BAL' alone isn't picked up as a location."""
+    s = line.strip().rstrip('.,')
+    if not s or len(s) > 50:
+        return False
+    if re.search(r'\d', s):
+        return False
+    if re.search(_WD_MONTH_RE, s, re.I):
+        return False
+    if s.upper() in TEAM_ABBR and len(s) <= 4:
+        return False
+    if find_players_in_text(s):
+        return False
+    sl = s.lower()
+    if any(b in sl for b in _WD_LOC_BAD_SUBSTR):
+        return False
+    words = s.split()
+    if not words or len(words) > 4:
+        return False
+    if not words[0][0].isupper():
+        return False
+    lowercase_ok = {'of', 'the', 'and', 'at', 'in', 'on', 'a', 'an'}
+    upper_count = 0
+    for w in words:
+        clean = re.sub(r'[^A-Za-z]', '', w)
+        if not clean:
+            continue
+        if clean[0].isupper():
+            upper_count += 1
+        elif clean.lower() in lowercase_ok:
+            continue
+        else:
+            return False
+    return upper_count >= 1
+
+
+# 'June 11 - Atlanta', 'May 29 - Lakeland' — captures the tail location after a date+separator.
+_WD_DATE_TAIL_LOC_RE = re.compile(
+    r'\b\d{1,2}(?:st|nd|rd|th)?\s*[-–—:]\s+([A-Z][A-Za-z\.\-\' ,]+?)\s*$'
+)
+# 'May 18th Columbia, SC 9am' — date followed by whitespace, then a Capitalized place,
+# bounded by a trailing time/number or end-of-line. No separator required.
+_WD_DATE_LOC_NOSEP_RE = re.compile(
+    r'\b\d{1,2}(?:st|nd|rd|th)?\s+([A-Z][A-Za-z\.\-\' ,]+?)(?=\s+\d|\s*$)'
+)
+# Explicit 'Location:' label lines: 'Location: Pirate City complex in Bradenton, FL'.
+_WD_LOC_PREFIX_RE = re.compile(r'^\s*(?:Location|Loc)\s*[:\-]\s*(.+?)\s*$', re.I)
+# Reversed form: 'Florida Southern, FL - June 2' / 'Charlotte, NC - June 3'.
+_WD_LOC_DATE_RE = re.compile(
+    r'^\s*([A-Z][A-Za-z\.\-\' ,]+?)\s*[-–—:]\s+(?:' + _WD_MONTH_RE + r'\s+\d|\d{1,2}/\d{1,2})',
     re.I,
 )
 _WD_DATE_LIST_LINE_RE = re.compile(
@@ -409,20 +477,87 @@ def extract_workout_dates(full_text):
     """
     merged = defaultdict(dict)
     current_team = None
-    for raw_line in full_text.split('\n'):
+    current_location = None
+    raw_lines = full_text.split('\n')
+    for idx, raw_line in enumerate(raw_lines):
         line = raw_line.strip()
         if not line: continue
         is_date_list = bool(_WD_DATE_LIST_LINE_RE.match(line))
         teams_in_line = find_teams_in_line(line)
         if teams_in_line and not is_date_list:
-            current_team = _wd_first_team(line) or sorted(teams_in_line)[0]
+            new_team = _wd_first_team(line) or sorted(teams_in_line)[0]
+            if new_team != current_team:
+                current_team = new_team
+                current_location = None
+            hdr_loc = _WD_LOC_RE.search(line)
+            if hdr_loc:
+                current_location = hdr_loc.group(1).strip()
         dates = _wd_extract_dates(line)
-        if not dates: continue
+        if not dates:
+            # Standalone location line (e.g., "Bradenton") under the current team —
+            # remember so subsequent dated bullets in the same block inherit it.
+            if not teams_in_line and current_team and not current_location and _wd_is_standalone_location(line):
+                current_location = line.strip().rstrip('.,')
+            continue
         tentative = bool(_WD_TENTATIVE_RE.search(line))
         tm = _WD_TIME_RE.search(line)
         time_str = tm.group(1).strip() if tm else None
         lm = _WD_LOC_RE.search(line)
         location = lm.group(1).strip() if lm else None
+        # Same-line "<date> - <Location>" pattern.
+        if not location:
+            tail = _WD_DATE_TAIL_LOC_RE.search(line)
+            if tail:
+                cand = tail.group(1).strip().rstrip('.,')
+                if cand and _wd_is_standalone_location(cand):
+                    location = cand
+        # Same-line "<date> <Location> <time>" with no separator — "May 18th Columbia, SC 9am".
+        if not location:
+            tail2 = _WD_DATE_LOC_NOSEP_RE.search(line)
+            if tail2:
+                cand = tail2.group(1).strip().rstrip('.,')
+                if cand and _wd_is_standalone_location(cand):
+                    location = cand
+        # Reversed form: "Florida Southern, FL - June 2" — location FIRST, then date.
+        if not location:
+            ld = _WD_LOC_DATE_RE.match(line)
+            if ld:
+                cand = ld.group(1).strip().rstrip('.,')
+                if cand and _wd_is_standalone_location(cand):
+                    location = cand
+        # Carry-forward from team header / earlier standalone line.
+        if not location:
+            location = current_location
+        # Look-ahead inside the same paragraph block — break on dates/blanks only,
+        # not on team-name strings (city names like 'Atlanta' register as teams via TEAM_ABBR).
+        if not location:
+            for j in range(idx + 1, min(idx + 5, len(raw_lines))):
+                nxt = raw_lines[j].strip()
+                if not nxt:
+                    break
+                if _wd_extract_dates(nxt):
+                    break
+                # Explicit "Location: ..." label wins.
+                pref = _WD_LOC_PREFIX_RE.match(nxt)
+                if pref:
+                    cand = pref.group(1).strip().rstrip('.,')
+                    if cand:
+                        location = cand[:80]
+                        current_location = location
+                        break
+                # Standalone short place name ("Bradenton").
+                if _wd_is_standalone_location(nxt):
+                    location = nxt.rstrip('.,')
+                    current_location = location
+                    break
+                # In/at/@ phrase embedded in a longer line.
+                lm2 = _WD_LOC_RE.search(nxt)
+                if lm2:
+                    cand = lm2.group(1).strip().rstrip('.,')
+                    if cand:
+                        location = cand
+                        current_location = location
+                        break
         targets = sorted(teams_in_line) if (teams_in_line and not is_date_list) else [current_team]
         for team in targets:
             for d in dates:
@@ -1093,6 +1228,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .edits-tbl td {{ padding: 6px 10px; border-top: 1px solid #f0f0f0; color: #222; }}
 .edits-tbl tr:hover td {{ background: #fafafa; }}
 #scorePopup .popup-colors {{ display: flex; gap: 5px; margin-bottom: 10px; align-items: center; }}
+#scorePopup .popup-reassign {{ display: flex; margin-bottom: 10px; }}
+#scorePopup .popup-reassign select {{ flex: 1; padding: 5px 7px; font-size: 12px; border: 1px solid #ccc; border-radius: 5px; background: white; }}
 /* Color-only mode: hide everything that isn't the color picker (used when the popup
    is opened from the detail-view 'Most Recent' block). */
 #scorePopup.color-only .popup-color,
@@ -1970,6 +2107,40 @@ async function saveScore(score) {{
     renderDetail();
 }}
 
+// Manual team reassignment for a single (player, original-team, date) record.
+// Override key: 'mt|player|orig_team|date' -> new_team. Empty/null clears.
+async function saveTeamReassign(newTeam) {{
+    if (!newTeam) return;
+    const player = _popupPlayer, team = _popupTeam, date = _popupDate;
+    if (newTeam === team) return;  // dropdown was reset
+    const mtKey = 'mt|' + player + '|' + team + '|' + date;
+    closeScorePopup();
+    try {{
+        const res = await fetch('/api/overrides', {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ key: mtKey, score: newTeam }})
+        }});
+        if (!res.ok) {{
+            const body = await res.text();
+            showToast('Save failed (' + res.status + '). ' + body.slice(0, 120));
+            return;
+        }}
+        scoreOverrides[mtKey] = newTeam;
+        scoreOverridesMeta[mtKey] = new Date().toISOString();
+        // Apply locally so the matrix/detail update without a full reload.
+        RECORDS.forEach(r => {{
+            if (r.player === player && r.team === team && r.date === date) {{
+                r.team = newTeam;
+                r.team_overridden = true;
+            }}
+        }});
+        showToast('Team reassigned to ' + newTeam, true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
+    renderMatrix();
+    renderDetail();
+}}
+
 // Manual most-recent-color override (popup color picker).
 // `color` is one of: 'green', 'light green', 'yellow', 'orange', 'red', or null to clear.
 async function saveColor(color) {{
@@ -2166,6 +2337,19 @@ function openScorePopup(player, team, date, event, colorOnly) {{
     }}
     // Build the color override picker — five swatches + a clear button when overridden.
     updateColorPicker();
+    // Populate the team-reassign dropdown (skip current team) and reset selection.
+    const reSel = document.getElementById('popupReassignTeam');
+    if (reSel) {{
+        if (reSel.options.length <= 1) {{
+            ALL_TEAMS.forEach(t => {{
+                const o = document.createElement('option');
+                o.value = t; o.textContent = t;
+                reSel.appendChild(o);
+            }});
+        }}
+        Array.from(reSel.options).forEach(o => {{ o.disabled = (o.value === team); }});
+        reSel.value = '';
+    }}
     // Render the team's 2026 bonus pool + first 5 picks (if available).
     const tInfo = TEAM_DRAFT[team];
     const tBox = document.getElementById('popupTeamInfo');
@@ -2217,29 +2401,32 @@ function fmtPool(s) {{
     return '$' + parseFloat(m[1]).toFixed(1) + (m[2] ? m[2].toUpperCase() : 'M');
 }}
 
-// Bonus-pool color scale: brighter green = more $ to spend, muted red = less.
+// Bonus-pool color scale: deep green = more $ to spend, deep red = less.
 // 2026 MLB pool range is ~$3.95m (LAD) to ~$19.13m (PIT). Anchored to that
 // span so the gradient hugs the actual data; values outside clamp.
+// Anchored colors (mid → high → low) chosen for readability on both white and
+// dark backgrounds, so the same value reads cleanly on the matrix header
+// (black bg) and the detail card (white bg).
 function poolTextColor(poolStr) {{
-    if (!poolStr) return '#fff';
+    if (!poolStr) return '#888';
     const m = String(poolStr).match(/([\\d.]+)/);
-    if (!m) return '#fff';
+    if (!m) return '#888';
     const v = parseFloat(m[1]);
     const lo = 4, hi = 19;
     const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+    // Anchors: low = deep red (170,40,35), mid = neutral gray (130,130,130),
+    // high = deep green (35,140,60). Linear interp through the gray pivot.
     if (t >= 0.5) {{
-        // mid → high: white → bright green
         const u = (t - 0.5) * 2;
-        const r = Math.round(255 - 165 * u);
-        const g = 255;
-        const b = Math.round(255 - 145 * u);
+        const r = Math.round(130 + ( 35 - 130) * u);
+        const g = Math.round(130 + (140 - 130) * u);
+        const b = Math.round(130 + ( 60 - 130) * u);
         return 'rgb(' + r + ',' + g + ',' + b + ')';
     }} else {{
-        // mid → low: white → muted red
         const u = (0.5 - t) * 2;
-        const r = 255;
-        const g = Math.round(255 - 130 * u);
-        const b = Math.round(255 - 130 * u);
+        const r = Math.round(130 + (170 - 130) * u);
+        const g = Math.round(130 + ( 40 - 130) * u);
+        const b = Math.round(130 + ( 35 - 130) * u);
         return 'rgb(' + r + ',' + g + ',' + b + ')';
     }}
 }}
@@ -2513,7 +2700,7 @@ function renderDetail() {{
                 '</div>' +
                 (tInfo && tInfo.pool ? '<div style="display:flex;flex-direction:column;gap:2px;">' +
                     '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">Bonus Pool</span>' +
-                    '<span style="color:#1a5e1a;font-weight:800;font-size:22px;letter-spacing:0.3px;">' + fmtPool(tInfo.pool) + '</span>' +
+                    '<span style="color:' + poolTextColor(tInfo.pool) + ';font-weight:800;font-size:22px;letter-spacing:0.3px;">' + fmtPool(tInfo.pool) + '</span>' +
                 '</div>' : '') +
                 (picks ? '<div style="display:flex;flex-direction:column;gap:2px;">' +
                     '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">First Picks</span>' +
@@ -2542,7 +2729,9 @@ function renderDetail() {{
         const esc = r.player.replace(/'/g, "\\\\'");
         const isOverridden = scoreOverrides.hasOwnProperty(r.player + '|' + r.team + '|' + r.date);
         const excluded = isExcluded(r);
-        const wBadge = !excluded && isPDW(r.player, r.team) ? '<span class="workout-badge">PDW</span>' : '';
+        // PDW badge attaches to the specific record whose source message triggered the
+        // workout flag (r.workout), not to every record for the (player, team) pair.
+        const wBadge = !excluded && r.workout ? '<span class="workout-badge">PDW</span>' : '';
         const rowKey = r.player + '|' + r.team + '|' + r.date + '|' + i;
         const rowStyle = excluded ? ' style="opacity:0.45;"' : '';
         // Score column = tier points for THIS touch (5/4/3/2/1/0). Plain badge
@@ -2663,6 +2852,10 @@ async function renderEdits() {{
             const p = k.substring(2).split('|');
             if (p.length !== 2) return;
             rows.push({{ edited_at: ts, ref_date: '', type: 'Most-Recent Color', player: p[0], team: p[1], details: v || '(cleared)', _color: v || null }});
+        }} else if (k.startsWith('mt|')) {{
+            const p = k.substring(3).split('|');
+            if (p.length !== 3) return;
+            rows.push({{ edited_at: ts, ref_date: p[2], type: 'Team Reassign', player: p[0], team: p[1], details: 'reassigned to ' + v }});
         }} else {{
             const p = k.split('|');
             if (p.length !== 3) return;
@@ -3213,7 +3406,8 @@ function _chipColor(ev) {{
 
 function _chipLabel(ev) {{
     if (ev.type === 'workout') {{
-        return (ev.team || '?') + ' · ' + (ev.player || '?') + (ev.tentative ? ' (T)' : '');
+        const loc = ev.location ? ' (' + ev.location + ')' : '';
+        return (ev.team || '?') + ' · ' + (ev.player || '?') + loc + (ev.tentative ? ' [T]' : '');
     }}
     if (ev.type === 'game') {{
         const opp = ev.opponent || '?';
@@ -3919,6 +4113,12 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
+    <div class="popup-color-label">Reassign team</div>
+    <div class="popup-reassign">
+        <select id="popupReassignTeam" onchange="saveTeamReassign(this.value)">
+            <option value="">— pick team —</option>
+        </select>
+    </div>
     <div class="popup-color-label">Set most-recent color</div>
     <div class="popup-colors">
         <button id="colorSwatch_green"       class="cs-green"   onclick="saveColor('green')"       title="Green"></button>
@@ -4016,6 +4216,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 #   "w|player|team"      -> true | false             (PDW flag toggle)
 #   "t|player|team|date" -> int 0..5                 (manual tier-points override)
 #   "c|player|team"      -> 'green'|'light green'|'yellow'|'orange'|'red'  (color override)
+#   "mt|player|orig_team|date" -> 'NEW'                  (manual team reassignment)
 GAME_SCHEDULE_CSV_URL = (
     'https://docs.google.com/spreadsheets/d/1PvPw1SKki7ZsSWwk2QIWrTp31yrgKvDvH8lbcHJCI24'
     '/export?format=csv&gid=446091585'
@@ -4209,6 +4410,7 @@ def apply_overrides(records, overrides):
     pdw_ov = {}
     points_ov = {}  # 't|player|team|date' → manual tier_multiplier override
     color_ov = {}   # 'c|player|team'      → manual most-recent-color override
+    team_ov = {}    # 'mt|player|orig_team|date' → new team
     for key, val in overrides.items():
         if key.startswith('w|'):
             parts = key.split('|', 2)
@@ -4222,6 +4424,10 @@ def apply_overrides(records, overrides):
             parts = key.split('|', 2)
             if len(parts) == 3:
                 color_ov[(parts[1], parts[2])] = val
+        elif key.startswith('mt|'):
+            parts = key.split('|')
+            if len(parts) == 4:
+                team_ov[(parts[1], parts[2], parts[3])] = val
         else:
             parts = key.split('|')
             if len(parts) == 3:
@@ -4249,6 +4455,23 @@ def apply_overrides(records, overrides):
                 copy['points_overridden'] = True
                 applied_points += 1
         out.append(copy)
+
+    # Team reassignments: rewrite the team on records matching (player, orig_team, date).
+    # Done AFTER score/points (those keys reference the original team) but BEFORE
+    # PDW/color (those reference the post-reassignment team).
+    team_reassigned = 0
+    team_unmatched = 0
+    for (player, orig_team, date), new_team in team_ov.items():
+        matched = False
+        for r in out:
+            if r.get('player') == player and r.get('team') == orig_team and r.get('date') == date:
+                r['team'] = new_team
+                r['team_overridden'] = True
+                matched = True
+        if matched:
+            team_reassigned += 1
+        else:
+            team_unmatched += 1
 
     pdw_flipped = set()
     pdw_missing = set()
@@ -4286,7 +4509,8 @@ def apply_overrides(records, overrides):
         f"Applied overrides: {applied_score} score edits, {applied_points} point edits, "
         f"{excluded} excluded, {len(pdw_flipped)} PDW pairs flipped, "
         f"{len(pdw_missing)} PDW with no records, {len(color_applied)} color overrides, "
-        f"{len(color_missing)} color overrides with no records"
+        f"{len(color_missing)} color overrides with no records, "
+        f"{team_reassigned} team reassignments ({team_unmatched} unmatched)"
     )
     for p, t in sorted(pdw_missing):
         print(f"  (skipped PDW override {p}/{t} — no records for pair)")
