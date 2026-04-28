@@ -2330,7 +2330,9 @@ function renderMatrix() {{
                 const title = (pts || 0) + ' point' + (pts === 1 ? '' : 's') + (colorWord ? ' \\u2022 latest: ' + colorWord : '');
                 html += '<td class="score-cell clickable' + (wk ? ' workout' : '') + '" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + display + '</td>';
             }} else {{
-                html += '<td></td>';
+                // Empty cells are still clickable — drop the user on the team-filtered
+                // detail view so they can set a color or add an entry.
+                html += '<td class="score-cell clickable" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="No intel yet — click to open"></td>';
             }}
         }});
         html += '</tr>';
