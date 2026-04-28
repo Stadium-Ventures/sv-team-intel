@@ -66,6 +66,7 @@ module.exports = async function handler(req, res) {
       if (err) return res.status(400).json({ error: err });
       const records = await kvGet(c);
       const id = body.id || newId();
+      const prev = records[id];
       records[id] = {
         id,
         player: body.player,
@@ -80,6 +81,8 @@ module.exports = async function handler(req, res) {
           location: wd.location || null,
           tentative: !!wd.tentative,
         })) : [],
+        created_at: (prev && prev.created_at) || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
       await kvSet(c, records);
       return res.json({ ok: true, id, record: records[id] });

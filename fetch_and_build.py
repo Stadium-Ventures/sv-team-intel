@@ -1390,12 +1390,17 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .cal-pad {{ background: #fafafa !important; cursor: default !important; }}
 .cal-pad:hover {{ background: #fafafa !important; }}
 .cal-cell.cal-draft {{ background: #fff5e0; }}
+.cal-cell.cal-combine {{ background: #e8f0fb; }}
 .cal-cell.cal-today {{ background: #fff0ed; }}
 .cal-cell.cal-today::before {{
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #ff2a22;
 }}
 .cal-drafttag {{
     display: inline-block; font-size: 8px; padding: 1px 4px; background: #ff2a22; color: white;
+    border-radius: 2px; vertical-align: middle; font-weight: 700; letter-spacing: 0.5px;
+}}
+.cal-combinetag {{
+    display: inline-block; font-size: 8px; padding: 1px 4px; background: #1e6fbb; color: white;
     border-radius: 2px; vertical-align: middle; font-weight: 700; letter-spacing: 0.5px;
 }}
 
@@ -1489,6 +1494,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 .agenda-day:first-child {{ border-top: 1px solid #e8e8e8; }}
 .agenda-day.agenda-draft {{ background: #fff5e0; }}
+.agenda-day.agenda-combine {{ background: #e8f0fb; }}
 .agenda-date {{
     flex-shrink: 0; width: 52px; text-align: center; padding: 4px 0;
     background: #fafafa; border-radius: 6px;
@@ -1497,6 +1503,10 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .agenda-dnum {{ font-size: 22px; font-weight: 800; color: #000000; line-height: 1; }}
 .agenda-drafttag {{
     display: inline-block; font-size: 8px; padding: 1px 4px; background: #ff2a22; color: white;
+    border-radius: 2px; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;
+}}
+.agenda-combinetag {{
+    display: inline-block; font-size: 8px; padding: 1px 4px; background: #1e6fbb; color: white;
     border-radius: 2px; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px;
 }}
 .agenda-chips {{ flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }}
@@ -1770,15 +1780,24 @@ function showToast(msg, ok) {{
     _toastTimer = setTimeout(function() {{ el.className = ok ? 'ok' : ''; }}, ok ? 2000 : 5000);
 }}
 
+var scoreOverridesMeta = {{}};  // 'key' -> ISO timestamp of last edit (Edits tab uses this).
 async function loadOverrides() {{
     try {{
-        const res = await fetch('/api/overrides');
+        const res = await fetch('/api/overrides?meta=1');
         if (!res.ok) {{
             const body = await res.text();
             showToast('Could not load overrides (' + res.status + '). Manual edits may not persist. ' + body.slice(0, 120));
             return;
         }}
-        scoreOverrides = await res.json();
+        const blob = await res.json();
+        // Server returns {{ values, meta }} when ?meta=1; fall back to flat shape if older.
+        if (blob && typeof blob === 'object' && blob.values !== undefined) {{
+            scoreOverrides = blob.values || {{}};
+            scoreOverridesMeta = blob.meta || {{}};
+        }} else {{
+            scoreOverrides = blob || {{}};
+            scoreOverridesMeta = {{}};
+        }}
     }} catch(e) {{
         showToast('Could not reach overrides API. Manual edits may not persist.');
     }}
@@ -1930,8 +1949,10 @@ async function saveScore(score) {{
         }}
         if (isReset) {{
             delete scoreOverrides[key];
+            delete scoreOverridesMeta[key];
         }} else {{
             scoreOverrides[key] = score;
+            scoreOverridesMeta[key] = new Date().toISOString();
         }}
         // "Reset to original" should also clear any manual points override.
         if (isReset && scoreOverrides.hasOwnProperty(tKey)) {{
@@ -1941,6 +1962,7 @@ async function saveScore(score) {{
                 body: JSON.stringify({{ key: tKey, score: null }})
             }});
             delete scoreOverrides[tKey];
+            delete scoreOverridesMeta[tKey];
         }}
         showToast('Saved', true);
     }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
@@ -1966,8 +1988,10 @@ async function saveColor(color) {{
         }}
         if (color === null || color === undefined) {{
             delete scoreOverrides[ck];
+            delete scoreOverridesMeta[ck];
         }} else {{
             scoreOverrides[ck] = color;
+            scoreOverridesMeta[ck] = new Date().toISOString();
         }}
         showToast('Saved', true);
     }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
@@ -2031,6 +2055,7 @@ async function savePoints(points) {{
             return;
         }}
         scoreOverrides[tKey] = points;
+        scoreOverridesMeta[tKey] = new Date().toISOString();
         showToast('Saved', true);
     }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
     renderMatrix();
@@ -2091,8 +2116,10 @@ async function togglePDW() {{
         }}
         if (toStore === null) {{
             delete scoreOverrides[wk];
+            delete scoreOverridesMeta[wk];
         }} else {{
             scoreOverrides[wk] = toStore;
+            scoreOverridesMeta[wk] = new Date().toISOString();
         }}
         showToast('Saved', true);
     }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
@@ -2361,7 +2388,7 @@ function renderMatrix() {{
         '<div class="stat-item"><span class="stat-label">Intel Reports:</span><span class="stat-value">' + RECORDS.length + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Player-Team Connections:</span><span class="stat-value">' + uniquePairs + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">Aug 2025 - Present</span></div>' +
-        '<button class="mr-addentry-btn" onclick="openManualEntryModal(null, null, null)" title="Add a manual player-team connection">&#x2B;&nbsp;Add Entry</button>';
+        '<button class="mr-addentry-btn" id="matrixAddEntryBtn" onclick="openManualEntryModal(null, null, null)" title="Add a manual player-team connection">&#x2B;&nbsp;Add Entry</button>';
 }}
 
 function toggleHidden() {{
@@ -2569,6 +2596,10 @@ function showView(view) {{
     const ed = document.getElementById('editsView');
     mx.style.display = 'none'; dt.style.display = 'none'; cl.style.display = 'none';
     if (ed) ed.style.display = 'none';
+    // Top-right matrix-only "+ Add Entry" button: hide outside the matrix view so the
+    // detail-view header's pre-filled "+ Add Entry" is the only one visible.
+    const matrixAdd = document.getElementById('matrixAddEntryBtn');
+    if (matrixAdd) matrixAdd.style.display = (view === 'matrix') ? '' : 'none';
     if (view === 'matrix') {{
         mx.style.display = 'block';
         document.querySelectorAll('.nav-tab')[0].classList.add('active');
@@ -2598,132 +2629,108 @@ async function renderEdits() {{
         catch(e) {{ _calEvents = _calEvents || {{}}; }}
     }}
 
-    let total = 0;
-    let html = '';
+    // Combine every kind of manual change into one chronological list, sorted
+    // by edit timestamp (most recent first). Items missing a timestamp (older
+    // overrides written before timestamp tracking was added) sort last.
+    const rows = [];
 
-    // ---- Manual records (matrix "+ Add Entry") ----
-    const manualRecs = RECORDS.filter(r => r.is_manual)
-        .slice().sort((a,b) => (b.date || '').localeCompare(a.date || ''));
-    total += manualRecs.length;
-    html += '<section style="margin-bottom:24px;">';
-    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Manual Records (' + manualRecs.length + ')</h3>';
-    if (!manualRecs.length) {{
-        html += '<div style="color:#999;font-size:12px;font-style:italic;">No manual records.</div>';
-    }} else {{
-        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Score</th><th>Color</th><th>PDW</th><th>Note</th></tr></thead><tbody>';
-        manualRecs.forEach(r => {{
-            html += '<tr>' +
-                '<td>' + _editsEsc(r.date) + '</td>' +
-                '<td>' + _editsEsc(r.player) + '</td>' +
-                '<td>' + _editsEsc(r.team) + '</td>' +
-                '<td>' + _editsEsc(r.score) + '</td>' +
-                '<td>' + _editsEsc(r.color || '\\u2014') + '</td>' +
-                '<td>' + (r.workout ? '\\u2713' : '') + '</td>' +
-                '<td style="max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _editsEsc(r.full_text || r.note || '') + '</td>' +
-                '</tr>';
+    RECORDS.filter(r => r.is_manual).forEach(r => {{
+        rows.push({{
+            edited_at: r.updated_at || r.created_at || '',
+            ref_date: r.date || '',
+            type: 'Manual Record',
+            player: r.player || '',
+            team: r.team || '',
+            details: 'score=' + r.score
+                + (r.color ? ', color=' + r.color : '')
+                + (r.workout ? ', PDW' : '')
+                + ((r.full_text || r.note) ? ' — ' + (r.full_text || r.note).slice(0, 200) : ''),
         }});
-        html += '</tbody></table>';
-    }}
-    html += '</section>';
+    }});
 
-    // ---- Score / Points / PDW / Color overrides ----
-    const scoreOv = [], pointsOv = [], pdwOv = [], colorOv = [];
     Object.keys(scoreOverrides).forEach(k => {{
+        const v = scoreOverrides[k];
+        const ts = scoreOverridesMeta[k] || '';
         if (k.startsWith('w|')) {{
             const p = k.substring(2).split('|');
-            if (p.length === 2) pdwOv.push({{ player: p[0], team: p[1], val: scoreOverrides[k] }});
+            if (p.length !== 2) return;
+            rows.push({{ edited_at: ts, ref_date: '', type: 'PDW Flag', player: p[0], team: p[1], details: v ? 'On' : 'Off' }});
         }} else if (k.startsWith('t|')) {{
             const p = k.substring(2).split('|');
-            if (p.length === 3) pointsOv.push({{ player: p[0], team: p[1], date: p[2], val: scoreOverrides[k] }});
+            if (p.length !== 3) return;
+            rows.push({{ edited_at: ts, ref_date: p[2], type: 'Tier Points', player: p[0], team: p[1], details: 'points=' + v }});
         }} else if (k.startsWith('c|')) {{
             const p = k.substring(2).split('|');
-            if (p.length === 2) colorOv.push({{ player: p[0], team: p[1], val: scoreOverrides[k] }});
+            if (p.length !== 2) return;
+            rows.push({{ edited_at: ts, ref_date: '', type: 'Most-Recent Color', player: p[0], team: p[1], details: v || '(cleared)', _color: v || null }});
         }} else {{
             const p = k.split('|');
-            if (p.length === 3) scoreOv.push({{ player: p[0], team: p[1], date: p[2], val: scoreOverrides[k] }});
+            if (p.length !== 3) return;
+            rows.push({{ edited_at: ts, ref_date: p[2], type: 'Score', player: p[0], team: p[1], details: 'score=' + v }});
         }}
     }});
-    const sortByPlayerThenDate = (a,b) => (a.player || '').localeCompare(b.player || '') || (a.date || '').localeCompare(b.date || '');
-    scoreOv.sort(sortByPlayerThenDate);
-    pointsOv.sort(sortByPlayerThenDate);
-    pdwOv.sort(sortByPlayerThenDate);
-    colorOv.sort(sortByPlayerThenDate);
-    total += scoreOv.length + pointsOv.length + pdwOv.length + colorOv.length;
 
-    html += '<section style="margin-bottom:24px;">';
-    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Score Overrides (' + scoreOv.length + ')</h3>';
-    if (!scoreOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No score overrides.</div>';
-    else {{
-        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Override</th></tr></thead><tbody>';
-        scoreOv.forEach(o => {{
-            html += '<tr><td>' + _editsEsc(o.date) + '</td><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + _editsEsc(o.val) + '</td></tr>';
+    Object.values(_calEvents || {{}}).forEach(ev => {{
+        const bits = [];
+        if (ev.team) bits.push(ev.team);
+        if (ev.type) bits.push(ev.type);
+        if (ev.time) bits.push(ev.time);
+        if (ev.location) bits.push(ev.location);
+        if (ev.confirmed) bits.push('confirmed');
+        rows.push({{
+            edited_at: ev.updated_at || ev.created_at || '',
+            ref_date: ev.date || '',
+            type: 'Calendar Event',
+            player: ev.player || '',
+            team: ev.team || '',
+            details: bits.join(' \\u00b7 '),
         }});
-        html += '</tbody></table>';
-    }}
-    html += '</section>';
+    }});
 
-    html += '<section style="margin-bottom:24px;">';
-    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Tier-Points Overrides (' + pointsOv.length + ')</h3>';
-    if (!pointsOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No tier-points overrides.</div>';
-    else {{
-        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Points</th></tr></thead><tbody>';
-        pointsOv.forEach(o => {{
-            html += '<tr><td>' + _editsEsc(o.date) + '</td><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + _editsEsc(o.val) + '</td></tr>';
-        }});
-        html += '</tbody></table>';
-    }}
-    html += '</section>';
+    // Sort by edited_at desc, missing timestamps last.
+    rows.sort((a, b) => {{
+        if (!a.edited_at && b.edited_at) return 1;
+        if (a.edited_at && !b.edited_at) return -1;
+        if (a.edited_at !== b.edited_at) return b.edited_at.localeCompare(a.edited_at);
+        // Within the same (or no) timestamp, fall back to the change's reference date desc.
+        if (a.ref_date !== b.ref_date) return (b.ref_date || '').localeCompare(a.ref_date || '');
+        return (a.player || '').localeCompare(b.player || '');
+    }});
 
-    html += '<section style="margin-bottom:24px;">';
-    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">PDW Flag Overrides (' + pdwOv.length + ')</h3>';
-    if (!pdwOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No PDW overrides.</div>';
-    else {{
-        html += '<table class="edits-tbl"><thead><tr><th>Player</th><th>Team</th><th>Set To</th></tr></thead><tbody>';
-        pdwOv.forEach(o => {{
-            html += '<tr><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + (o.val ? 'On' : 'Off') + '</td></tr>';
-        }});
-        html += '</tbody></table>';
+    function fmtTs(iso) {{
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        // Local time, e.g. "Apr 28, 2026 2:35 PM".
+        const opts = {{ year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }};
+        return d.toLocaleString(undefined, opts);
     }}
-    html += '</section>';
 
-    html += '<section style="margin-bottom:24px;">';
-    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Most-Recent Color Overrides (' + colorOv.length + ')</h3>';
-    if (!colorOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No color overrides.</div>';
-    else {{
-        html += '<table class="edits-tbl"><thead><tr><th>Player</th><th>Team</th><th>Color</th></tr></thead><tbody>';
-        colorOv.forEach(o => {{
-            const sw = o.val ? '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + (COLOR_BG[o.val] || '#ccc') + ';margin-right:6px;vertical-align:-2px;"></span>' : '';
-            html += '<tr><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + sw + _editsEsc(o.val || '(cleared)') + '</td></tr>';
-        }});
-        html += '</tbody></table>';
-    }}
-    html += '</section>';
-
-    // ---- Manual calendar events ----
-    const calEvs = Object.values(_calEvents || {{}})
-        .slice().sort((a,b) => (b.date || '').localeCompare(a.date || ''));
-    total += calEvs.length;
-    html += '<section style="margin-bottom:24px;">';
-    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Manual Calendar Events (' + calEvs.length + ')</h3>';
-    if (!calEvs.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No manual calendar events.</div>';
-    else {{
-        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Type</th><th>Time</th><th>Location</th><th>Confirmed</th></tr></thead><tbody>';
-        calEvs.forEach(ev => {{
+    let html = '';
+    if (!rows.length) {{
+        html = '<div style="color:#999;font-size:13px;font-style:italic;padding:18px;background:white;border:1px solid #e0e0e0;border-radius:6px;">No manual edits or additions yet.</div>';
+    }} else {{
+        html += '<table class="edits-tbl"><thead><tr>' +
+            '<th>Edited</th><th>Type</th><th>Player</th><th>Team</th><th>Ref. Date</th><th>Details</th>' +
+            '</tr></thead><tbody>';
+        rows.forEach(r => {{
+            const sw = (r.type === 'Most-Recent Color' && r._color)
+                ? '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + (COLOR_BG[r._color] || '#ccc') + ';margin-right:6px;vertical-align:-2px;"></span>'
+                : '';
+            const editedDisp = r.edited_at ? fmtTs(r.edited_at) : '';
             html += '<tr>' +
-                '<td>' + _editsEsc(ev.date) + '</td>' +
-                '<td>' + _editsEsc(ev.player) + '</td>' +
-                '<td>' + _editsEsc(ev.team || '\\u2014') + '</td>' +
-                '<td>' + _editsEsc(ev.type || '\\u2014') + '</td>' +
-                '<td>' + _editsEsc(ev.time || '\\u2014') + '</td>' +
-                '<td>' + _editsEsc(ev.location || '\\u2014') + '</td>' +
-                '<td>' + (ev.confirmed ? '\\u2713' : '') + '</td>' +
+                '<td style="white-space:nowrap;color:' + (r.edited_at ? '#222' : '#999') + ';">' + _editsEsc(editedDisp || '\\u2014') + '</td>' +
+                '<td style="white-space:nowrap;font-weight:600;">' + _editsEsc(r.type) + '</td>' +
+                '<td style="white-space:nowrap;">' + _editsEsc(r.player) + '</td>' +
+                '<td style="white-space:nowrap;">' + _editsEsc(r.team) + '</td>' +
+                '<td style="white-space:nowrap;color:' + (r.ref_date ? '#222' : '#999') + ';">' + _editsEsc(r.ref_date || '\\u2014') + '</td>' +
+                '<td style="max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + sw + _editsEsc(r.details || '') + '</td>' +
                 '</tr>';
         }});
         html += '</tbody></table>';
     }}
-    html += '</section>';
 
-    document.getElementById('editsCount').textContent = total + ' total change' + (total === 1 ? '' : 's');
+    document.getElementById('editsCount').textContent = rows.length + ' total change' + (rows.length === 1 ? '' : 's');
     document.getElementById('editsBody').innerHTML = html;
 }}
 
@@ -2907,10 +2914,12 @@ function _buildPdfGridHtml(year, month, eventsByDate) {{
         }}
         const iso = year + '-' + String(month+1).padStart(2,'0') + '-' + String(dayNum).padStart(2,'0');
         const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
-        const bg = isDraft ? '#fff5e0' : 'white';
+        const isCombine = (iso >= '2026-06-21' && iso <= '2026-06-26');
+        const bg = isDraft ? '#fff5e0' : (isCombine ? '#e8f0fb' : 'white');
         html += '<div style="background:' + bg + ';min-height:90px;padding:4px 5px;vertical-align:top;">';
         html += '<div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px;">' + dayNum
             + (isDraft ? ' <span style="font-size:8px;padding:1px 4px;background:#ff2a22;color:white;border-radius:2px;font-weight:700;">DRAFT</span>' : '')
+            + (isCombine ? ' <span style="font-size:8px;padding:1px 4px;background:#1e6fbb;color:white;border-radius:2px;font-weight:700;">COMBINE</span>' : '')
             + '</div>';
         (eventsByDate[iso] || []).forEach(ev => {{
             const color = _chipColor(ev);
@@ -3259,12 +3268,17 @@ function renderCalendar() {{
         const d = new Date(year, month, dayNum);
         const iso = _fmtIso(d);
         const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
+        const isCombine = (iso >= '2026-06-21' && iso <= '2026-06-26');
         const isToday = (iso === todayIso);
         let cls = 'cal-cell';
         if (isDraft) cls += ' cal-draft';
+        if (isCombine) cls += ' cal-combine';
         if (isToday) cls += ' cal-today';
         html += '<div class="' + cls + '" data-iso="' + iso + '">';
-        html += '<div class="cal-daynum">' + dayNum + (isDraft ? ' <span class="cal-drafttag">DRAFT</span>' : '') + '</div>';
+        html += '<div class="cal-daynum">' + dayNum
+            + (isDraft ? ' <span class="cal-drafttag">DRAFT</span>' : '')
+            + (isCombine ? ' <span class="cal-combinetag">COMBINE</span>' : '')
+            + '</div>';
         const evs = byDate[iso] || [];
         evs.forEach(ev => {{
             const color = _chipColor(ev);

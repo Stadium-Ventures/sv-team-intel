@@ -57,6 +57,7 @@ module.exports = async function handler(req, res) {
       if (err) return res.status(400).json({ error: err });
       const events = await kvGet(c);
       const id = body.id || newId();
+      const prev = events[id];
       events[id] = {
         id,
         date: body.date,
@@ -69,6 +70,8 @@ module.exports = async function handler(req, res) {
         location: body.location || null,
         tentative: !!body.tentative,
         confirmed: !!body.confirmed,
+        created_at: (prev && prev.created_at) || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
       await kvSet(c, events);
       return res.json({ ok: true, id, event: events[id] });
