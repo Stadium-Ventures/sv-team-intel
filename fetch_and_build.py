@@ -1087,6 +1087,23 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #scorePopup .popup-pdw:hover {{ background: #fdf6e3; }}
 #scorePopup .popup-pdw.active {{ background: #ff2a22; color: white; }}
+#scorePopup .popup-colors {{ display: flex; gap: 5px; margin-bottom: 10px; align-items: center; }}
+#scorePopup .popup-colors button {{
+    flex: 1; height: 28px; border: 2px solid rgba(0,0,0,0.15); border-radius: 5px;
+    cursor: pointer; padding: 0; transition: transform 0.1s, border-color 0.1s;
+}}
+#scorePopup .popup-colors button:hover {{ transform: scale(1.06); }}
+#scorePopup .popup-colors button.active {{ border-color: #000; box-shadow: 0 0 0 1px #000 inset; }}
+#scorePopup .popup-colors .cs-green   {{ background: rgb(130, 200, 140); }}
+#scorePopup .popup-colors .cs-lgreen  {{ background: rgb(200, 230, 180); }}
+#scorePopup .popup-colors .cs-yellow  {{ background: rgb(252, 232, 130); }}
+#scorePopup .popup-colors .cs-orange  {{ background: rgb(245, 160, 95); }}
+#scorePopup .popup-colors .cs-red     {{ background: rgb(225, 110, 105); }}
+#scorePopup .popup-colors .cs-clear {{
+    flex: 0 0 28px; background: white; color: #888; font-size: 16px; font-weight: 700;
+    line-height: 1; border: 2px solid #ccc;
+}}
+#scorePopup .popup-colors .cs-clear:hover {{ color: #c0392b; border-color: #c0392b; }}
 #scorePopup .popup-reset:hover {{ color: #c0392b; }}
 #scoreOverlay {{ display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 8999; }}
 
@@ -1349,6 +1366,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .cal-chip.workout-invite .chip-text {{ color: var(--chip-color, #333); }}
 /* Confirmed workout: solid, bold, with check */
 .cal-chip.workout-confirmed {{ font-weight: 800; box-shadow: 0 0 0 2px rgba(0,0,0,0.15) inset; }}
+/* Workout chip for a (player, team) pair whose most-recent color is "green" — bold lettering. */
+.cal-chip.workout-green-conn {{ font-weight: 800; }}
 .cal-chip.tentative {{ opacity: 0.75; font-style: italic; }}
 .cal-chip.manual::after {{ content: ' *'; opacity: 0.8; }}
 .cal-legend {{ display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 10px; font-size: 10px; color: #666; }}
@@ -1642,6 +1661,13 @@ function checkPw() {{
             <label>Date</label>
             <input type="date" id="evDate" min="2026-04-01" max="2026-08-31">
         </div>
+        <div class="ev-row" id="evExtraDatesRow">
+            <label>Also on</label>
+            <div style="flex:1;">
+                <div id="evExtraDates"></div>
+                <button type="button" onclick="addExtraDate()" style="margin-top:4px;font-size:11px;padding:3px 8px;border:1px solid #ccc;background:#f9f9f9;border-radius:4px;cursor:pointer;">+ Add date</button>
+            </div>
+        </div>
         <div class="ev-row">
             <label>Type</label>
             <select id="evType" onchange="evSyncType()">
@@ -1652,6 +1678,10 @@ function checkPw() {{
         <div class="ev-row">
             <label>Player</label>
             <select id="evPlayer"></select>
+        </div>
+        <div class="ev-row" id="evExtraPlayersRow">
+            <label>Also for</label>
+            <select id="evExtraPlayers" multiple size="4" style="flex:1;font-size:13px;padding:4px;" title="Hold Cmd/Ctrl to pick multiple"></select>
         </div>
         <div class="ev-row" id="evTeamRow">
             <label>Team</label>
@@ -1894,6 +1924,72 @@ async function saveScore(score) {{
     renderDetail();
 }}
 
+// Manual most-recent-color override (popup color picker).
+// `color` is one of: 'green', 'light green', 'yellow', 'orange', 'red', or null to clear.
+async function saveColor(color) {{
+    const player = _popupPlayer, team = _popupTeam;
+    const ck = 'c|' + player + '|' + team;
+    try {{
+        const res = await fetch('/api/overrides', {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ key: ck, score: color }})
+        }});
+        if (!res.ok) {{
+            const body = await res.text();
+            showToast('Save failed (' + res.status + '). ' + body.slice(0, 120));
+            return;
+        }}
+        if (color === null || color === undefined) {{
+            delete scoreOverrides[ck];
+        }} else {{
+            scoreOverrides[ck] = color;
+        }}
+        showToast('Saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
+    // Refresh the popup's "Most recent" label and the matrix/detail cell colors.
+    openScorePopupRefresh();
+    renderMatrix();
+    renderDetail();
+}}
+
+function openScorePopupRefresh() {{
+    // Re-render the most-recent label inside the still-open popup after a color change.
+    const player = _popupPlayer, team = _popupTeam;
+    if (!player || !team) return;
+    const _latest = getLatestColor(player, team);
+    const _ovd = isColorOverridden(player, team);
+    const cBox = document.getElementById('popupColor');
+    if (_latest) {{
+        const cBg = COLOR_BG[_latest] || '#ccc';
+        cBox.innerHTML = '<span class="pc-swatch" style="background:' + cBg + ';"></span>' +
+            '<span class="pc-label">Most recent' + (_ovd ? ' (manual)' : '') + ':</span>' +
+            '<span class="pc-value">' + _latest + '</span>';
+        cBox.style.background = cBg;
+        cBox.style.display = 'flex';
+    }} else {{
+        cBox.style.display = 'none';
+    }}
+    updateColorPicker();
+}}
+
+function updateColorPicker() {{
+    // Mark the active swatch (matches the resolved current color) and toggle the Clear button.
+    const player = _popupPlayer, team = _popupTeam;
+    const cur = getLatestColor(player, team);
+    const ovd = isColorOverridden(player, team);
+    const COLORS = ['green', 'light green', 'yellow', 'orange', 'red'];
+    COLORS.forEach(function(c) {{
+        const id = 'colorSwatch_' + c.replace(' ', '_');
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (c === cur) el.classList.add('active');
+        else el.classList.remove('active');
+    }});
+    const clr = document.getElementById('colorClearBtn');
+    if (clr) clr.style.display = ovd ? 'inline-block' : 'none';
+}}
+
 // Manual tier-points override (popup buttons 5/4/3/2/1/0).
 async function savePoints(points) {{
     const player = _popupPlayer, team = _popupTeam, date = _popupDate;
@@ -1923,6 +2019,30 @@ function isPDW(player, team) {{
     var hasAuto = false;
     RECORDS.forEach(function(r) {{ if (r.player === player && r.team === team && r.workout) hasAuto = true; }});
     return hasAuto;
+}}
+
+// Most-recent literal color for a (player, team) pair, with manual override applied.
+// Returns null if no color is set. The override key is 'c|<player>|<team>' and the
+// value is one of: 'green', 'light green', 'yellow', 'orange', 'red'.
+function _autoLatestColor(player, team) {{
+    var latest = null, latestDate = '';
+    RECORDS.forEach(function(r) {{
+        if (r.player !== player || r.team !== team || !r.color) return;
+        if (isExcluded(r)) return;
+        if ((r.date || '') > latestDate) {{ latestDate = r.date || ''; latest = r.color; }}
+    }});
+    return latest;
+}}
+function getLatestColor(player, team) {{
+    var ck = 'c|' + player + '|' + team;
+    if (scoreOverrides.hasOwnProperty(ck)) {{
+        var v = scoreOverrides[ck];
+        return v || null;  // empty/null override means "no color"
+    }}
+    return _autoLatestColor(player, team);
+}}
+function isColorOverridden(player, team) {{
+    return scoreOverrides.hasOwnProperty('c|' + player + '|' + team);
 }}
 
 async function togglePDW() {{
@@ -1976,27 +2096,22 @@ function openScorePopup(player, team, date, event) {{
     _popupDate = date;
     document.getElementById('popupTitle').textContent = player + ' \\u2014 ' + team + ' (' + date + ')';
     // Most-recent literal color for this (player, team) pair — same signal the
-    // matrix cell shows. Skips records the user marked NA.
-    let _latestColor = null, _latestDate = '';
-    RECORDS.forEach(r => {{
-        if (r.player !== player || r.team !== team || !r.color) return;
-        if (isExcluded(r)) return;
-        if ((r.date || '') > _latestDate) {{
-            _latestDate = r.date || '';
-            _latestColor = r.color;
-        }}
-    }});
+    // matrix cell shows. Skips records the user marked NA. Honors manual override.
+    const _latestColor = getLatestColor(player, team);
+    const _isOverridden = isColorOverridden(player, team);
     const cBox = document.getElementById('popupColor');
     if (_latestColor) {{
         const cBg = COLOR_BG[_latestColor] || '#ccc';
         cBox.innerHTML = '<span class="pc-swatch" style="background:' + cBg + ';"></span>' +
-            '<span class="pc-label">Most recent:</span>' +
+            '<span class="pc-label">Most recent' + (_isOverridden ? ' (manual)' : '') + ':</span>' +
             '<span class="pc-value">' + _latestColor + '</span>';
         cBox.style.background = cBg;
         cBox.style.display = 'flex';
     }} else {{
         cBox.style.display = 'none';
     }}
+    // Build the color override picker — five swatches + a clear button when overridden.
+    updateColorPicker();
     // Render the team's 2026 bonus pool + first 5 picks (if available).
     const tInfo = TEAM_DRAFT[team];
     const tBox = document.getElementById('popupTeamInfo');
@@ -2098,11 +2213,20 @@ function buildMatrix() {{
         if (r.workout) workoutMap[key] = true;
     }});
     // Manual PDW overrides (matrix popup) still apply to the workout map.
+    // Manual color overrides (c|player|team) override most-recent color.
     Object.keys(scoreOverrides).forEach(k => {{
         if (k.startsWith('w|')) {{
             const parts = k.substring(2);
             if (scoreOverrides[k]) workoutMap[parts] = true;
             else delete workoutMap[parts];
+        }} else if (k.startsWith('c|')) {{
+            const key = k.substring(2);
+            const val = scoreOverrides[k];
+            if (val) {{
+                cellLatestColor[key] = {{ date: '9999-12-31', color: val, manual: true }};
+            }} else {{
+                delete cellLatestColor[key];
+            }}
         }}
     }});
 
@@ -2248,6 +2372,19 @@ function renderDetail() {{
                 latestByTeam[r.team] = {{ date: r.date, color: r.color }};
             }}
         }});
+        // Apply manual color overrides (c|player|team) — replace or remove the auto entry.
+        const _player = visible[0] && visible[0].player;
+        if (_player) {{
+            Object.keys(scoreOverrides).forEach(k => {{
+                if (!k.startsWith('c|')) return;
+                const parts = k.substring(2).split('|');
+                if (parts.length !== 2 || parts[0] !== _player) return;
+                const t = parts[1];
+                const v = scoreOverrides[k];
+                if (v) latestByTeam[t] = {{ date: '9999-12-31', color: v }};
+                else delete latestByTeam[t];
+            }});
+        }}
         const buckets = {{ 'green': [], 'light green': [], 'yellow': [], 'orange': [], 'red': [] }};
         Object.keys(latestByTeam).forEach(team => {{
             const c = latestByTeam[team].color;
@@ -2276,15 +2413,9 @@ function renderDetail() {{
     if (_filterTeam) {{
         const tInfo = TEAM_DRAFT[_filterTeam];
         // Most-recent literal color word for this (player, team) — same signal
-        // the matrix shows. Skips NA-excluded records.
-        let _fcLatest = null, _fcDate = '';
-        visible.forEach(r => {{
-            if (!r.color) return;
-            if ((r.date || '') > _fcDate) {{
-                _fcDate = r.date || '';
-                _fcLatest = r.color;
-            }}
-        }});
+        // the matrix shows. Skips NA-excluded records. Honors manual color override.
+        const _fcPlayer = visible[0] && visible[0].player;
+        let _fcLatest = _fcPlayer ? getLatestColor(_fcPlayer, _filterTeam) : null;
         const colorBlock = _fcLatest
             ? '<div style="display:flex;flex-direction:column;gap:4px;">' +
                   '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">Most Recent</span>' +
@@ -2956,6 +3087,11 @@ function renderCalendar() {{
                 if (isConfirmed) prefix = '&#10003; ';
             }}
             if (ev.tentative) cls += ' tentative';
+            // Bold the chip when the (player, team) connection's most-recent color is GREEN
+            // (the strongest signal — not light green).
+            if (isWorkout && ev.player && ev.team && getLatestColor(ev.player, ev.team) === 'green') {{
+                cls += ' workout-green-conn';
+            }}
             html += '<div class="' + cls + '" style="' + style + '" ' +
                 'onclick="openEventChip(\\'' + cid + '\\')" ' +
                 'title="' + safeTitle + '">' +
@@ -3015,6 +3151,9 @@ function renderCalendar() {{
                         if (isConfirmed) prefix = '&#10003; ';
                     }}
                     if (ev.tentative) cls += ' tentative';
+                    if (isWorkout && ev.player && ev.team && getLatestColor(ev.player, ev.team) === 'green') {{
+                        cls += ' workout-green-conn';
+                    }}
                     agendaHtml += '<div class="' + cls + '" style="' + style + '" ' +
                         'onclick="openEventChip(\\'' + cid + '\\')" ' +
                         'title="' + safeTitle + '">' +
@@ -3075,13 +3214,17 @@ function openEventModal(id, isoDate, ev) {{
     const overlay = document.getElementById('evOverlay');
     ev = ev || null;
     _lastEventModalCtx = {{ id: id, isoDate: isoDate, ev: ev }};
+    const isEdit = !!(id && ev && !ev.auto) || !!(ev && ev.auto);
     document.getElementById('evTitle').textContent = (id && ev && !ev.auto) ? 'Edit Event' : (ev && ev.auto ? 'Edit Auto-Workout' : 'Add Event');
     document.getElementById('evDate').value = (ev && ev.date) || isoDate || _fmtIso(new Date());
     document.getElementById('evType').value = (ev && ev.type) || 'workout';
     const playerSel = document.getElementById('evPlayer');
+    const extraSel = document.getElementById('evExtraPlayers');
     if (playerSel.options.length === 0) {{
         const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
         players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; playerSel.appendChild(o); }});
+        // Mirror the same player list into the multi-select.
+        players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; extraSel.appendChild(o); }});
     }}
     // Default to a currently-selected player when adding a new event.
     let calFilterPlayer = '';
@@ -3090,6 +3233,11 @@ function openEventModal(id, isoDate, ev) {{
         calFilterPlayer = sel[0];
     }}
     playerSel.value = (ev && ev.player) || calFilterPlayer || playerSel.options[0].value;
+    // Reset multi-select / extra dates each open. Hide both rows when editing.
+    Array.from(extraSel.options).forEach(o => {{ o.selected = false; }});
+    document.getElementById('evExtraDates').innerHTML = '';
+    document.getElementById('evExtraPlayersRow').style.display = isEdit ? 'none' : '';
+    document.getElementById('evExtraDatesRow').style.display = isEdit ? 'none' : '';
     const teamSel = document.getElementById('evTeam');
     if (teamSel.options.length <= 1) {{
         ALL_TEAMS.forEach(t => {{ const o = document.createElement('option'); o.value = t; o.textContent = t; teamSel.appendChild(o); }});
@@ -3204,11 +3352,31 @@ function evSyncType() {{
     if (slackBtn && t !== 'workout') slackBtn.style.display = 'none';
 }}
 
+function addExtraDate() {{
+    const wrap = document.getElementById('evExtraDates');
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:6px;margin-bottom:4px;';
+    const input = document.createElement('input');
+    input.type = 'date';
+    input.min = '2026-04-01';
+    input.max = '2026-08-31';
+    input.className = 'ev-extra-date';
+    input.style.flex = '1';
+    const rm = document.createElement('button');
+    rm.type = 'button';
+    rm.textContent = '\\u00d7';
+    rm.title = 'Remove';
+    rm.style.cssText = 'padding:0 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer;';
+    rm.onclick = function() {{ row.remove(); }};
+    row.appendChild(input);
+    row.appendChild(rm);
+    wrap.appendChild(row);
+    input.focus();
+}}
+
 async function saveEvent() {{
-    const body = {{
-        date: document.getElementById('evDate').value,
+    const baseBody = {{
         type: document.getElementById('evType').value,
-        player: document.getElementById('evPlayer').value,
         team: document.getElementById('evTeam').value || null,
         title: document.getElementById('evTitleInput').value || null,
         time: document.getElementById('evTime').value || null,
@@ -3218,14 +3386,52 @@ async function saveEvent() {{
         notes: document.getElementById('evNotes').value || null,
     }};
     const editId = document.getElementById('evOverlay').dataset.editId;
-    if (editId) body.id = editId;
-    try {{
-        const r = await _calApi('POST', body);
-        if (r && r.event) {{ _calEvents[r.id] = r.event; }}
-        closeEventModal();
-        renderCalendar();
-        showToast('Event saved', true);
-    }} catch(e) {{ showToast('Save failed: ' + e.message, false); }}
+
+    // Edit path: keep single-event semantics, never fan out.
+    if (editId) {{
+        const body = Object.assign({{}}, baseBody, {{
+            id: editId,
+            date: document.getElementById('evDate').value,
+            player: document.getElementById('evPlayer').value,
+        }});
+        try {{
+            const r = await _calApi('POST', body);
+            if (r && r.event) {{ _calEvents[r.id] = r.event; }}
+            closeEventModal();
+            renderCalendar();
+            showToast('Event saved', true);
+        }} catch(e) {{ showToast('Save failed: ' + e.message, false); }}
+        return;
+    }}
+
+    // Add path: fan out across (players × dates).
+    const primaryPlayer = document.getElementById('evPlayer').value;
+    const extraPlayers = Array.from(document.getElementById('evExtraPlayers').selectedOptions).map(o => o.value);
+    const players = [...new Set([primaryPlayer, ...extraPlayers].filter(Boolean))];
+    const primaryDate = document.getElementById('evDate').value;
+    const extraDates = Array.from(document.querySelectorAll('#evExtraDates .ev-extra-date'))
+        .map(i => i.value).filter(Boolean);
+    const dates = [...new Set([primaryDate, ...extraDates].filter(Boolean))];
+    if (!players.length || !dates.length) {{
+        showToast('Pick at least one player and one date', false);
+        return;
+    }}
+
+    let saved = 0, failed = 0;
+    for (const p of players) {{
+        for (const d of dates) {{
+            const body = Object.assign({{}}, baseBody, {{ player: p, date: d }});
+            try {{
+                const r = await _calApi('POST', body);
+                if (r && r.event) {{ _calEvents[r.id] = r.event; }}
+                saved++;
+            }} catch(e) {{ failed++; }}
+        }}
+    }}
+    closeEventModal();
+    renderCalendar();
+    if (failed) showToast(`Saved ${{saved}}, ${{failed}} failed`, saved > 0);
+    else showToast(saved === 1 ? 'Event saved' : `Saved ${{saved}} events`, true);
 }}
 
 async function deleteEvent() {{
@@ -3500,6 +3706,15 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
+    <div class="popup-points-label">Set most-recent color</div>
+    <div class="popup-colors">
+        <button id="colorSwatch_green"       class="cs-green"   onclick="saveColor('green')"       title="Green"></button>
+        <button id="colorSwatch_light_green" class="cs-lgreen"  onclick="saveColor('light green')" title="Light Green"></button>
+        <button id="colorSwatch_yellow"      class="cs-yellow"  onclick="saveColor('yellow')"      title="Yellow"></button>
+        <button id="colorSwatch_orange"      class="cs-orange"  onclick="saveColor('orange')"      title="Orange"></button>
+        <button id="colorSwatch_red"         class="cs-red"     onclick="saveColor('red')"         title="Red"></button>
+        <button id="colorClearBtn" class="cs-clear" onclick="saveColor(null)" title="Clear manual override" style="display:none;">&times;</button>
+    </div>
     <span class="popup-reset" onclick="saveScore(null)">Reset to original</span>
 </div>
 <div id="messageOverlay" onclick="if(event.target===this) closeMessageModal()">
@@ -3584,8 +3799,10 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 # read the static JSON and never see the overrides unless we merge them here.
 #
 # KV blob shape (key = 'score_overrides'):
-#   "player|team|date" -> int (-2..2) or "NA"         (score edit / exclusion)
-#   "w|player|team"    -> true | false                 (PDW flag toggle)
+#   "player|team|date"   -> int (-2..2) or "NA"     (score edit / exclusion)
+#   "w|player|team"      -> true | false             (PDW flag toggle)
+#   "t|player|team|date" -> int 0..5                 (manual tier-points override)
+#   "c|player|team"      -> 'green'|'light green'|'yellow'|'orange'|'red'  (color override)
 GAME_SCHEDULE_CSV_URL = (
     'https://docs.google.com/spreadsheets/d/1PvPw1SKki7ZsSWwk2QIWrTp31yrgKvDvH8lbcHJCI24'
     '/export?format=csv&gid=446091585'
@@ -3778,6 +3995,7 @@ def apply_overrides(records, overrides):
     score_ov = {}
     pdw_ov = {}
     points_ov = {}  # 't|player|team|date' → manual tier_multiplier override
+    color_ov = {}   # 'c|player|team'      → manual most-recent-color override
     for key, val in overrides.items():
         if key.startswith('w|'):
             parts = key.split('|', 2)
@@ -3787,6 +4005,10 @@ def apply_overrides(records, overrides):
             parts = key.split('|')
             if len(parts) == 4:
                 points_ov[(parts[1], parts[2], parts[3])] = val
+        elif key.startswith('c|'):
+            parts = key.split('|', 2)
+            if len(parts) == 3:
+                color_ov[(parts[1], parts[2])] = val
         else:
             parts = key.split('|')
             if len(parts) == 3:
@@ -3826,13 +4048,37 @@ def apply_overrides(records, overrides):
                 matched = True
         (pdw_flipped if matched else pdw_missing).add((player, team))
 
+    # Color overrides: rewrite the color of the most-recent record for each
+    # (player, team) pair so downstream consumers (teamintel.json) see the
+    # manual color when picking "most recent".
+    color_applied = set()
+    color_missing = set()
+    for (player, team), val in color_ov.items():
+        latest = None
+        for r in out:
+            if r.get('player') == player and r.get('team') == team:
+                if latest is None or (r.get('date') or '') > (latest.get('date') or ''):
+                    latest = r
+        if latest is None:
+            color_missing.add((player, team))
+            continue
+        if val:
+            latest['color'] = val
+        else:
+            latest['color'] = None
+        latest['color_overridden'] = True
+        color_applied.add((player, team))
+
     print(
         f"Applied overrides: {applied_score} score edits, {applied_points} point edits, "
         f"{excluded} excluded, {len(pdw_flipped)} PDW pairs flipped, "
-        f"{len(pdw_missing)} PDW with no records"
+        f"{len(pdw_missing)} PDW with no records, {len(color_applied)} color overrides, "
+        f"{len(color_missing)} color overrides with no records"
     )
     for p, t in sorted(pdw_missing):
         print(f"  (skipped PDW override {p}/{t} — no records for pair)")
+    for p, t in sorted(color_missing):
+        print(f"  (skipped color override {p}/{t} — no records for pair)")
     return out
 
 
