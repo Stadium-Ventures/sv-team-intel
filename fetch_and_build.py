@@ -332,7 +332,7 @@ _WD_MAX = datetime(2026, 7, 13)
 _WD_TENTATIVE_RE = re.compile(r'\b(tentative|likely|maybe|possibly|tbd|possible|hopefully|might)\b', re.I)
 _WD_TIME_RE = re.compile(r'\b(\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM))\b')
 _WD_LOC_RE = re.compile(
-    r'(?:\bin|\bat|@)\s+([A-Z][\w\.\- ]+?)(?=[\.,\n]|\s+or\s+|\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\s+\d|\Z)',
+    r'(?:\bin|\bat|@)\s+([A-Z][\w\.\- ]+?)(?=[\.,;:\n]|\s+or\s+|\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\s+\d|\Z)',
     re.I,
 )
 _WD_DATE_LIST_LINE_RE = re.compile(
@@ -409,20 +409,29 @@ def extract_workout_dates(full_text):
     """
     merged = defaultdict(dict)
     current_team = None
+    current_location = None  # Location announced on a team-header line, carried forward to date-only lines under the same team.
     for raw_line in full_text.split('\n'):
         line = raw_line.strip()
         if not line: continue
         is_date_list = bool(_WD_DATE_LIST_LINE_RE.match(line))
         teams_in_line = find_teams_in_line(line)
         if teams_in_line and not is_date_list:
-            current_team = _wd_first_team(line) or sorted(teams_in_line)[0]
+            new_team = _wd_first_team(line) or sorted(teams_in_line)[0]
+            if new_team != current_team:
+                current_team = new_team
+                current_location = None
+            # Capture a header-line location ("CHC at Wrigley Field:") so subsequent
+            # date-only bullets inherit it.
+            hdr_loc = _WD_LOC_RE.search(line)
+            if hdr_loc:
+                current_location = hdr_loc.group(1).strip()
         dates = _wd_extract_dates(line)
         if not dates: continue
         tentative = bool(_WD_TENTATIVE_RE.search(line))
         tm = _WD_TIME_RE.search(line)
         time_str = tm.group(1).strip() if tm else None
         lm = _WD_LOC_RE.search(line)
-        location = lm.group(1).strip() if lm else None
+        location = lm.group(1).strip() if lm else current_location
         targets = sorted(teams_in_line) if (teams_in_line and not is_date_list) else [current_team]
         for team in targets:
             for d in dates:
@@ -1010,7 +1019,7 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #000000; outline-offset: -2px; }}
-td.workout {{ outline: 3px solid #d4a017; outline-offset: -3px; }}
+td.workout {{ box-shadow: inset 0 0 0 1px rgba(0,0,0,0.85), inset 0 0 0 4px #d4a017; }}
 .workout-badge {{ display: inline-block; background: #d4a017; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
 td.overridden {{ position: relative; }}
 td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(0,0,0,0.4); }}
@@ -1549,7 +1558,7 @@ function checkPw() {{
 
 <div class="legend">
     <span class="legend-title">Key:</span>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 3px #d4a017"></div>Pre-Draft Workout</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.85), inset 0 0 0 4px #d4a017"></div>Pre-Draft Workout</div>
     <span class="legend-title" style="margin-left:14px;">Points</span>
     <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
 </div>
