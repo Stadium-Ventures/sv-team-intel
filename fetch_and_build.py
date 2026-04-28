@@ -3156,10 +3156,23 @@ function jumpToCalendarForCurrentPlayer() {{
         _calSelectedPlayers = new Set([player]);
         _calSelectedPlayersEverSeen.add(player);
         _calSaveSelection();
-        // Jump to a month where this player has events if possible, else stay.
-        const autoDates = _calAutoEvents.filter(e => e.player === player).map(e => e.date).sort();
-        if (autoDates.length) {{
-            const d = new Date(autoDates[0] + 'T00:00:00');
+        // Default to the current month. If the player has no events this month,
+        // jump to their nearest upcoming event (or most recent past event if none upcoming).
+        const now = new Date();
+        const todayIso = _fmtIso(now);
+        const curYM = now.getFullYear() * 12 + now.getMonth();
+        const autoDates = _calAutoEvents.filter(e => e.player === player).map(e => e.date);
+        const hasThisMonth = autoDates.some(iso => {{
+            const d = new Date(iso + 'T00:00:00');
+            return (d.getFullYear() * 12 + d.getMonth()) === curYM;
+        }});
+        if (hasThisMonth || autoDates.length === 0) {{
+            _calMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        }} else {{
+            const upcoming = autoDates.filter(iso => iso >= todayIso).sort();
+            const past = autoDates.filter(iso => iso < todayIso).sort();
+            const pick = upcoming.length ? upcoming[0] : past[past.length - 1];
+            const d = new Date(pick + 'T00:00:00');
             _calMonth = new Date(d.getFullYear(), d.getMonth(), 1);
         }}
         showView('calendar');
