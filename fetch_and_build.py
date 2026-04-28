@@ -335,6 +335,61 @@ _WD_LOC_RE = re.compile(
     r'(?:\bin|\bat|@)\s+([A-Z][\w\.\- ]+?)(?=[\.,;:\n]|\s+or\s+|\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\s+\d|\Z)',
     re.I,
 )
+# Words that disqualify a line from being a "standalone location" (notes/intent/status words
+# we sometimes see in PDW invite blocks: "Workout invite", "Tentative", "In the mix", etc.)
+_WD_LOC_BAD_SUBSTR = (
+    'workout', 'invite', 'tentative', 'maybe', 'likely', 'possible', 'pending',
+    'cancelled', 'canceled', 'confirmed', 'declined', 'declining', 'pre-draft',
+    'predraft', 'pdw', 'team intel', 'in the mix', 'follow up', 'follow-up',
+    'will be', "won't", 'not going', 'just signed', 'note:', 'update:',
+)
+
+
+def _wd_is_standalone_location(line):
+    """Heuristic: does this line look like a place name on its own, with no date/team-header/notes?
+    City names like "Atlanta" or "Lakeland" pass — caller is expected to skip team-header lines
+    (where teams_in_line is non-empty) so we don't misclassify "BAL" as a location."""
+    s = line.strip().rstrip('.,')
+    if not s or len(s) > 50:
+        return False
+    if re.search(r'\d', s):
+        return False
+    if re.search(_WD_MONTH_RE, s, re.I):
+        return False
+    # Reject if line is just a 2-4 char team abbreviation (e.g., "BAL", "SDP").
+    if s.upper() in TEAM_ABBR and len(s) <= 4:
+        return False
+    # Reject if a known player is mentioned (rules out "Green - Cam, Condon, Robbins").
+    if find_players_in_text(s):
+        return False
+    sl = s.lower()
+    if any(b in sl for b in _WD_LOC_BAD_SUBSTR):
+        return False
+    words = s.split()
+    if not words or len(words) > 4:
+        return False
+    if not words[0][0].isupper():
+        return False
+    # Most words should start uppercase (allow articles/prepositions in place names like "Field of Dreams").
+    lowercase_ok = {'of', 'the', 'and', 'at', 'in', 'on', 'a', 'an'}
+    upper_count = 0
+    for w in words:
+        clean = re.sub(r'[^A-Za-z]', '', w)
+        if not clean:
+            continue
+        if clean[0].isupper():
+            upper_count += 1
+        elif clean.lower() in lowercase_ok:
+            continue
+        else:
+            return False
+    return upper_count >= 1
+
+
+# "June 11 - Atlanta", "May 29 - Lakeland" — captures the tail location after a date+separator.
+_WD_DATE_TAIL_LOC_RE = re.compile(
+    r'\b\d{1,2}(?:st|nd|rd|th)?\s*[-–—:]\s+([A-Z][A-Za-z\.\-\' ,]+?)\s*$'
+)
 _WD_DATE_LIST_LINE_RE = re.compile(
     r'^\s*(?:' + _WD_MONTH_RE + r'\s+\d{1,2}(?:st|nd|rd|th)?|\d{1,2}/\d{1,2})\s*[-–:]\s*\S',
     re.I,
@@ -410,7 +465,8 @@ def extract_workout_dates(full_text):
     merged = defaultdict(dict)
     current_team = None
     current_location = None  # Location announced on a team-header line, carried forward to date-only lines under the same team.
-    for raw_line in full_text.split('\n'):
+    raw_lines = full_text.split('\n')
+    for idx, raw_line in enumerate(raw_lines):
         line = raw_line.strip()
         if not line: continue
         is_date_list = bool(_WD_DATE_LIST_LINE_RE.match(line))
@@ -426,12 +482,43 @@ def extract_workout_dates(full_text):
             if hdr_loc:
                 current_location = hdr_loc.group(1).strip()
         dates = _wd_extract_dates(line)
-        if not dates: continue
+        if not dates:
+            # Standalone location line ("Bradenton" on its own) under the current team —
+            # remember it so later date lines in the same block inherit it.
+            # Skip if line was a team header (teams_in_line set) so "BAL" doesn't become a location.
+            if not teams_in_line and current_team and not current_location and _wd_is_standalone_location(line):
+                current_location = line.strip().rstrip('.,')
+            continue
         tentative = bool(_WD_TENTATIVE_RE.search(line))
         tm = _WD_TIME_RE.search(line)
         time_str = tm.group(1).strip() if tm else None
         lm = _WD_LOC_RE.search(line)
-        location = lm.group(1).strip() if lm else current_location
+        location = lm.group(1).strip() if lm else None
+        # Same-line "<date> - <Location>" pattern: "June 11 - Atlanta", "May 29 - Lakeland".
+        if not location:
+            tail = _WD_DATE_TAIL_LOC_RE.search(line)
+            if tail:
+                cand = tail.group(1).strip().rstrip('.,')
+                if cand and _wd_is_standalone_location(cand):
+                    location = cand
+        # Fall back to a location remembered from a header line or earlier standalone line.
+        if not location:
+            location = current_location
+        # Look ahead for a standalone-location line in the same paragraph block
+        # (handles the "May 25-27 / Bradenton" pattern where location follows the date).
+        # Stop on blank lines or another date — but DON'T stop on team-name strings,
+        # since city names like "Atlanta" register as teams via the abbr map.
+        if not location:
+            for j in range(idx + 1, min(idx + 5, len(raw_lines))):
+                nxt = raw_lines[j].strip()
+                if not nxt:
+                    break
+                if _wd_extract_dates(nxt):
+                    break
+                if _wd_is_standalone_location(nxt):
+                    location = nxt.rstrip('.,')
+                    current_location = location  # remember for later dates in this block
+                    break
         targets = sorted(teams_in_line) if (teams_in_line and not is_date_list) else [current_team]
         for team in targets:
             for d in dates:
@@ -797,8 +884,10 @@ def parse_messages(messages):
             if ft not in _wd_cache:
                 _wd_cache[ft] = extract_workout_dates(ft)
             r['workout_dates'] = _wd_cache[ft].get(r['team'], [])
+            r['workout_locations'] = sorted({wd['location'] for wd in r['workout_dates'] if wd.get('location')})
         else:
             r['workout_dates'] = []
+            r['workout_locations'] = []
 
     # Deduplicate
     seen = set()
@@ -1143,6 +1232,10 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     background: #d6e7f7; border-bottom: 2px solid #1f6bb8;
     padding: 1px 2px; border-radius: 2px; color: #0d3b6a; font-weight: 700;
 }}
+#messageModal mark.mm-hl-loc {{
+    background: #d8f0d4; border-bottom: 2px solid #2e7d32;
+    padding: 1px 2px; border-radius: 2px; color: #1b4d1f; font-weight: 700;
+}}
 #messageModal .mm-legend {{
     font-size: 11px; color: #888; margin-top: 10px;
 }}
@@ -1152,6 +1245,9 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #messageModal .mm-legend .pill-player {{
     background: #d6e7f7; border-bottom-color: #1f6bb8; color: #0d3b6a;
+}}
+#messageModal .mm-legend .pill-loc {{
+    background: #d8f0d4; border-bottom-color: #2e7d32; color: #1b4d1f;
 }}
 .detail-table td.note-cell {{ cursor: pointer; }}
 .detail-table tr:hover td.note-cell {{ background: #fff5f5; }}
@@ -1830,9 +1926,11 @@ function openMessageModal(rowKey) {{
         document.getElementById('mmMeta').textContent = r.date + ' · #' + (r.channel || 'unknown') +
             (isPDWrow ? ' · PDW flagged' : '');
     }}
+    const locs = (r.workout_locations || []);
     const groups = [
         // Draw PDW highlight first (it takes priority on overlap).
         {{ phrases: r.workout_matches || [], cls: 'mm-hl', wholeWord: false }},
+        {{ phrases: locs, cls: 'mm-hl-loc', wholeWord: true }},
         {{ phrases: playerAliases, cls: 'mm-hl-player', wholeWord: true }},
     ];
     document.getElementById('mmBody').innerHTML = _highlightMatches(body || '', groups);
@@ -1840,6 +1938,9 @@ function openMessageModal(rowKey) {{
         '<span class="pill pill-player">' + r.player.split(' ')[0] + '</span> = player mentions' +
         (isPDWrow && (r.workout_matches || []).length
             ? ' &nbsp;·&nbsp; <span class="pill">highlighted</span> = text that triggered the PDW flag'
+            : '') +
+        (locs.length
+            ? ' &nbsp;·&nbsp; <span class="pill pill-loc">' + _escapeHtml(locs[0]) + '</span> = workout location'
             : '');
     document.getElementById('mmLegend').style.display = 'block';
     document.getElementById('messageOverlay').classList.add('visible');
