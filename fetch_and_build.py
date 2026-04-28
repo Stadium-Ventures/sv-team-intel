@@ -1088,6 +1088,10 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup .popup-pdw:hover {{ background: #fdf6e3; }}
 #scorePopup .popup-pdw.active {{ background: #ff2a22; color: white; }}
 #scorePopup .popup-color-label {{ font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 5px; text-transform: uppercase; }}
+.edits-tbl {{ width: 100%; border-collapse: collapse; font-size: 12px; background: white; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }}
+.edits-tbl th {{ background: #000; color: #fff; padding: 6px 10px; text-align: left; font-weight: 700; font-size: 11px; letter-spacing: 0.3px; text-transform: uppercase; }}
+.edits-tbl td {{ padding: 6px 10px; border-top: 1px solid #f0f0f0; color: #222; }}
+.edits-tbl tr:hover td {{ background: #fafafa; }}
 #scorePopup .popup-colors {{ display: flex; gap: 5px; margin-bottom: 10px; align-items: center; }}
 /* Color-only mode: hide everything that isn't the color picker (used when the popup
    is opened from the detail-view 'Most Recent' block). */
@@ -1581,6 +1585,7 @@ function checkPw() {{
         <div class="nav-tab active" onclick="showView('matrix')">Matrix View</div>
         <div class="nav-tab" onclick="showView('detail')">Detail View</div>
         <div class="nav-tab" onclick="goToCalendar()">Calendar</div>
+        <div class="nav-tab" onclick="showView('edits')">Edits</div>
     </div>
 </div>
 
@@ -1660,6 +1665,15 @@ function checkPw() {{
             <span>"*" = manually edited</span>
         </span>
     </div>
+</div>
+
+<div id="editsView" style="display:none;padding:18px 22px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+        <button onclick="showView('matrix')" style="padding:6px 14px;font-size:13px;font-weight:600;background:#000000;color:white;border:none;border-radius:6px;cursor:pointer;">&#8592; Back</button>
+        <h2 style="margin:0;font-size:18px;color:#000;">Manual Edits &amp; Additions</h2>
+        <span id="editsCount" style="color:#666;font-size:13px;"></span>
+    </div>
+    <div id="editsBody"></div>
 </div>
 
 </div><!-- /appContent -->
@@ -2552,7 +2566,9 @@ function showView(view) {{
     const mx = document.getElementById('matrixView');
     const dt = document.getElementById('detailView');
     const cl = document.getElementById('calendarView');
+    const ed = document.getElementById('editsView');
     mx.style.display = 'none'; dt.style.display = 'none'; cl.style.display = 'none';
+    if (ed) ed.style.display = 'none';
     if (view === 'matrix') {{
         mx.style.display = 'block';
         document.querySelectorAll('.nav-tab')[0].classList.add('active');
@@ -2563,7 +2579,152 @@ function showView(view) {{
         cl.style.display = 'block';
         document.querySelectorAll('.nav-tab')[2].classList.add('active');
         if (!window._calInitialized) {{ initCalendar(); }}
+    }} else if (view === 'edits') {{
+        ed.style.display = 'block';
+        document.querySelectorAll('.nav-tab')[3].classList.add('active');
+        renderEdits();
     }}
+}}
+
+function _editsEsc(s) {{
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}}
+
+async function renderEdits() {{
+    // Manual calendar events live in /api/calendar-events. Lazy-load if the
+    // calendar tab hasn't been opened yet so this view doesn't depend on init order.
+    if (!window._calInitialized) {{
+        try {{ _calEvents = await _calApi('GET', null) || {{}}; }}
+        catch(e) {{ _calEvents = _calEvents || {{}}; }}
+    }}
+
+    let total = 0;
+    let html = '';
+
+    // ---- Manual records (matrix "+ Add Entry") ----
+    const manualRecs = RECORDS.filter(r => r.is_manual)
+        .slice().sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+    total += manualRecs.length;
+    html += '<section style="margin-bottom:24px;">';
+    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Manual Records (' + manualRecs.length + ')</h3>';
+    if (!manualRecs.length) {{
+        html += '<div style="color:#999;font-size:12px;font-style:italic;">No manual records.</div>';
+    }} else {{
+        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Score</th><th>Color</th><th>PDW</th><th>Note</th></tr></thead><tbody>';
+        manualRecs.forEach(r => {{
+            html += '<tr>' +
+                '<td>' + _editsEsc(r.date) + '</td>' +
+                '<td>' + _editsEsc(r.player) + '</td>' +
+                '<td>' + _editsEsc(r.team) + '</td>' +
+                '<td>' + _editsEsc(r.score) + '</td>' +
+                '<td>' + _editsEsc(r.color || '\\u2014') + '</td>' +
+                '<td>' + (r.workout ? '\\u2713' : '') + '</td>' +
+                '<td style="max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _editsEsc(r.full_text || r.note || '') + '</td>' +
+                '</tr>';
+        }});
+        html += '</tbody></table>';
+    }}
+    html += '</section>';
+
+    // ---- Score / Points / PDW / Color overrides ----
+    const scoreOv = [], pointsOv = [], pdwOv = [], colorOv = [];
+    Object.keys(scoreOverrides).forEach(k => {{
+        if (k.startsWith('w|')) {{
+            const p = k.substring(2).split('|');
+            if (p.length === 2) pdwOv.push({{ player: p[0], team: p[1], val: scoreOverrides[k] }});
+        }} else if (k.startsWith('t|')) {{
+            const p = k.substring(2).split('|');
+            if (p.length === 3) pointsOv.push({{ player: p[0], team: p[1], date: p[2], val: scoreOverrides[k] }});
+        }} else if (k.startsWith('c|')) {{
+            const p = k.substring(2).split('|');
+            if (p.length === 2) colorOv.push({{ player: p[0], team: p[1], val: scoreOverrides[k] }});
+        }} else {{
+            const p = k.split('|');
+            if (p.length === 3) scoreOv.push({{ player: p[0], team: p[1], date: p[2], val: scoreOverrides[k] }});
+        }}
+    }});
+    const sortByPlayerThenDate = (a,b) => (a.player || '').localeCompare(b.player || '') || (a.date || '').localeCompare(b.date || '');
+    scoreOv.sort(sortByPlayerThenDate);
+    pointsOv.sort(sortByPlayerThenDate);
+    pdwOv.sort(sortByPlayerThenDate);
+    colorOv.sort(sortByPlayerThenDate);
+    total += scoreOv.length + pointsOv.length + pdwOv.length + colorOv.length;
+
+    html += '<section style="margin-bottom:24px;">';
+    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Score Overrides (' + scoreOv.length + ')</h3>';
+    if (!scoreOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No score overrides.</div>';
+    else {{
+        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Override</th></tr></thead><tbody>';
+        scoreOv.forEach(o => {{
+            html += '<tr><td>' + _editsEsc(o.date) + '</td><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + _editsEsc(o.val) + '</td></tr>';
+        }});
+        html += '</tbody></table>';
+    }}
+    html += '</section>';
+
+    html += '<section style="margin-bottom:24px;">';
+    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Tier-Points Overrides (' + pointsOv.length + ')</h3>';
+    if (!pointsOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No tier-points overrides.</div>';
+    else {{
+        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Points</th></tr></thead><tbody>';
+        pointsOv.forEach(o => {{
+            html += '<tr><td>' + _editsEsc(o.date) + '</td><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + _editsEsc(o.val) + '</td></tr>';
+        }});
+        html += '</tbody></table>';
+    }}
+    html += '</section>';
+
+    html += '<section style="margin-bottom:24px;">';
+    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">PDW Flag Overrides (' + pdwOv.length + ')</h3>';
+    if (!pdwOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No PDW overrides.</div>';
+    else {{
+        html += '<table class="edits-tbl"><thead><tr><th>Player</th><th>Team</th><th>Set To</th></tr></thead><tbody>';
+        pdwOv.forEach(o => {{
+            html += '<tr><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + (o.val ? 'On' : 'Off') + '</td></tr>';
+        }});
+        html += '</tbody></table>';
+    }}
+    html += '</section>';
+
+    html += '<section style="margin-bottom:24px;">';
+    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Most-Recent Color Overrides (' + colorOv.length + ')</h3>';
+    if (!colorOv.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No color overrides.</div>';
+    else {{
+        html += '<table class="edits-tbl"><thead><tr><th>Player</th><th>Team</th><th>Color</th></tr></thead><tbody>';
+        colorOv.forEach(o => {{
+            const sw = o.val ? '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + (COLOR_BG[o.val] || '#ccc') + ';margin-right:6px;vertical-align:-2px;"></span>' : '';
+            html += '<tr><td>' + _editsEsc(o.player) + '</td><td>' + _editsEsc(o.team) + '</td><td>' + sw + _editsEsc(o.val || '(cleared)') + '</td></tr>';
+        }});
+        html += '</tbody></table>';
+    }}
+    html += '</section>';
+
+    // ---- Manual calendar events ----
+    const calEvs = Object.values(_calEvents || {{}})
+        .slice().sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+    total += calEvs.length;
+    html += '<section style="margin-bottom:24px;">';
+    html += '<h3 style="margin:0 0 8px;font-size:14px;color:#333;">Manual Calendar Events (' + calEvs.length + ')</h3>';
+    if (!calEvs.length) html += '<div style="color:#999;font-size:12px;font-style:italic;">No manual calendar events.</div>';
+    else {{
+        html += '<table class="edits-tbl"><thead><tr><th>Date</th><th>Player</th><th>Team</th><th>Type</th><th>Time</th><th>Location</th><th>Confirmed</th></tr></thead><tbody>';
+        calEvs.forEach(ev => {{
+            html += '<tr>' +
+                '<td>' + _editsEsc(ev.date) + '</td>' +
+                '<td>' + _editsEsc(ev.player) + '</td>' +
+                '<td>' + _editsEsc(ev.team || '\\u2014') + '</td>' +
+                '<td>' + _editsEsc(ev.type || '\\u2014') + '</td>' +
+                '<td>' + _editsEsc(ev.time || '\\u2014') + '</td>' +
+                '<td>' + _editsEsc(ev.location || '\\u2014') + '</td>' +
+                '<td>' + (ev.confirmed ? '\\u2713' : '') + '</td>' +
+                '</tr>';
+        }});
+        html += '</tbody></table>';
+    }}
+    html += '</section>';
+
+    document.getElementById('editsCount').textContent = total + ' total change' + (total === 1 ? '' : 's');
+    document.getElementById('editsBody').innerHTML = html;
 }}
 
 // ================= Calendar =================
