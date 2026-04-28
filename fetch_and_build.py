@@ -681,9 +681,19 @@ def parse_messages(messages):
 
         elif channel in CHANNEL_TO_PLAYER:
             player = CHANNEL_TO_PLAYER[channel]
-            all_teams = set()
-            for line in text.split('\n'):
-                all_teams.update(find_teams_in_line(line))
+            # Prefer an explicit "Team Intel - <ABBR>" header. Without it, city/team-name
+            # words anywhere in the body (Atlanta, Detroit, Lakeland, ...) would create
+            # phantom records via TEAM_ABBR's full-name keys.
+            header_match = re.search(r'[Tt]eam\s*[Ii]ntel\s*[-:]?\s*\n?\s*(\w+)', text)
+            header_team = None
+            if header_match:
+                header_team = normalize_team(header_match.group(1))
+            if header_team:
+                all_teams = {header_team}
+            else:
+                all_teams = set()
+                for line in text.split('\n'):
+                    all_teams.update(find_teams_in_line(line))
             if not all_teams:
                 continue
             for team in all_teams:
