@@ -2416,8 +2416,20 @@ function renderDetail() {{
         // the matrix shows. Skips NA-excluded records. Honors manual color override.
         const _fcPlayer = visible[0] && visible[0].player;
         let _fcLatest = _fcPlayer ? getLatestColor(_fcPlayer, _filterTeam) : null;
+        // Click-to-edit: anchor the score popup to the latest record's date for this pair.
+        let _fcLatestDate = '';
+        if (_fcPlayer) {{
+            visible.forEach(r => {{
+                if ((r.date || '') > _fcLatestDate) _fcLatestDate = r.date || '';
+            }});
+        }}
+        const _fcEsc = (_fcPlayer || '').replace(/'/g, "\\\\'");
+        const _fcOnclick = (_fcPlayer && _fcLatestDate)
+            ? ' onclick="openScorePopup(\\'' + _fcEsc + '\\', \\'' + _filterTeam + '\\', \\'' + _fcLatestDate + '\\', event)"'
+            : '';
+        const _fcCursor = _fcOnclick ? 'cursor:pointer;' : '';
         const colorBlock = _fcLatest
-            ? '<div style="display:flex;flex-direction:column;gap:4px;">' +
+            ? '<div style="display:flex;flex-direction:column;gap:4px;' + _fcCursor + '"' + _fcOnclick + ' title="Click to override most-recent color">' +
                   '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">Most Recent</span>' +
                   '<span style="display:flex;align-items:center;gap:8px;">' +
                       '<span style="display:inline-block;width:24px;height:24px;border-radius:5px;background:' + (COLOR_BG[_fcLatest] || '#ccc') + ';border:1px solid rgba(0,0,0,0.15);"></span>' +
