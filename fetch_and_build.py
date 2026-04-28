@@ -1087,7 +1087,17 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #scorePopup .popup-pdw:hover {{ background: #fdf6e3; }}
 #scorePopup .popup-pdw.active {{ background: #ff2a22; color: white; }}
+#scorePopup .popup-color-label {{ font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 5px; text-transform: uppercase; }}
 #scorePopup .popup-colors {{ display: flex; gap: 5px; margin-bottom: 10px; align-items: center; }}
+/* Color-only mode: hide everything that isn't the color picker (used when the popup
+   is opened from the detail-view 'Most Recent' block). */
+#scorePopup.color-only .popup-color,
+#scorePopup.color-only .popup-team-info,
+#scorePopup.color-only .popup-points-label,
+#scorePopup.color-only .popup-points,
+#scorePopup.color-only .popup-scores,
+#scorePopup.color-only .popup-pdw,
+#scorePopup.color-only .popup-reset {{ display: none !important; }}
 #scorePopup .popup-colors button {{
     flex: 1; height: 28px; border: 2px solid rgba(0,0,0,0.15); border-radius: 5px;
     cursor: pointer; padding: 0; transition: transform 0.1s, border-color 0.1s;
@@ -2090,10 +2100,13 @@ function updatePDWButton() {{
     }}
 }}
 
-function openScorePopup(player, team, date, event) {{
+function openScorePopup(player, team, date, event, colorOnly) {{
     _popupPlayer = player;
     _popupTeam = team;
     _popupDate = date;
+    var popupRoot = document.getElementById('scorePopup');
+    if (colorOnly) popupRoot.classList.add('color-only');
+    else popupRoot.classList.remove('color-only');
     document.getElementById('popupTitle').textContent = player + ' \\u2014 ' + team + (date ? ' (' + date + ')' : '');
     // Most-recent literal color for this (player, team) pair — same signal the
     // matrix cell shows. Skips records the user marked NA. Honors manual override.
@@ -2428,7 +2441,7 @@ function renderDetail() {{
         }}
         const _fcEsc = (_fcPlayer || '').replace(/'/g, "\\\\'");
         const _fcOnclick = _fcPlayer
-            ? ' onclick="openScorePopup(\\'' + _fcEsc + '\\', \\'' + _filterTeam + '\\', \\'' + _fcLatestDate + '\\', event)"'
+            ? ' onclick="openScorePopup(\\'' + _fcEsc + '\\', \\'' + _filterTeam + '\\', \\'' + _fcLatestDate + '\\', event, true)"'
             : '';
         const _fcCursor = _fcOnclick ? 'cursor:pointer;' : '';
         const _fcSwatchBg = _fcLatest ? (COLOR_BG[_fcLatest] || '#ccc') : '#f0f0f0';
@@ -3729,7 +3742,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
-    <div class="popup-points-label">Set most-recent color</div>
+    <div class="popup-color-label">Set most-recent color</div>
     <div class="popup-colors">
         <button id="colorSwatch_green"       class="cs-green"   onclick="saveColor('green')"       title="Green"></button>
         <button id="colorSwatch_light_green" class="cs-lgreen"  onclick="saveColor('light green')" title="Light Green"></button>
