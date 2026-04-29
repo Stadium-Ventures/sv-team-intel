@@ -399,9 +399,12 @@ def _wd_is_standalone_location(line):
     return upper_count >= 1
 
 
-# 'June 11 - Atlanta', 'May 29 - Lakeland' — captures the tail location after a date+separator.
+# 'June 11 - Atlanta', 'May 29 - Lakeland', 'June 3-Metro Atl. (Either Pace HS …)'
+# — captures the tail location after a date+separator. Allows zero-or-more
+# whitespace around the separator (so "June 3-Metro" works) and stops at a
+# trailing parenthetical so the location doesn't absorb "(Either Pace HS …)".
 _WD_DATE_TAIL_LOC_RE = re.compile(
-    r'\b\d{1,2}(?:st|nd|rd|th)?\s*[-–—:]\s+([A-Z][A-Za-z\.\-\' ,]+?)\s*$'
+    r'\b\d{1,2}(?:st|nd|rd|th)?\s*[-–—:]\s*([A-Z][A-Za-z\.\-\' ,]+?)\s*(?:\(|$)'
 )
 # 'May 18th Columbia, SC 9am' — date followed by whitespace, then a Capitalized place,
 # bounded by a trailing time/number or end-of-line. No separator required.
@@ -586,11 +589,13 @@ def extract_workout_dates(full_text):
         time_str = tm.group(1).strip() if tm else None
         lm = _WD_LOC_RE.search(line)
         location = lm.group(1).strip() if lm else None
-        # Same-line "<date> - <Location>" pattern.
+        # Same-line "<date> - <Location>" pattern. Strips trailing comma but
+        # keeps a trailing period so abbreviations like "Metro Atl." render
+        # the way they were written.
         if not location:
             tail = _WD_DATE_TAIL_LOC_RE.search(line)
             if tail:
-                cand = tail.group(1).strip().rstrip('.,')
+                cand = tail.group(1).strip().rstrip(',')
                 if cand and _wd_is_standalone_location(cand):
                     location = cand
         # Same-line "<date> <Location> <time>" with no separator — "May 18th Columbia, SC 9am".
