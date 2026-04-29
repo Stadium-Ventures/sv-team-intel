@@ -1212,18 +1212,26 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #scorePopup .popup-color .pc-label {{ color: #444; font-weight: 600; }}
 #scorePopup .popup-color .pc-value {{ color: #1a1a1a; font-weight: 700; text-transform: capitalize; }}
-/* Source attribution chip after the color value: clickable Slack permalink
-   when the color came from a parsed Slack message; plain text "manual override"
-   or "manual entry" otherwise. */
-#scorePopup .popup-color .pc-source {{
-    margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 6px;
-    border-radius: 3px; background: rgba(0,0,0,0.06); color: #444;
-    white-space: nowrap; text-decoration: none;
+/* Source attribution: where the most-recent color came from. Sits in its own
+   row below the color line so a wide chip can't push the popup off-screen. */
+#scorePopup .popup-source {{
+    display: flex; align-items: center; gap: 6px;
+    margin: -4px 0 10px;
 }}
-#scorePopup .popup-color a.pc-source {{
-    background: #2a2a2a; color: #fff;
+#scorePopup .popup-source-label {{
+    font-size: 10px; color: #888; font-weight: 600; letter-spacing: 0.3px;
+    text-transform: uppercase;
 }}
-#scorePopup .popup-color a.pc-source:hover {{ background: #000; }}
+#scorePopup .popup-source-chip {{
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 4px; background: #f0f0f0; color: #444;
+    border: 1px solid #e0e0e0; white-space: nowrap;
+}}
+#scorePopup button.popup-source-chip {{
+    background: #2a2a2a; color: #fff; border-color: #2a2a2a;
+    cursor: pointer; transition: background 0.15s;
+}}
+#scorePopup button.popup-source-chip:hover {{ background: #000; }}
 #scorePopup .popup-team-info {{
     background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 5px;
     padding: 6px 9px; margin: 0 0 10px; font-size: 11px; line-height: 1.45;
@@ -1269,11 +1277,13 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 /* Color-only mode: hide everything that isn't the color picker (used when the popup
    is opened from the detail-view 'Most Recent' block). */
 #scorePopup.color-only .popup-color,
+#scorePopup.color-only .popup-source,
 #scorePopup.color-only .popup-team-info,
 #scorePopup.color-only .popup-points-label,
 #scorePopup.color-only .popup-points,
 #scorePopup.color-only .popup-scores,
 #scorePopup.color-only .popup-pdw,
+#scorePopup.color-only .popup-reassign-wrap,
 #scorePopup.color-only .popup-reset {{ display: none !important; }}
 #scorePopup .popup-colors button {{
     flex: 1; height: 28px; border: 2px solid rgba(0,0,0,0.15); border-radius: 5px;
@@ -2217,6 +2227,7 @@ function openScorePopupRefresh() {{
     const player = _popupPlayer, team = _popupTeam;
     if (!player || !team) return;
     _renderPopupColorBox(player, team);
+    _renderPopupSourceBox(player, team);
     updateColorPicker();
 }}
 
@@ -2350,39 +2361,61 @@ function _fmtShortDate(iso) {{
     return months[parseInt(m[2],10)-1] + ' ' + parseInt(m[3],10);
 }}
 
-// Render the popup's "Most recent" line including the source chip.
-// Encapsulates the duplication between openScorePopup and openScorePopupRefresh.
+// Render the popup's "Most recent" color line. Source attribution lives in
+// its own row below — see _renderPopupSourceBox.
 function _renderPopupColorBox(player, team) {{
     var cBox = document.getElementById('popupColor');
     if (!cBox) return;
     var color = getLatestColor(player, team);
     if (!color) {{ cBox.style.display = 'none'; cBox.innerHTML = ''; return; }}
     var bg = COLOR_BG[color] || '#ccc';
-    var src = getLatestColorSource(player, team);
-    var srcHtml = '';
-    if (src.kind === 'override') {{
-        srcHtml = '<span class="pc-source" title="Color set manually via the popup picker">manual override</span>';
-    }} else if (src.kind === 'manual_entry') {{
-        var lbl = 'manual entry' + (src.date ? ' \\u00b7 ' + _fmtShortDate(src.date) : '');
-        srcHtml = '<span class="pc-source" title="From a manually-added entry">' + lbl + '</span>';
-    }} else if (src.kind === 'slack') {{
-        var label = 'Slack' + (src.date ? ' \\u00b7 ' + _fmtShortDate(src.date) : '') +
-            (src.is_reply ? ' (reply)' : '') + ' \\u2197';
-        var ch = src.channel ? ('#' + src.channel + ' \\u00b7 ' + (src.date || '')) : (src.date || '');
-        if (src.slack_url) {{
-            srcHtml = '<a class="pc-source" href="' + src.slack_url + '" target="_blank" rel="noopener" ' +
-                'title="Open in Slack: ' + ch + '" onclick="event.stopPropagation();">' + label + '</a>';
-        }} else {{
-            srcHtml = '<span class="pc-source" title="' + ch + '">Slack \\u00b7 ' + _fmtShortDate(src.date) + '</span>';
-        }}
-    }}
     cBox.innerHTML =
         '<span class="pc-swatch" style="background:' + bg + ';"></span>' +
         '<span class="pc-label">Most recent:</span>' +
-        '<span class="pc-value">' + color + '</span>' +
-        srcHtml;
+        '<span class="pc-value">' + color + '</span>';
     cBox.style.background = bg;
     cBox.style.display = 'flex';
+}}
+
+// Synthetic key under which we register the source record so the existing
+// message modal (which keys off _modalIndex) can render it. Reused across
+// popup opens — last write wins.
+var _POPUP_SOURCE_MODAL_KEY = '__popup_source__';
+
+// Render the "Source: ..." row under the most-recent color line. Shows where
+// the active color word came from and, when there's an underlying record,
+// makes the chip click-through to the full message modal.
+function _renderPopupSourceBox(player, team) {{
+    var sBox = document.getElementById('popupSource');
+    if (!sBox) return;
+    var color = getLatestColor(player, team);
+    if (!color) {{ sBox.style.display = 'none'; sBox.innerHTML = ''; return; }}
+    var src = getLatestColorSource(player, team);
+    var label = '<span class="popup-source-label">Source</span>';
+    var chip = '';
+    if (src.kind === 'override') {{
+        chip = '<span class="popup-source-chip" title="Color set manually via the popup picker">Manual override</span>';
+    }} else if (src.kind === 'manual_entry') {{
+        var sourceRec = _autoLatestColorRecord(player, team);
+        if (sourceRec) _modalIndex[_POPUP_SOURCE_MODAL_KEY] = sourceRec;
+        var meLbl = 'Manual entry' + (src.date ? ' \\u00b7 ' + _fmtShortDate(src.date) : '');
+        chip = '<button class="popup-source-chip" title="Click to view the manual entry" ' +
+            'onclick="closeScorePopup(); openMessageModal(\\'' + _POPUP_SOURCE_MODAL_KEY + '\\');">' +
+            meLbl + '</button>';
+    }} else if (src.kind === 'slack') {{
+        var sourceRec = _autoLatestColorRecord(player, team);
+        if (sourceRec) _modalIndex[_POPUP_SOURCE_MODAL_KEY] = sourceRec;
+        var slLbl = 'Slack' + (src.date ? ' \\u00b7 ' + _fmtShortDate(src.date) : '') +
+            (src.is_reply ? ' (reply)' : '');
+        var ch = src.channel ? ('#' + src.channel + ' \\u00b7 ' + (src.date || '')) : (src.date || '');
+        chip = '<button class="popup-source-chip" title="Click to view the Slack message — ' + ch + '" ' +
+            'onclick="closeScorePopup(); openMessageModal(\\'' + _POPUP_SOURCE_MODAL_KEY + '\\');">' +
+            slLbl + '</button>';
+    }} else {{
+        sBox.style.display = 'none'; sBox.innerHTML = ''; return;
+    }}
+    sBox.innerHTML = label + chip;
+    sBox.style.display = 'flex';
 }}
 
 async function togglePDW() {{
@@ -2442,8 +2475,9 @@ function openScorePopup(player, team, date, event, colorOnly) {{
     document.getElementById('popupTitle').textContent = player + ' \\u2014 ' + team + (date ? ' (' + date + ')' : '');
     // Most-recent literal color for this (player, team) pair — same signal the
     // matrix cell shows. Skips records the user marked NA. Honors manual
-    // override and renders a Slack permalink when sourced from a Slack message.
+    // override; source row below shows where the color came from.
     _renderPopupColorBox(player, team);
+    _renderPopupSourceBox(player, team);
     // Build the color override picker — five swatches + a clear button when overridden.
     updateColorPicker();
     // Populate the team-reassign dropdown (skip current team) and reset selection.
@@ -4208,6 +4242,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 <div id="scorePopup">
     <div class="popup-title" id="popupTitle"></div>
     <div class="popup-color" id="popupColor" style="display:none;"></div>
+    <div class="popup-source" id="popupSource" style="display:none;"></div>
     <div class="popup-team-info" id="popupTeamInfo" style="display:none;"></div>
     <div class="popup-points-label">Set points</div>
     <div class="popup-points">
@@ -4222,11 +4257,13 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
-    <div class="popup-color-label">Reassign team</div>
-    <div class="popup-reassign">
-        <select id="popupReassignTeam" onchange="saveTeamReassign(this.value)">
-            <option value="">— pick team —</option>
-        </select>
+    <div class="popup-reassign-wrap">
+        <div class="popup-color-label">Reassign team</div>
+        <div class="popup-reassign">
+            <select id="popupReassignTeam" onchange="saveTeamReassign(this.value)">
+                <option value="">— pick team —</option>
+            </select>
+        </div>
     </div>
     <div class="popup-color-label">Set most-recent color</div>
     <div class="popup-colors">
