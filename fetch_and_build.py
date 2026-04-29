@@ -1285,6 +1285,10 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup.color-only .popup-pdw,
 #scorePopup.color-only .popup-reassign-wrap,
 #scorePopup.color-only .popup-reset {{ display: none !important; }}
+/* Default mode hides the color picker — the cell popup edits points/score/PDW;
+   color editing lives in the detail-view 'Most Recent' block (color-only mode). */
+#scorePopup .popup-set-color-wrap {{ display: none; }}
+#scorePopup.color-only .popup-set-color-wrap {{ display: block; }}
 #scorePopup .popup-colors button {{
     flex: 1; height: 28px; border: 2px solid rgba(0,0,0,0.15); border-radius: 5px;
     cursor: pointer; padding: 0; transition: transform 0.1s, border-color 0.1s;
@@ -2823,12 +2827,37 @@ function renderDetail() {{
             : '<span style="color:#aaa;font-weight:600;font-size:14px;letter-spacing:0.3px;">(set color)</span>';
         const _fcSwatchBorder = _fcLatest ? 'rgba(0,0,0,0.15)' : '#bbb';
         const _fcSwatchStyle = _fcLatest ? '' : 'border-style:dashed;';
+        // Source chip — same kinds the popup shows: Slack / Manual entry / Manual override.
+        // Sits beneath the swatch so a glance answers "where did this color come from?"
+        // Clicking the chip opens the in-app message modal (skipping the color-only
+        // popup); event.stopPropagation prevents the parent click from firing too.
+        let _fcSourceHtml = '';
+        if (_fcPlayer && _fcLatest) {{
+            const _src = getLatestColorSource(_fcPlayer, _filterTeam);
+            const _srcRec = _autoLatestColorRecord(_fcPlayer, _filterTeam);
+            const baseStyle = 'font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.2px;';
+            if (_src.kind === 'override') {{
+                _fcSourceHtml = '<span style="' + baseStyle + 'background:#f0f0f0;color:#444;border:1px solid #e0e0e0;" title="Color set manually via the popup picker">Manual override</span>';
+            }} else if ((_src.kind === 'manual_entry' || _src.kind === 'slack') && _srcRec) {{
+                _modalIndex[_POPUP_SOURCE_MODAL_KEY] = _srcRec;
+                const lbl = (_src.kind === 'slack' ? 'Slack' : 'Manual entry') +
+                    (_src.date ? ' \\u00b7 ' + _fmtShortDate(_src.date) : '') +
+                    (_src.kind === 'slack' && _src.is_reply ? ' (reply)' : '');
+                const tip = _src.kind === 'slack'
+                    ? 'Click to view the Slack message' + (_src.channel ? ' \\u2014 #' + _src.channel : '')
+                    : 'Click to view the manual entry';
+                _fcSourceHtml = '<button style="' + baseStyle + 'background:#2a2a2a;color:#fff;border:1px solid #2a2a2a;cursor:pointer;" ' +
+                    'onclick="event.stopPropagation(); openMessageModal(\\'' + _POPUP_SOURCE_MODAL_KEY + '\\');" ' +
+                    'title="' + tip + '">' + lbl + '</button>';
+            }}
+        }}
         const colorBlock = _fcPlayer
             ? '<div style="display:flex;flex-direction:column;gap:4px;' + _fcCursor + '"' + _fcOnclick + ' title="Click to set/override most-recent color">' +
                   '<span style="color:#888;font-weight:700;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;">Most Recent</span>' +
                   '<span style="display:flex;align-items:center;gap:8px;">' +
                       '<span style="display:inline-block;width:24px;height:24px;border-radius:5px;background:' + _fcSwatchBg + ';border:1px solid ' + _fcSwatchBorder + ';' + _fcSwatchStyle + '"></span>' +
                       _fcLabel +
+                      (_fcSourceHtml ? '<span style="margin-left:4px;">' + _fcSourceHtml + '</span>' : '') +
                   '</span>' +
               '</div>'
             : '';
@@ -4265,14 +4294,16 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
             </select>
         </div>
     </div>
-    <div class="popup-color-label">Set most-recent color</div>
-    <div class="popup-colors">
-        <button id="colorSwatch_green"       class="cs-green"   onclick="saveColor('green')"       title="Green"></button>
-        <button id="colorSwatch_light_green" class="cs-lgreen"  onclick="saveColor('light green')" title="Light Green"></button>
-        <button id="colorSwatch_yellow"      class="cs-yellow"  onclick="saveColor('yellow')"      title="Yellow"></button>
-        <button id="colorSwatch_orange"      class="cs-orange"  onclick="saveColor('orange')"      title="Orange"></button>
-        <button id="colorSwatch_red"         class="cs-red"     onclick="saveColor('red')"         title="Red"></button>
-        <button id="colorClearBtn" class="cs-clear" onclick="saveColor(null)" title="Clear manual override" style="display:none;">&times;</button>
+    <div class="popup-set-color-wrap">
+        <div class="popup-color-label">Set most-recent color</div>
+        <div class="popup-colors">
+            <button id="colorSwatch_green"       class="cs-green"   onclick="saveColor('green')"       title="Green"></button>
+            <button id="colorSwatch_light_green" class="cs-lgreen"  onclick="saveColor('light green')" title="Light Green"></button>
+            <button id="colorSwatch_yellow"      class="cs-yellow"  onclick="saveColor('yellow')"      title="Yellow"></button>
+            <button id="colorSwatch_orange"      class="cs-orange"  onclick="saveColor('orange')"      title="Orange"></button>
+            <button id="colorSwatch_red"         class="cs-red"     onclick="saveColor('red')"         title="Red"></button>
+            <button id="colorClearBtn" class="cs-clear" onclick="saveColor(null)" title="Clear manual override" style="display:none;">&times;</button>
+        </div>
     </div>
     <span class="popup-reset" onclick="saveScore(null)">Reset to original</span>
 </div>
