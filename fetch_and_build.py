@@ -428,6 +428,76 @@ def _wd_safe(year, month, day):
         return None
 
 
+# Trailing capitalized word/phrase, optionally led by comma/semicolon, anchored
+# at the end of the chunk. Used to pull the location prefix out of a per-date
+# segment like " CIN " or ", Daytona ".
+_WD_CHUNK_LOC_RE = re.compile(
+    r'(?:^|[,;])\s*([A-Z][A-Za-z\.\-]*(?:\s+[A-Z][A-Za-z\.\-]+){0,2})\s*$'
+)
+# Conversational openers that often precede a comma-separated workout list.
+_WD_CHUNK_LEAD_STRIP_RE = re.compile(
+    r'^\s*(?:workouts?|pdw|pre-?\s*draft\s+workouts?)\s*:\s*', re.I,
+)
+
+
+def _wd_chunk_leading_location(chunk_pre):
+    """Given the text immediately preceding a date in a multi-date line, return
+    the most likely location label (team abbrev or short title-cased place
+    name), or None when nothing usable is found.
+    """
+    if not chunk_pre or not chunk_pre.strip():
+        return None
+    cp = _WD_CHUNK_LEAD_STRIP_RE.sub('', chunk_pre)
+    m = _WD_CHUNK_LOC_RE.search(cp)
+    if not m:
+        return None
+    cand = m.group(1).strip().rstrip('.,')
+    if not cand:
+        return None
+    if re.match(_WD_MONTH_RE + r'\b', cand, re.I):
+        return None
+    cl = cand.lower()
+    if any(b in cl for b in _WD_LOC_BAD_SUBSTR):
+        return None
+    # Recognized team abbrev → uppercased so display is consistent.
+    if cand.upper() in TEAM_ABBR and len(cand) <= 4:
+        return cand.upper()
+    return cand
+
+
+def _wd_extract_dates_pos(line):
+    """Like _wd_extract_dates but returns (date_str, start, end) per match,
+    sorted by position. Used to chunk multi-date lines so each date can carry
+    its own location.
+    """
+    found = []
+    for m in re.finditer(
+        _WD_MONTH_RE + r'\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s*,?\s*(\d{4}))?',
+        line, re.I,
+    ):
+        month = _WD_MONTH_NUM.get(m.group(1).upper()[:3])
+        day = int(m.group(2))
+        year = int(m.group(3)) if m.group(3) else 2026
+        d = _wd_safe(year, month, day)
+        if d and _WD_MIN <= d <= _WD_MAX:
+            found.append((d.strftime('%Y-%m-%d'), m.start(), m.end()))
+    for m in re.finditer(r'\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b', line):
+        month = int(m.group(1))
+        day = int(m.group(2))
+        year = m.group(3)
+        if year:
+            year = int(year)
+            if year < 100:
+                year += 2000
+        else:
+            year = 2026
+        d = _wd_safe(year, month, day)
+        if d and _WD_MIN <= d <= _WD_MAX:
+            found.append((d.strftime('%Y-%m-%d'), m.start(), m.end()))
+    found.sort(key=lambda x: x[1])
+    return found
+
+
 def _wd_extract_dates(line):
     found = []
     for m in re.finditer(_WD_MONTH_RE + r'\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s*,?\s*(\d{4}))?', line, re.I):
@@ -570,17 +640,33 @@ def extract_workout_dates(full_text):
                         location = cand
                         current_location = location
                         break
+        # Per-date location for multi-date lines like
+        #   "Workouts: CIN June 4, ATL June 10, Daytona June 11"
+        # Each date carries the location/team prefix that immediately precedes
+        # it. Falls back to the line-wide `location` when no chunk prefix
+        # parses out (e.g. "April 15, 16, 17" — same workout, no per-date loc).
+        per_date_loc = {}
+        date_positions = _wd_extract_dates_pos(line)
+        if len(date_positions) >= 2:
+            prev_end = 0
+            for d_str, d_start, d_end in date_positions:
+                chunk_pre = line[prev_end:d_start]
+                loc = _wd_chunk_leading_location(chunk_pre)
+                if loc:
+                    per_date_loc[d_str] = loc
+                prev_end = d_end
         targets = sorted(teams_in_line) if (teams_in_line and not is_date_list) else [current_team]
         for team in targets:
             for d in dates:
+                eff_loc = per_date_loc.get(d) or location
                 ev = merged[team].get(d)
                 if ev is None:
-                    merged[team][d] = {'date': d, 'tentative': tentative, 'time': time_str, 'location': location}
+                    merged[team][d] = {'date': d, 'tentative': tentative, 'time': time_str, 'location': eff_loc}
                 else:
                     if tentative: ev['tentative'] = True
                     if time_str and not ev['time']: ev['time'] = time_str
-                    if location and (not ev['location'] or len(location) > len(ev['location'])):
-                        ev['location'] = location
+                    if eff_loc and (not ev['location'] or len(eff_loc) > len(ev['location'])):
+                        ev['location'] = eff_loc
     return {t: list(d.values()) for t, d in merged.items() if t}
 
 
