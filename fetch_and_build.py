@@ -104,6 +104,18 @@ def fetch_messages(token):
     client = WebClient(token=token)
     all_messages = []
 
+    # Workspace base URL (e.g. https://stadium-ventures.slack.com/) for building
+    # message permalinks. Falls back to None if auth_test fails — UI hides the
+    # "View in Slack" link in that case.
+    workspace_url = None
+    try:
+        info = client.auth_test()
+        u = (info.get('url') or '').rstrip('/')
+        if u:
+            workspace_url = u
+    except Exception as e:
+        print(f"WARN: auth_test failed, Slack permalinks will be unavailable: {e}")
+
     for name, cid in CHANNELS:
         try:
             client.conversations_join(channel=cid)
@@ -179,7 +191,7 @@ def fetch_messages(token):
             unique.append(m)
 
     print(f"Fetched {len(unique)} TeamIntel messages from {len(CHANNELS)} channels")
-    return unique
+    return unique, workspace_url
 
 
 # --- STEP 2: PARSE ---
@@ -790,6 +802,12 @@ def parse_messages(messages):
         text = msg['text']
         date = msg['date']
         channel = msg['channel']
+        # Slack source fields — propagated onto every record produced from this
+        # message so the popup can render a clickable permalink. parent_ts is
+        # only set for thread replies (used in ?thread_ts= query).
+        ts = msg.get('ts')
+        channel_id = msg.get('channel_id')
+        parent_ts = msg.get('parent_ts')
 
         if channel == 'winter-meetings-2026':
             header_match = re.search(r'[Tt]eam\s*[Ii]ntel\s*[-:]\s*(\w+)', text)
@@ -811,6 +829,7 @@ def parse_messages(messages):
                         'player': player, 'team': team, 'date': date,
                         'score': score, 'note': ls[:200],
                         'channel': channel, 'full_text': text[:3000],
+                        'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                     })
                     _attach_tier(records[-1], ls)
 
@@ -862,6 +881,7 @@ def parse_messages(messages):
                     'player': player, 'team': team, 'date': date,
                     'score': best_score, 'note': text.strip()[:200],
                     'channel': channel, 'full_text': text[:3000],
+                    'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                 })
                 _attach_tier(records[-1], best_tier_line or text)
 
@@ -890,6 +910,7 @@ def parse_messages(messages):
                                 'player': p, 'team': header_team, 'date': date,
                                 'score': score, 'note': ls[:200],
                                 'channel': channel, 'full_text': text[:3000],
+                                'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                             })
                             _attach_tier(records[-1], ls)
             elif players and all_teams:
@@ -905,6 +926,7 @@ def parse_messages(messages):
                                     'player': p, 'team': t, 'date': date,
                                     'score': score, 'note': ls[:200],
                                     'channel': channel, 'full_text': text[:3000],
+                                    'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                                 })
                                 _attach_tier(records[-1], ls)
                     elif lp and not lt and all_teams:
@@ -915,6 +937,7 @@ def parse_messages(messages):
                                     'player': p, 'team': t, 'date': date,
                                     'score': score, 'note': text.strip()[:200],
                                     'channel': channel, 'full_text': text[:3000],
+                                    'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                                 })
                                 _attach_tier(records[-1], ls)
 
@@ -974,7 +997,7 @@ def load_team_draft_info():
     return out
 
 
-def build_html(records, password="SVintel2026", games=None):
+def build_html(records, password="SVintel2026", games=None, slack_workspace_url=None):
     records_js = json.dumps(records)
     games_js = json.dumps(games or [])
     eastern = timezone(timedelta(hours=-4))
@@ -983,6 +1006,7 @@ def build_html(records, password="SVintel2026", games=None):
     # Serialize alias map (sets aren't JSON-safe — convert to lists)
     player_aliases_js = json.dumps({name: sorted(aliases) for name, aliases in PLAYER_ALIASES.items()})
     team_draft_js = json.dumps(load_team_draft_info())
+    slack_workspace_js = json.dumps(slack_workspace_url or '')
 
     html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -1188,6 +1212,18 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #scorePopup .popup-color .pc-label {{ color: #444; font-weight: 600; }}
 #scorePopup .popup-color .pc-value {{ color: #1a1a1a; font-weight: 700; text-transform: capitalize; }}
+/* Source attribution chip after the color value: clickable Slack permalink
+   when the color came from a parsed Slack message; plain text "manual override"
+   or "manual entry" otherwise. */
+#scorePopup .popup-color .pc-source {{
+    margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 6px;
+    border-radius: 3px; background: rgba(0,0,0,0.06); color: #444;
+    white-space: nowrap; text-decoration: none;
+}}
+#scorePopup .popup-color a.pc-source {{
+    background: #2a2a2a; color: #fff;
+}}
+#scorePopup .popup-color a.pc-source:hover {{ background: #000; }}
 #scorePopup .popup-team-info {{
     background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 5px;
     padding: 6px 9px; margin: 0 0 10px; font-size: 11px; line-height: 1.45;
@@ -1900,6 +1936,10 @@ const ALL_TEAMS = {json.dumps(ALL_TEAMS)};
 const ALL_2026_PLAYERS = {all_2026_js};
 const PLAYER_ALIASES = {player_aliases_js};
 const TEAM_DRAFT = {team_draft_js};
+// Slack workspace base URL (e.g. https://stadium-ventures.slack.com). Empty
+// string when auth_test failed at fetch time — UI hides the "View in Slack"
+// link in that case.
+const SLACK_WORKSPACE_URL = {slack_workspace_js};
 
 // --- Override system (Vercel KV) — per-record overrides ---
 var scoreOverrides = {{}};
@@ -2176,19 +2216,7 @@ function openScorePopupRefresh() {{
     // Re-render the most-recent label inside the still-open popup after a color change.
     const player = _popupPlayer, team = _popupTeam;
     if (!player || !team) return;
-    const _latest = getLatestColor(player, team);
-    const _ovd = isColorOverridden(player, team);
-    const cBox = document.getElementById('popupColor');
-    if (_latest) {{
-        const cBg = COLOR_BG[_latest] || '#ccc';
-        cBox.innerHTML = '<span class="pc-swatch" style="background:' + cBg + ';"></span>' +
-            '<span class="pc-label">Most recent' + (_ovd ? ' (manual)' : '') + ':</span>' +
-            '<span class="pc-value">' + _latest + '</span>';
-        cBox.style.background = cBg;
-        cBox.style.display = 'flex';
-    }} else {{
-        cBox.style.display = 'none';
-    }}
+    _renderPopupColorBox(player, team);
     updateColorPicker();
 }}
 
@@ -2253,6 +2281,19 @@ function _autoLatestColor(player, team) {{
     }});
     return latest;
 }}
+// Source record (not just the color word) of the most-recent color for a
+// (player, team) pair. Returns the actual record object so the UI can build
+// a Slack permalink or label it as manual. Returns null when no underlying
+// record carries a color — e.g. when only a manual color override exists.
+function _autoLatestColorRecord(player, team) {{
+    var latest = null, latestDate = '';
+    RECORDS.forEach(function(r) {{
+        if (r.player !== player || r.team !== team || !r.color) return;
+        if (isExcluded(r)) return;
+        if ((r.date || '') > latestDate) {{ latestDate = r.date || ''; latest = r; }}
+    }});
+    return latest;
+}}
 function getLatestColor(player, team) {{
     var ck = 'c|' + player + '|' + team;
     if (scoreOverrides.hasOwnProperty(ck)) {{
@@ -2263,6 +2304,85 @@ function getLatestColor(player, team) {{
 }}
 function isColorOverridden(player, team) {{
     return scoreOverrides.hasOwnProperty('c|' + player + '|' + team);
+}}
+
+// Build a Slack permalink for a record. Format:
+//   <workspace>/archives/<channel_id>/p<ts_no_dot>[?thread_ts=<parent_ts>&cid=<channel_id>]
+// Returns null when we lack the workspace URL or the record's source fields.
+function slackPermalink(r) {{
+    if (!SLACK_WORKSPACE_URL || !r || !r.ts || !r.channel_id) return null;
+    var ts = String(r.ts).replace('.', '');
+    var url = SLACK_WORKSPACE_URL + '/archives/' + r.channel_id + '/p' + ts;
+    if (r.parent_ts) {{
+        url += '?thread_ts=' + encodeURIComponent(r.parent_ts) + '&cid=' + r.channel_id;
+    }}
+    return url;
+}}
+
+// Source descriptor for the most-recent color on a (player, team) pair.
+// Shape: {{ kind: 'override' | 'slack' | 'manual_entry' | 'none',
+//          slack_url?, channel?, date?, is_reply? }}
+function getLatestColorSource(player, team) {{
+    if (isColorOverridden(player, team)) {{
+        return {{ kind: 'override' }};
+    }}
+    var rec = _autoLatestColorRecord(player, team);
+    if (!rec) return {{ kind: 'none' }};
+    if (rec.is_manual) {{
+        return {{ kind: 'manual_entry', date: rec.date || '' }};
+    }}
+    return {{
+        kind: 'slack',
+        slack_url: slackPermalink(rec),
+        channel: rec.channel || '',
+        date: rec.date || '',
+        is_reply: !!rec.parent_ts,
+    }};
+}}
+
+// Compact "Apr 22" rendering for the source chip — saves horizontal space
+// over the full ISO date.
+function _fmtShortDate(iso) {{
+    if (!iso) return '';
+    var m = /^(\\d{{4}})-(\\d{{2}})-(\\d{{2}})$/.exec(iso);
+    if (!m) return iso;
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(m[2],10)-1] + ' ' + parseInt(m[3],10);
+}}
+
+// Render the popup's "Most recent" line including the source chip.
+// Encapsulates the duplication between openScorePopup and openScorePopupRefresh.
+function _renderPopupColorBox(player, team) {{
+    var cBox = document.getElementById('popupColor');
+    if (!cBox) return;
+    var color = getLatestColor(player, team);
+    if (!color) {{ cBox.style.display = 'none'; cBox.innerHTML = ''; return; }}
+    var bg = COLOR_BG[color] || '#ccc';
+    var src = getLatestColorSource(player, team);
+    var srcHtml = '';
+    if (src.kind === 'override') {{
+        srcHtml = '<span class="pc-source" title="Color set manually via the popup picker">manual override</span>';
+    }} else if (src.kind === 'manual_entry') {{
+        var lbl = 'manual entry' + (src.date ? ' \\u00b7 ' + _fmtShortDate(src.date) : '');
+        srcHtml = '<span class="pc-source" title="From a manually-added entry">' + lbl + '</span>';
+    }} else if (src.kind === 'slack') {{
+        var label = 'Slack' + (src.date ? ' \\u00b7 ' + _fmtShortDate(src.date) : '') +
+            (src.is_reply ? ' (reply)' : '') + ' \\u2197';
+        var ch = src.channel ? ('#' + src.channel + ' \\u00b7 ' + (src.date || '')) : (src.date || '');
+        if (src.slack_url) {{
+            srcHtml = '<a class="pc-source" href="' + src.slack_url + '" target="_blank" rel="noopener" ' +
+                'title="Open in Slack: ' + ch + '" onclick="event.stopPropagation();">' + label + '</a>';
+        }} else {{
+            srcHtml = '<span class="pc-source" title="' + ch + '">Slack \\u00b7 ' + _fmtShortDate(src.date) + '</span>';
+        }}
+    }}
+    cBox.innerHTML =
+        '<span class="pc-swatch" style="background:' + bg + ';"></span>' +
+        '<span class="pc-label">Most recent:</span>' +
+        '<span class="pc-value">' + color + '</span>' +
+        srcHtml;
+    cBox.style.background = bg;
+    cBox.style.display = 'flex';
 }}
 
 async function togglePDW() {{
@@ -2321,20 +2441,9 @@ function openScorePopup(player, team, date, event, colorOnly) {{
     else popupRoot.classList.remove('color-only');
     document.getElementById('popupTitle').textContent = player + ' \\u2014 ' + team + (date ? ' (' + date + ')' : '');
     // Most-recent literal color for this (player, team) pair — same signal the
-    // matrix cell shows. Skips records the user marked NA. Honors manual override.
-    const _latestColor = getLatestColor(player, team);
-    const _isOverridden = isColorOverridden(player, team);
-    const cBox = document.getElementById('popupColor');
-    if (_latestColor) {{
-        const cBg = COLOR_BG[_latestColor] || '#ccc';
-        cBox.innerHTML = '<span class="pc-swatch" style="background:' + cBg + ';"></span>' +
-            '<span class="pc-label">Most recent' + (_isOverridden ? ' (manual)' : '') + ':</span>' +
-            '<span class="pc-value">' + _latestColor + '</span>';
-        cBox.style.background = cBg;
-        cBox.style.display = 'flex';
-    }} else {{
-        cBox.style.display = 'none';
-    }}
+    // matrix cell shows. Skips records the user marked NA. Honors manual
+    // override and renders a Slack permalink when sourced from a Slack message.
+    _renderPopupColorBox(player, team);
     // Build the color override picker — five swatches + a clear button when overridden.
     updateColorPicker();
     // Populate the team-reassign dropdown (skip current team) and reset selection.
@@ -4535,7 +4644,7 @@ if __name__ == '__main__':
 
     password = os.environ.get('DASHBOARD_PASSWORD', 'SVintel2026')
 
-    messages = fetch_messages(token)
+    messages, slack_workspace_url = fetch_messages(token)
     records = parse_messages(messages)
 
     # Merge manual records (matrix "+ Add Entry") before building HTML and JSON.
@@ -4549,7 +4658,7 @@ if __name__ == '__main__':
     # Pull game schedule from the shared Google Sheet. Read-only — filtered to roster.
     games = fetch_game_schedule()
 
-    html = build_html(records, password, games=games)
+    html = build_html(records, password, games=games, slack_workspace_url=slack_workspace_url)
 
     out_dir = os.environ.get('OUTPUT_DIR', os.path.join(os.path.dirname(__file__), 'public'))
     out_path = os.path.join(out_dir, 'index.html')
