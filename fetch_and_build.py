@@ -1683,15 +1683,23 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 
 /* --- Event modal --- */
-#evOverlay, #mrOverlay, #gameDetailsOverlay {{
+#evOverlay, #mrOverlay, #gameDetailsOverlay, #teamInfoOverlay {{
     position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
     display: none; align-items: center; justify-content: center;
 }}
-#evOverlay.open, #mrOverlay.open, #gameDetailsOverlay.open {{ display: flex; }}
-#evModal, #mrModal, #gameDetailsModal {{
+#evOverlay.open, #mrOverlay.open, #gameDetailsOverlay.open, #teamInfoOverlay.open {{ display: flex; }}
+#evModal, #mrModal, #gameDetailsModal, #teamInfoModal {{
     background: white; border-radius: 8px; padding: 20px 22px; width: 420px; max-width: 92vw;
     max-height: 90vh; overflow-y: auto; box-shadow: 0 6px 32px rgba(0,0,0,0.3);
 }}
+#teamInfoBody .gd-row .ti-pool {{ color: #1a5e1a; font-weight: 700; }}
+#teamInfoBody .gd-row .ti-picks {{ color: #c0392b; font-weight: 600; }}
+.ti-actions {{ display: flex; gap: 8px; margin-top: 14px; }}
+.ti-actions button {{ flex: 1; padding: 9px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; color: white; }}
+.ti-actions .ti-edit {{ background: #ff2a22; }}
+.ti-actions .ti-edit:hover {{ background: #d4221a; }}
+.ti-actions .ti-cancel {{ background: #000; }}
+.ti-actions .ti-cancel:hover {{ background: #222; }}
 .gd-title {{ font-size: 16px; font-weight: 700; color: #12284b; margin-bottom: 4px; }}
 .gd-sub {{ font-size: 11px; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }}
 .gd-row {{ display: flex; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; color: #333; }}
@@ -3858,7 +3866,41 @@ function openEventChip(cid) {{
     // Games are read-only (source is the shared Google Sheet). Show a minimal
     // details popup instead of the editable event modal.
     if (ev.type === 'game') {{ openGameDetails(ev); return; }}
+    // Workouts with a team: surface 2026 bonus pool + first-3-round picks first;
+    // an "Edit Workout" button passes through to the editable event modal.
+    if (ev.type === 'workout' && ev.team && TEAM_DRAFT[ev.team]) {{
+        openTeamInfoPopover(ev);
+        return;
+    }}
     openEventModal(ev.id || null, ev.date, ev);
+}}
+
+var _teamInfoCtx = null;
+
+function openTeamInfoPopover(ev) {{
+    _teamInfoCtx = ev;
+    const tInfo = TEAM_DRAFT[ev.team] || {{}};
+    const poolDisplay = tInfo.pool ? fmtPool(tInfo.pool) : '—';
+    const picks = (tInfo.picks && tInfo.picks.length) ? tInfo.picks.join(', ') : '—';
+    const subBits = [];
+    if (ev.player) subBits.push(ev.player);
+    if (ev.date) subBits.push(ev.date);
+    document.getElementById('teamInfoTitle').textContent = ev.team || 'Team Info';
+    document.getElementById('teamInfoSub').textContent = subBits.join(' · ');
+    document.getElementById('teamInfoBody').innerHTML =
+        '<div class="gd-row"><span class="gd-label">Pool</span><span class="ti-pool">' + poolDisplay + '</span></div>'
+      + '<div class="gd-row"><span class="gd-label">Picks (Rds 1-3)</span><span class="ti-picks">' + picks + '</span></div>';
+    document.getElementById('teamInfoOverlay').classList.add('open');
+}}
+
+function closeTeamInfoPopover() {{
+    document.getElementById('teamInfoOverlay').classList.remove('open');
+}}
+
+function editFromTeamInfo() {{
+    const ev = _teamInfoCtx;
+    closeTeamInfoPopover();
+    if (ev) openEventModal(ev.id || null, ev.date, ev);
 }}
 
 function openGameDetails(ev) {{
@@ -4467,6 +4509,18 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <div class="gd-sub">Read-only &middot; sourced from schedule sheet</div>
         <div id="gameDetailsBody"></div>
         <button class="gd-close" onclick="closeGameDetails()">Close</button>
+    </div>
+</div>
+<!-- Team Info popover (calendar workout chip first-click destination) -->
+<div id="teamInfoOverlay" onclick="if(event.target===this) closeTeamInfoPopover()">
+    <div id="teamInfoModal">
+        <div class="gd-title" id="teamInfoTitle">Team Info</div>
+        <div class="gd-sub" id="teamInfoSub"></div>
+        <div id="teamInfoBody"></div>
+        <div class="ti-actions">
+            <button class="ti-edit" onclick="editFromTeamInfo()">Edit Workout</button>
+            <button class="ti-cancel" onclick="closeTeamInfoPopover()">Close</button>
+        </div>
     </div>
 </div>
 <div id="toast"></div>
