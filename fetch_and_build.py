@@ -655,16 +655,23 @@ def extract_workout_dates(full_text):
         # Each date carries the location/team prefix that immediately precedes
         # it. Falls back to the line-wide `location` when no chunk prefix
         # parses out (e.g. "April 15, 16, 17" — same workout, no per-date loc).
+        # Also scans the chunk AFTER each date for an "in/at/@ X" phrase
+        # ("June 8 in Fayetteville NC") — that wins over the leading prefix
+        # because it's more explicit about which date a location belongs to.
         per_date_loc = {}
         date_positions = _wd_extract_dates_pos(line)
         if len(date_positions) >= 2:
-            prev_end = 0
-            for d_str, d_start, d_end in date_positions:
-                chunk_pre = line[prev_end:d_start]
-                loc = _wd_chunk_leading_location(chunk_pre)
+            for i, (d_str, d_start, d_end) in enumerate(date_positions):
+                prev_end = date_positions[i-1][2] if i > 0 else 0
+                next_start = date_positions[i+1][1] if i+1 < len(date_positions) else len(line)
+                loc = _wd_chunk_leading_location(line[prev_end:d_start])
+                m_post = _WD_LOC_RE.search(line[d_end:next_start])
+                if m_post:
+                    cand = m_post.group(1).strip().rstrip('.,')
+                    if cand:
+                        loc = cand
                 if loc:
                     per_date_loc[d_str] = loc
-                prev_end = d_end
         targets = sorted(teams_in_line) if (teams_in_line and not is_date_list) else [current_team]
         for team in targets:
             for d in dates:
