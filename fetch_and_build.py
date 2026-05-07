@@ -1714,12 +1714,22 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #teamInfoBody .gd-row .ti-pool {{ color: #1a5e1a; font-weight: 700; }}
 #teamInfoBody .gd-row .ti-picks {{ color: #c0392b; font-weight: 600; }}
+#teamInfoModal {{ position: relative; }}
+.ti-modal-x {{
+    position: absolute; top: 8px; right: 10px;
+    width: 26px; height: 26px; padding: 0; line-height: 1;
+    background: transparent; border: none; cursor: pointer;
+    color: #888; font-size: 22px; font-weight: 400;
+    border-radius: 4px;
+}}
+.ti-modal-x:hover {{ background: #f0f0f0; color: #333; }}
 .ti-actions {{ display: flex; gap: 8px; margin-top: 14px; }}
 .ti-actions button {{ flex: 1; padding: 9px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; color: white; }}
 .ti-actions .ti-edit {{ background: #ff2a22; }}
 .ti-actions .ti-edit:hover {{ background: #d4221a; }}
-.ti-actions .ti-cancel {{ background: #000; }}
-.ti-actions .ti-cancel:hover {{ background: #222; }}
+.ti-actions .ti-slack {{ background: #000; }}
+.ti-actions .ti-slack:hover {{ background: #222; }}
+.ti-actions .ti-slack:disabled {{ background: #ccc; cursor: not-allowed; }}
 .gd-title {{ font-size: 16px; font-weight: 700; color: #12284b; margin-bottom: 4px; }}
 .gd-sub {{ font-size: 11px; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }}
 .gd-row {{ display: flex; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; color: #333; }}
@@ -3910,6 +3920,12 @@ function openTeamInfoPopover(ev) {{
     document.getElementById('teamInfoBody').innerHTML =
         '<div class="gd-row"><span class="gd-label">Pool</span><span class="ti-pool">' + poolDisplay + '</span></div>'
       + '<div class="gd-row"><span class="gd-label">Picks (Rds 1-3)</span><span class="ti-picks">' + picks + '</span></div>';
+    // Slack button is only meaningful when an underlying record exists for this
+    // (player, team). Manual calendar events without a backing Slack post show
+    // the button disabled rather than vanishing it (keeps layout stable).
+    const slackBtn = document.getElementById('teamInfoSlackBtn');
+    const pool = _calRecordsByPlayerTeam[(ev.player || '') + '|' + (ev.team || '')] || [];
+    slackBtn.disabled = pool.length === 0;
     document.getElementById('teamInfoOverlay').classList.add('open');
 }}
 
@@ -3921,6 +3937,23 @@ function editFromTeamInfo() {{
     const ev = _teamInfoCtx;
     closeTeamInfoPopover();
     if (ev) openEventModal(ev.id || null, ev.date, ev);
+}}
+
+function openSlackFromTeamInfo() {{
+    const ev = _teamInfoCtx;
+    if (!ev) return;
+    const pool = _calRecordsByPlayerTeam[(ev.player || '') + '|' + (ev.team || '')] || [];
+    if (!pool.length) {{ showToast('No Slack message found for this player/team', false); return; }}
+    let picked = pool.find(r => (r.workout_dates || []).some(wd => wd.date === ev.date));
+    if (!picked) picked = pool.slice().sort((a,b) => (b.date || '').localeCompare(a.date || ''))[0];
+    const rowKey = picked.player + '|' + picked.team + '|' + picked.date + '|cal';
+    _modalIndex[rowKey] = picked;
+    // Coming from team info, not the event modal — clear any stale "Back to Event"
+    // context so the message modal doesn't offer a misleading return target.
+    _mmReturnToEvent = null;
+    document.getElementById('mmBackBtn').style.display = 'none';
+    closeTeamInfoPopover();
+    openMessageModal(rowKey);
 }}
 
 function openGameDetails(ev) {{
@@ -4534,12 +4567,13 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 <!-- Team Info popover (calendar workout chip first-click destination) -->
 <div id="teamInfoOverlay" onclick="if(event.target===this) closeTeamInfoPopover()">
     <div id="teamInfoModal">
+        <button class="ti-modal-x" onclick="closeTeamInfoPopover()" aria-label="Close">&times;</button>
         <div class="gd-title" id="teamInfoTitle">Team Info</div>
         <div class="gd-sub" id="teamInfoSub"></div>
         <div id="teamInfoBody"></div>
         <div class="ti-actions">
             <button class="ti-edit" onclick="editFromTeamInfo()">Edit Workout</button>
-            <button class="ti-cancel" onclick="closeTeamInfoPopover()">Close</button>
+            <button class="ti-slack" id="teamInfoSlackBtn" onclick="openSlackFromTeamInfo()">See Slack Message</button>
         </div>
     </div>
 </div>
