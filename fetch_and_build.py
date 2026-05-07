@@ -672,6 +672,26 @@ def extract_workout_dates(full_text):
                     if time_str and not ev['time']: ev['time'] = time_str
                     if eff_loc and (not ev['location'] or len(eff_loc) > len(ev['location'])):
                         ev['location'] = eff_loc
+    # Orphan-date reassignment: dates parsed before any team header land under
+    # `None`. When the whole message references exactly one team, attribute
+    # them to it. Handles the "date first, team below" Slack shape, e.g.
+    # "June 12 workout invite\n\nChuck Ricci - Rays". Multi-team messages keep
+    # their line-by-line resolution untouched.
+    if None in merged and merged[None]:
+        teams_in_text = find_teams_in_line(full_text)
+        if len(teams_in_text) == 1:
+            sole_team = next(iter(teams_in_text))
+            tgt = merged[sole_team]
+            for d_str, ev in merged[None].items():
+                existing = tgt.get(d_str)
+                if existing is None:
+                    tgt[d_str] = ev
+                else:
+                    if ev.get('tentative'): existing['tentative'] = True
+                    if ev.get('time') and not existing.get('time'): existing['time'] = ev['time']
+                    if ev.get('location') and (not existing.get('location') or len(ev['location']) > len(existing['location'])):
+                        existing['location'] = ev['location']
+        del merged[None]
     return {t: list(d.values()) for t, d in merged.items() if t}
 
 
