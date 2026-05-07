@@ -271,6 +271,11 @@ _WORKOUT_TARGETED_PATTERNS = [
     r'\bworkout\s+important\b',                                              # "Condon — workout important"
     r'\bworkouts?\s+for\s+\w',                                               # "workouts for Bo and Taj"
     r'\breach(?:ed|ing)?\s+out\s+(?:on|about|for)\s+.*?workouts?',           # "reached out on workouts"
+    # "workout in Orlando (TNXL), want Condon and Woodward there" — invite phrasing
+    # where the players come AFTER the workout reference. Matches either order
+    # so "want Condon there for the workout" also fires.
+    r'\bworkout[\s\S]{0,80}?\bwant\w*\s+\w+(?:\s+(?:and|,)\s+\w+)?\s+there\b',
+    r'\bwant\w*\s+\w+(?:\s+(?:and|,)\s+\w+)?\s+there\b[\s\S]{0,80}?\bworkout',
     # Team-name + workout proximity: only flag players co-mentioned in the same line.
     # Keeps single-player channels covered (all targeted fire there), but group-intel
     # messages won't blanket-flag everyone just because "BAL ... Workout" appears.
