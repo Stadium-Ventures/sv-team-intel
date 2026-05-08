@@ -223,7 +223,7 @@ def find_players_in_text(text):
             found.add(full)
     if re.search(r'\bcam\b', tl) and 'Cameron Flukey' not in found:
         found.add('Cameron Flukey')
-    if re.search(r'\btrev\b', tl) and 'Trevor Condon' not in found:
+    if re.search(r'\b(?:trev|trevor)\b', tl) and 'Trevor Condon' not in found:
         found.add('Trevor Condon')
     if re.search(r'\bbo\b', tl) and 'Bo Lowrance' not in found:
         found.add('Bo Lowrance')
@@ -231,6 +231,20 @@ def find_players_in_text(text):
         found.add('Taj Marchand')
     if re.search(r'\bphinn\b', tl) and 'Phinn Beaird' not in found:
         found.add('Phinn Beaird')
+    if re.search(r'\bmyles\b', tl) and 'Myles Bailey' not in found:
+        found.add('Myles Bailey')
+    if re.search(r'\bkyle\b', tl) and 'Kyle Jones' not in found:
+        found.add('Kyle Jones')
+    if re.search(r'\baiden\b', tl) and 'Aiden Robbins' not in found:
+        found.add('Aiden Robbins')
+    if re.search(r'\bmason\b', tl) and 'Mason Eckelman' not in found:
+        found.add('Mason Eckelman')
+    if re.search(r'\bduke\b', tl) and 'Duke McCarron' not in found:
+        found.add('Duke McCarron')
+    if re.search(r'\bbrady\b', tl) and 'Brady Neal' not in found:
+        found.add('Brady Neal')
+    if re.search(r'\blee\b', tl) and 'Lee Ellis' not in found:
+        found.add('Lee Ellis')
     return found
 
 # Single-player Slack channels — every message in these is already scoped to one player,
