@@ -3730,20 +3730,18 @@ function _fmtPdwDateLabel(isoList) {{
 
 // Build PDW-only rows for a single player, scoped to the active month range.
 // One row per team — date lists from multiple Slack messages are merged.
+// Walks _getMergedEvents() (not RECORDS directly) so manual location/date
+// edits made in the calendar UI are reflected in the PDF summary.
 function _gatherPdwRowsForPlayer(player, monthKeySet) {{
     const byTeam = {{}};
-    RECORDS.forEach(r => {{
-        if (r.player !== player) return;
-        const ov = (typeof scoreOverrides !== 'undefined') ? scoreOverrides['w|' + r.player + '|' + r.team] : undefined;
-        const isPDW = (ov === false) ? false : (ov === true ? true : !!r.workout);
-        if (!isPDW) return;
-        if (!r.workout_dates || !r.workout_dates.length) return;
-        if (!byTeam[r.team]) byTeam[r.team] = {{ dates: [], locations: [] }};
-        r.workout_dates.forEach(wd => {{
-            if (!wd.date || !monthKeySet.has(wd.date.slice(0,7))) return;
-            byTeam[r.team].dates.push(wd.date);
-            if (wd.location) byTeam[r.team].locations.push(wd.location);
-        }});
+    _getMergedEvents().forEach(ev => {{
+        if (ev.player !== player) return;
+        if (ev.type !== 'workout') return;
+        if (!ev.team) return;
+        if (!ev.date || !monthKeySet.has(ev.date.slice(0,7))) return;
+        if (!byTeam[ev.team]) byTeam[ev.team] = {{ dates: [], locations: [] }};
+        byTeam[ev.team].dates.push(ev.date);
+        if (ev.location) byTeam[ev.team].locations.push(ev.location);
     }});
     const rows = [];
     Object.keys(byTeam).forEach(team => {{
