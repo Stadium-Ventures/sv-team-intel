@@ -1625,6 +1625,23 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 .cal-nav button:hover {{ background: #222222; }}
 .cal-month-label {{ font-size: 16px; font-weight: 700; min-width: 150px; text-align: center; color: #000000; }}
+.cal-month-btn {{
+    font-family: inherit; background: transparent; border: 1px solid transparent;
+    border-radius: 6px; padding: 4px 10px; cursor: pointer;
+}}
+.cal-month-btn:hover {{ background: #fff5f5; border-color: #f5c4c1; }}
+.cal-range-panel {{ min-width: 240px; padding: 8px 0 4px; }}
+.cal-range-row {{ display: flex; align-items: center; gap: 8px; padding: 4px 12px; font-size: 12px; color: #444; }}
+.cal-range-row select {{ flex: 1; padding: 4px 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }}
+.cal-range-actions {{
+    display: flex; gap: 6px; justify-content: flex-end;
+    padding: 8px 12px; border-top: 1px solid #eee; margin-top: 4px;
+}}
+.cal-range-actions button {{
+    padding: 4px 12px; font-size: 12px; font-weight: 600; border-radius: 4px; cursor: pointer; border: 1px solid;
+}}
+.cal-range-actions .cal-range-clear {{ background: white; color: #555; border-color: #ccc; }}
+.cal-range-actions .cal-range-apply {{ background: #ff2a22; color: white; border-color: #ff2a22; }}
 .cal-addbtn {{
     padding: 6px 14px; font-size: 13px; font-weight: 600;
     background: #ff2a22; color: white; border: none; border-radius: 6px; cursor: pointer;
@@ -1669,7 +1686,15 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 .cal-multi-item:hover {{ background: #fff5f5; }}
 .cal-multi-item input[type="checkbox"] {{ margin: 0; cursor: pointer; accent-color: #000000; }}
 .cal-multi-empty {{ padding: 10px 12px; font-size: 12px; color: #888; font-style: italic; }}
-.cal-grid {{
+.cal-grid {{ display: flex; flex-direction: column; gap: 16px; }}
+.cal-month-block {{ display: flex; flex-direction: column; }}
+.cal-month-hdr {{
+    font-size: 13px; font-weight: 800; color: #000; padding: 4px 0 6px;
+    border-bottom: 2px solid #000; margin-bottom: 6px; letter-spacing: 0.4px;
+    display: none;
+}}
+.cal-grid.multi .cal-month-hdr {{ display: block; }}
+.cal-month-grid {{
     display: grid; grid-template-columns: repeat(7, 1fr);
     border: 1px solid #d6d6d6; border-radius: 6px; overflow: hidden; background: #eee; gap: 1px;
 }}
@@ -1977,7 +2002,20 @@ function checkPw() {{
     <div class="cal-toolbar">
         <div class="cal-nav">
             <button onclick="calShiftMonth(-1)" title="Previous month">&#8592;</button>
-            <div class="cal-month-label" id="calMonthLabel"></div>
+            <div class="cal-multi cal-range" id="calRangeDropdown">
+                <button type="button" class="cal-month-label cal-month-btn" id="calMonthLabel"
+                        title="Click to pick a range of months"
+                        onclick="event.stopPropagation(); toggleCalRangePanel()"></button>
+                <div class="cal-multi-panel cal-range-panel" id="calRangePanel" onclick="event.stopPropagation()">
+                    <div style="padding:6px 12px 4px;font-size:11px;color:#666;font-weight:700;letter-spacing:0.3px;">SHOW A RANGE OF MONTHS</div>
+                    <div class="cal-range-row"><label style="min-width:32px;">From</label><select id="calRangeFrom"></select></div>
+                    <div class="cal-range-row"><label style="min-width:32px;">To</label><select id="calRangeTo"></select></div>
+                    <div class="cal-range-actions">
+                        <button type="button" class="cal-range-clear" onclick="calClearMonthRange()">Single month</button>
+                        <button type="button" class="cal-range-apply" onclick="calApplyMonthRange()">Apply</button>
+                    </div>
+                </div>
+            </div>
             <button onclick="calShiftMonth(1)" title="Next month">&#8594;</button>
             <button onclick="calJumpTo('today')" title="Jump to today" style="margin-left:6px;">Today</button>
         </div>
@@ -1996,14 +2034,18 @@ function checkPw() {{
                 <div id="calPlayerChips"></div>
             </div>
         </div>
-        <div class="cal-filter">
-            <label for="calTypeFilter">Type:</label>
-            <select id="calTypeFilter" onchange="renderCalendar()">
-                <option value="">All</option>
-                <option value="workout">Workouts</option>
-                <option value="game">Games</option>
-                <option value="other">Other</option>
-            </select>
+        <div class="cal-filter cal-multi" id="calTypeDropdown">
+            <label>Type:</label>
+            <button type="button" class="cal-multi-btn" onclick="event.stopPropagation(); toggleCalTypePanel()">
+                <span id="calTypeBtnLabel">All</span><span class="caret">&#9662;</span>
+            </button>
+            <div class="cal-multi-panel" id="calTypePanel" onclick="event.stopPropagation()">
+                <div class="cal-multi-header">
+                    <span class="cal-multi-ctl" onclick="calSelectAllTypes()">All</span>
+                    <span class="cal-multi-ctl" onclick="calSelectNoTypes()">None</span>
+                </div>
+                <div id="calTypeChips"></div>
+            </div>
         </div>
     </div>
     <div class="cal-grid" id="calGrid"></div>
@@ -3281,8 +3323,15 @@ var _calInitialized = false;
 var _calSelectedPlayers = null;   // Set<player> currently toggled on. null = uninitialized.
 var _calAllPlayersCache = null;   // sorted list of every player that could appear
 var _calSelectedPlayersEverSeen = new Set();  // tracks which players we've shown a chip for
+var _calSelectedTypes = null;     // Set<'workout'|'game'|'other'> — null = uninitialized
+var _calMonthEnd = null;          // Date|null. null = single-month mode (uses _calMonth only).
+                                  // Set = multi-month mode showing _calMonth..._calMonthEnd inclusive.
 
 const _CAL_PLAYERS_LS_KEY = 'ti_cal_selected_players_v1';
+const _CAL_TYPES_LS_KEY = 'ti_cal_selected_types_v1';
+const _CAL_TYPES_ALL = ['workout','game','other'];
+const _CAL_TYPE_LABELS = {{ workout: 'Workouts', game: 'Games', other: 'Other' }};
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function _calComputeAllPlayers() {{
     // Players who have a PDW invite — honoring the matrix override:
@@ -3386,10 +3435,182 @@ function _calClosePlayerPanel() {{
 }}
 
 document.addEventListener('click', function(e) {{
-    const dd = document.getElementById('calPlayerDropdown');
-    if (!dd || !dd.classList.contains('open')) return;
-    if (!dd.contains(e.target)) _calClosePlayerPanel();
+    ['calPlayerDropdown','calTypeDropdown','calRangeDropdown'].forEach(function(id) {{
+        const dd = document.getElementById(id);
+        if (!dd || !dd.classList.contains('open')) return;
+        if (!dd.contains(e.target)) dd.classList.remove('open');
+    }});
 }});
+
+// --- Type multi-select ---
+function _calLoadTypeSelection() {{
+    try {{
+        const raw = localStorage.getItem(_CAL_TYPES_LS_KEY);
+        if (raw) {{
+            const saved = JSON.parse(raw);
+            if (Array.isArray(saved)) {{
+                const known = new Set(_CAL_TYPES_ALL);
+                const restored = new Set(saved.filter(t => known.has(t)));
+                if (restored.size > 0) return restored;
+            }}
+        }}
+    }} catch(e) {{ /* ignore */ }}
+    return new Set(_CAL_TYPES_ALL);
+}}
+function _calSaveTypeSelection() {{
+    try {{ localStorage.setItem(_CAL_TYPES_LS_KEY, JSON.stringify([..._calSelectedTypes])); }} catch(e) {{}}
+}}
+function _calEnsureTypeSelection() {{
+    if (_calSelectedTypes === null) _calSelectedTypes = _calLoadTypeSelection();
+}}
+function _calRenderTypeChips() {{
+    const host = document.getElementById('calTypeChips');
+    if (!host) return;
+    let html = '';
+    _CAL_TYPES_ALL.forEach(t => {{
+        const on = _calSelectedTypes.has(t);
+        html += '<label class="cal-multi-item" onclick="event.stopPropagation()">'
+             +  '<input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="calToggleType(\\'' + t + '\\')">'
+             +  '<span>' + _CAL_TYPE_LABELS[t] + '</span>'
+             +  '</label>';
+    }});
+    host.innerHTML = html;
+    _calUpdateTypeBtnLabel();
+}}
+function _calUpdateTypeBtnLabel() {{
+    const el = document.getElementById('calTypeBtnLabel');
+    if (!el) return;
+    const sel = _calSelectedTypes ? _calSelectedTypes.size : 0;
+    const total = _CAL_TYPES_ALL.length;
+    let label;
+    if (sel === 0) label = 'None';
+    else if (sel === total) label = 'All';
+    else if (sel === 1) label = _CAL_TYPE_LABELS[[..._calSelectedTypes][0]];
+    else label = sel + ' selected';
+    el.textContent = label;
+}}
+function toggleCalTypePanel() {{
+    const el = document.getElementById('calTypeDropdown');
+    if (el) el.classList.toggle('open');
+}}
+function calToggleType(t) {{
+    if (_calSelectedTypes.has(t)) _calSelectedTypes.delete(t);
+    else _calSelectedTypes.add(t);
+    _calSaveTypeSelection();
+    _calRenderTypeChips();
+    renderCalendar();
+}}
+function calSelectAllTypes() {{
+    _calSelectedTypes = new Set(_CAL_TYPES_ALL);
+    _calSaveTypeSelection();
+    _calRenderTypeChips();
+    renderCalendar();
+}}
+function calSelectNoTypes() {{
+    _calSelectedTypes = new Set();
+    _calSaveTypeSelection();
+    _calRenderTypeChips();
+    renderCalendar();
+}}
+// Bucket an event into one of the three Type filter slots. "other" catches
+// anything that isn't a workout or a game (legacy playoff/travel/other events).
+function _calEventTypeBucket(ev) {{
+    if (ev.type === 'workout' || ev.type === 'game') return ev.type;
+    return 'other';
+}}
+
+// --- Month-range picker ---
+// _calMonth is always the start of the range. _calMonthEnd === null means single-month mode.
+function _calMonthsInRange() {{
+    const out = [];
+    const start = new Date(_calMonth.getFullYear(), _calMonth.getMonth(), 1);
+    const end = _calMonthEnd ? new Date(_calMonthEnd.getFullYear(), _calMonthEnd.getMonth(), 1) : start;
+    let d = new Date(start);
+    while (d <= end) {{
+        out.push(new Date(d.getFullYear(), d.getMonth(), 1));
+        d = new Date(d.getFullYear(), d.getMonth()+1, 1);
+    }}
+    return out;
+}}
+function _fmtRangeLabel() {{
+    if (!_calMonthEnd) return _fmtMonth(_calMonth);
+    const sM = _calMonth.getMonth(), sY = _calMonth.getFullYear();
+    const eM = _calMonthEnd.getMonth(), eY = _calMonthEnd.getFullYear();
+    if (sY === eY) return MONTH_SHORT[sM] + ' \\u2013 ' + MONTH_SHORT[eM] + ' ' + sY;
+    return MONTH_SHORT[sM] + ' ' + sY + ' \\u2013 ' + MONTH_SHORT[eM] + ' ' + eY;
+}}
+function _calRangeOptions() {{
+    // Show every month between the earliest and latest event in the dataset,
+    // expanded to also cover at least 6 months before/after today. Ensures
+    // the picker offers a useful span even when there are no events yet.
+    const ev = _getMergedEvents();
+    const today = new Date();
+    let minY = today.getFullYear(), minM = today.getMonth() - 6;
+    let maxY = today.getFullYear(), maxM = today.getMonth() + 6;
+    while (minM < 0) {{ minM += 12; minY -= 1; }}
+    while (maxM > 11) {{ maxM -= 12; maxY += 1; }}
+    let minIso = minY + '-' + String(minM+1).padStart(2,'0');
+    let maxIso = maxY + '-' + String(maxM+1).padStart(2,'0');
+    ev.forEach(e => {{
+        if (!e.date) return;
+        const yyyymm = e.date.slice(0, 7);
+        if (yyyymm < minIso) minIso = yyyymm;
+        if (yyyymm > maxIso) maxIso = yyyymm;
+    }});
+    const out = [];
+    let [y, m] = minIso.split('-').map(s => parseInt(s, 10));
+    m -= 1;
+    const endParts = maxIso.split('-').map(s => parseInt(s, 10));
+    const endY = endParts[0], endM = endParts[1] - 1;
+    while (y < endY || (y === endY && m <= endM)) {{
+        out.push({{ y: y, m: m, val: y + '-' + String(m+1).padStart(2,'0'), label: MONTH_SHORT[m] + ' ' + y }});
+        m += 1; if (m > 11) {{ m = 0; y += 1; }}
+    }}
+    return out;
+}}
+function _calPopulateRangeSelects() {{
+    const fromSel = document.getElementById('calRangeFrom');
+    const toSel = document.getElementById('calRangeTo');
+    if (!fromSel || !toSel) return;
+    const opts = _calRangeOptions();
+    const startVal = _calMonth.getFullYear() + '-' + String(_calMonth.getMonth()+1).padStart(2,'0');
+    const endVal = (_calMonthEnd || _calMonth).getFullYear() + '-'
+        + String((_calMonthEnd || _calMonth).getMonth()+1).padStart(2,'0');
+    const buildHtml = (selectedVal) => opts.map(o =>
+        '<option value="' + o.val + '"' + (o.val === selectedVal ? ' selected' : '') + '>' + o.label + '</option>'
+    ).join('');
+    fromSel.innerHTML = buildHtml(startVal);
+    toSel.innerHTML = buildHtml(endVal);
+}}
+function toggleCalRangePanel() {{
+    const el = document.getElementById('calRangeDropdown');
+    if (!el) return;
+    _calPopulateRangeSelects();
+    el.classList.toggle('open');
+}}
+function _calCloseRangePanel() {{
+    const el = document.getElementById('calRangeDropdown');
+    if (el) el.classList.remove('open');
+}}
+function calApplyMonthRange() {{
+    const fromSel = document.getElementById('calRangeFrom');
+    const toSel = document.getElementById('calRangeTo');
+    if (!fromSel || !toSel) return;
+    const [fy, fm] = fromSel.value.split('-').map(s => parseInt(s, 10));
+    let [ty, tm] = toSel.value.split('-').map(s => parseInt(s, 10));
+    let start = new Date(fy, fm-1, 1);
+    let end = new Date(ty, tm-1, 1);
+    if (end < start) {{ const tmp = start; start = end; end = tmp; }}
+    _calMonth = start;
+    _calMonthEnd = (start.getTime() === end.getTime()) ? null : end;
+    _calCloseRangePanel();
+    renderCalendar();
+}}
+function calClearMonthRange() {{
+    _calMonthEnd = null;
+    _calCloseRangePanel();
+    renderCalendar();
+}}
 
 function calTogglePlayer(p) {{
     if (_calSelectedPlayers.has(p)) _calSelectedPlayers.delete(p);
@@ -3467,11 +3688,14 @@ function _buildPdfGridHtml(year, month, eventsByDate) {{
     return html;
 }}
 
-function _buildPdfAgendaHtml(players, eventsByDate, year, month) {{
-    const MONTH_KEY = year + '-' + String(month+1).padStart(2,'0');
+// Combined agenda for the PDF — spans every YYYY-MM key in monthKeySet.
+// When the range covers more than one month, the date column widens to fit
+// the month abbreviation alongside the day.
+function _buildPdfAgendaHtml(players, eventsByDate, monthKeySet) {{
+    const isMulti = monthKeySet.size > 1;
     const byPlayer = {{}};
     Object.keys(eventsByDate).forEach(iso => {{
-        if (iso.slice(0,7) !== MONTH_KEY) return;
+        if (!monthKeySet.has(iso.slice(0,7))) return;
         eventsByDate[iso].forEach(ev => {{
             (byPlayer[ev.player] = byPlayer[ev.player] || []).push(ev);
         }});
@@ -3482,11 +3706,14 @@ function _buildPdfAgendaHtml(players, eventsByDate, year, month) {{
         html += '<div style="border:1px solid #ddd;border-radius:4px;padding:8px 10px;break-inside:avoid;">';
         html += '<div style="font-size:12px;font-weight:700;color:#000000;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
         if (!evs.length) {{
-            html += '<div style="font-size:10px;color:#999;font-style:italic;">No events this month.</div>';
+            html += '<div style="font-size:10px;color:#999;font-style:italic;">No events in this range.</div>';
         }} else {{
+            const dateColW = isMulti ? 56 : 34;
             evs.forEach(ev => {{
                 const d = new Date(ev.date + 'T00:00:00');
-                const dateStr = (d.getMonth()+1) + '/' + d.getDate();
+                const dateStr = isMulti
+                    ? (MONTH_SHORT[d.getMonth()] + ' ' + d.getDate())
+                    : ((d.getMonth()+1) + '/' + d.getDate());
                 const isWorkout = ev.type === 'workout';
                 const isGame = ev.type === 'game';
                 let line = '';
@@ -3501,7 +3728,7 @@ function _buildPdfAgendaHtml(players, eventsByDate, year, month) {{
                 if (ev.time) line += ' · ' + _escHtml(ev.time);
                 if (ev.location && !isGame) line += ' · ' + _escHtml(ev.location);
                 html += '<div style="font-size:10px;color:#333;padding:2px 0;">'
-                     + '<span style="display:inline-block;width:34px;color:#888;font-weight:600;">' + dateStr + '</span>'
+                     + '<span style="display:inline-block;width:' + dateColW + 'px;color:#888;font-weight:600;">' + dateStr + '</span>'
                      + line + '</div>';
             }});
         }}
@@ -3517,44 +3744,54 @@ function exportCalendarPDF() {{
     // tricks; the browser's own print engine handles layout + print-safe rendering
     // reliably. UX cost: the user clicks "Save as PDF" in the print dialog (1 extra step).
     _calEnsureSelection();
+    _calEnsureTypeSelection();
     const players = [..._calSelectedPlayers].sort();
     if (!players.length) {{
         showToast('Select at least one player first.', false);
         return;
     }}
 
-    const fType = document.getElementById('calTypeFilter').value;
     const merged = _getMergedEvents().filter(ev => {{
         if (!_calSelectedPlayers.has(ev.player)) return false;
-        if (fType) {{
-            // "other" buckets anything that isn't a workout or a game
-            // (keeps legacy playoff/travel events visible).
-            if (fType === 'other') {{
-                if (ev.type === 'workout' || ev.type === 'game') return false;
-            }} else if (ev.type !== fType) return false;
-        }}
+        if (!_calSelectedTypes.has(_calEventTypeBucket(ev))) return false;
         return true;
     }});
     const byDate = {{}};
     merged.forEach(ev => {{ (byDate[ev.date] = byDate[ev.date] || []).push(ev); }});
 
-    const year = _calMonth.getFullYear();
-    const month = _calMonth.getMonth();
-    const monthName = MONTH_NAMES[month];
+    const months = _calMonthsInRange();
+    const isMulti = months.length > 1;
+    const monthKeys = new Set(months.map(d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')));
+    const rangeLabel = isMulti ? _fmtRangeLabel() : (MONTH_NAMES[months[0].getMonth()] + ' ' + months[0].getFullYear());
+    const filenameRange = isMulti
+        ? (MONTH_SHORT[months[0].getMonth()] + months[0].getFullYear()
+            + '-' + MONTH_SHORT[months[months.length-1].getMonth()] + months[months.length-1].getFullYear())
+        : (MONTH_NAMES[months[0].getMonth()] + '-' + months[0].getFullYear());
     const nowIso = _fmtIso(new Date());
-    const filename = 'SV-TeamIntel-' + monthName + '-' + year
+    const filename = 'SV-TeamIntel-' + filenameRange
         + (players.length <= 3 ? '-' + players.map(p => p.split(' ').pop()).join('-') : '');
+
+    // One grid per month, separator between, then a single combined agenda below.
+    let gridsHtml = '';
+    months.forEach((m, i) => {{
+        if (isMulti) {{
+            gridsHtml += '<div style="font-size:13px;font-weight:800;color:#000;padding:'
+                + (i === 0 ? '0' : '12px') + ' 0 6px;border-bottom:2px solid #000;margin-bottom:6px;letter-spacing:0.4px;">'
+                + MONTH_NAMES[m.getMonth()] + ' ' + m.getFullYear() + '</div>';
+        }}
+        gridsHtml += _buildPdfGridHtml(m.getFullYear(), m.getMonth(), byDate);
+    }});
 
     const bodyHtml =
         '<div class="pdf-header">'
       +   '<div>'
-      +     '<div class="pdf-title">Stadium Ventures &middot; ' + monthName + ' ' + year + '</div>'
+      +     '<div class="pdf-title">Stadium Ventures &middot; ' + rangeLabel + '</div>'
       +     '<div class="pdf-sub">Players: ' + _escHtml(players.join(', ')) + '</div>'
       +   '</div>'
       +   '<div class="pdf-gen">SV TeamIntel<br>Generated ' + nowIso + '</div>'
       + '</div>'
-      + _buildPdfGridHtml(year, month, byDate)
-      + _buildPdfAgendaHtml(players, byDate, year, month);
+      + gridsHtml
+      + _buildPdfAgendaHtml(players, byDate, monthKeys);
 
     const doc = '<!DOCTYPE html>\\n<html><head><meta charset="utf-8"><title>' + filename + '</title>'
       + '<style>'
@@ -3708,7 +3945,11 @@ function _fmtIso(d) {{
 }}
 
 function calShiftMonth(delta) {{
+    // Range mode: shift both endpoints by the same delta so the window slides as a block.
     _calMonth = new Date(_calMonth.getFullYear(), _calMonth.getMonth()+delta, 1);
+    if (_calMonthEnd) {{
+        _calMonthEnd = new Date(_calMonthEnd.getFullYear(), _calMonthEnd.getMonth()+delta, 1);
+    }}
     renderCalendar();
 }}
 
@@ -3716,6 +3957,7 @@ function calJumpTo(which) {{
     if (which === 'today') {{
         const now = new Date();
         _calMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        _calMonthEnd = null;  // collapse back to single-month view
     }}
     renderCalendar();
 }}
@@ -3745,31 +3987,20 @@ function _chipLabel(ev) {{
 }}
 
 function renderCalendar() {{
-    document.getElementById('calMonthLabel').textContent = _fmtMonth(_calMonth);
-
     _calEnsureSelection();
+    _calEnsureTypeSelection();
     _calRenderPlayerChips();
-    const fType = document.getElementById('calTypeFilter').value;
+    _calRenderTypeChips();
 
-    const year = _calMonth.getFullYear(), month = _calMonth.getMonth();
-    const first = new Date(year, month, 1);
-    const startDow = first.getDay();
-    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const months = _calMonthsInRange();   // [Date, Date, ...] each at day 1
+    const isMulti = months.length > 1;
+    const monthKeys = new Set(months.map(d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')));
 
-    let html = '';
-    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {{
-        html += '<div class="cal-dow">' + d + '</div>';
-    }});
+    document.getElementById('calMonthLabel').textContent = _fmtRangeLabel();
 
     const merged = _getMergedEvents().filter(ev => {{
         if (!_calSelectedPlayers.has(ev.player)) return false;
-        if (fType) {{
-            // "other" buckets anything that isn't a workout or a game
-            // (keeps legacy playoff/travel events visible).
-            if (fType === 'other') {{
-                if (ev.type === 'workout' || ev.type === 'game') return false;
-            }} else if (ev.type !== fType) return false;
-        }}
+        if (!_calSelectedTypes.has(_calEventTypeBucket(ev))) return false;
         return true;
     }});
     // Reset chip dispatch table for this render.
@@ -3779,73 +4010,92 @@ function renderCalendar() {{
     merged.forEach(ev => {{ (byDate[ev.date] = byDate[ev.date] || []).push(ev); }});
 
     const todayIso = _fmtIso(new Date());
-    const cells = Math.ceil((startDow + daysInMonth) / 7) * 7;
-    for (let i = 0; i < cells; i++) {{
-        const dayNum = i - startDow + 1;
-        if (dayNum < 1 || dayNum > daysInMonth) {{
-            html += '<div class="cal-cell cal-pad"></div>';
-            continue;
-        }}
-        const d = new Date(year, month, dayNum);
-        const iso = _fmtIso(d);
-        const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
-        const isCombine = (iso >= '2026-06-21' && iso <= '2026-06-26');
-        const isToday = (iso === todayIso);
-        let cls = 'cal-cell';
-        if (isDraft) cls += ' cal-draft';
-        if (isCombine) cls += ' cal-combine';
-        if (isToday) cls += ' cal-today';
-        html += '<div class="' + cls + '" data-iso="' + iso + '">';
-        html += '<div class="cal-daynum">' + dayNum
-            + (isDraft ? ' <span class="cal-drafttag">DRAFT</span>' : '')
-            + (isCombine ? ' <span class="cal-combinetag">COMBINE</span>' : '')
-            + '</div>';
-        const evs = byDate[iso] || [];
-        evs.forEach(ev => {{
-            const color = _chipColor(ev);
-            const marker = ev.auto ? '' : '*';
-            const cid = 'c' + (_calChipCounter++);
-            _calChipIndex[cid] = ev;
-            const safeTitle = (ev.notes || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-            const isWorkout = ev.type === 'workout';
-            const isConfirmed = isWorkout && !!ev.confirmed;
-            let cls = 'cal-chip';
-            let style = '';
-            let prefix = '';
-            if (isWorkout && !isConfirmed) {{
-                cls += ' workout-invite';
-                style = 'border-color:' + color + ';color:' + color + ';--chip-color:' + color + ';';
-            }} else {{
-                if (isConfirmed) cls += ' workout-confirmed';
-                style = 'background:' + color + ';';
-                if (isConfirmed) prefix = '&#10003; ';
-            }}
-            if (ev.tentative) cls += ' tentative';
-            // Bold the chip when the (player, team) connection's most-recent color is GREEN
-            // (the strongest signal — not light green).
-            if (isWorkout && ev.player && ev.team && getLatestColor(ev.player, ev.team) === 'green') {{
-                cls += ' workout-green-conn';
-            }}
-            html += '<div class="' + cls + '" style="' + style + '" ' +
-                'onclick="openEventChip(\\'' + cid + '\\')" ' +
-                'title="' + safeTitle + '">' +
-                prefix + _chipLabel(ev) + marker + '</div>';
-        }});
-        html += '</div>';
-    }}
-    document.getElementById('calGrid').innerHTML = html;
 
-    // Mobile agenda view: same events, grouped chronologically by date.
-    const monthKey = year + '-' + String(month+1).padStart(2,'0');
-    const agendaDates = Object.keys(byDate).filter(d => d.slice(0,7) === monthKey).sort();
-    // Always surface draft days even if empty.
+    // ----- Per-month grids -----
+    let html = '';
+    months.forEach(monthDate => {{
+        const year = monthDate.getFullYear(), month = monthDate.getMonth();
+        const first = new Date(year, month, 1);
+        const startDow = first.getDay();
+        const daysInMonth = new Date(year, month+1, 0).getDate();
+        const cells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+
+        html += '<div class="cal-month-block">';
+        html += '<div class="cal-month-hdr">' + MONTH_NAMES[month] + ' ' + year + '</div>';
+        html += '<div class="cal-month-grid">';
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {{
+            html += '<div class="cal-dow">' + d + '</div>';
+        }});
+        for (let i = 0; i < cells; i++) {{
+            const dayNum = i - startDow + 1;
+            if (dayNum < 1 || dayNum > daysInMonth) {{
+                html += '<div class="cal-cell cal-pad"></div>';
+                continue;
+            }}
+            const d = new Date(year, month, dayNum);
+            const iso = _fmtIso(d);
+            const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
+            const isCombine = (iso >= '2026-06-21' && iso <= '2026-06-26');
+            const isToday = (iso === todayIso);
+            let cls = 'cal-cell';
+            if (isDraft) cls += ' cal-draft';
+            if (isCombine) cls += ' cal-combine';
+            if (isToday) cls += ' cal-today';
+            html += '<div class="' + cls + '" data-iso="' + iso + '">';
+            html += '<div class="cal-daynum">' + dayNum
+                + (isDraft ? ' <span class="cal-drafttag">DRAFT</span>' : '')
+                + (isCombine ? ' <span class="cal-combinetag">COMBINE</span>' : '')
+                + '</div>';
+            const evs = byDate[iso] || [];
+            evs.forEach(ev => {{
+                const color = _chipColor(ev);
+                const marker = ev.auto ? '' : '*';
+                const cid = 'c' + (_calChipCounter++);
+                _calChipIndex[cid] = ev;
+                const safeTitle = (ev.notes || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+                const isWorkout = ev.type === 'workout';
+                const isConfirmed = isWorkout && !!ev.confirmed;
+                let cls2 = 'cal-chip';
+                let style = '';
+                let prefix = '';
+                if (isWorkout && !isConfirmed) {{
+                    cls2 += ' workout-invite';
+                    style = 'border-color:' + color + ';color:' + color + ';--chip-color:' + color + ';';
+                }} else {{
+                    if (isConfirmed) cls2 += ' workout-confirmed';
+                    style = 'background:' + color + ';';
+                    if (isConfirmed) prefix = '&#10003; ';
+                }}
+                if (ev.tentative) cls2 += ' tentative';
+                // Bold the chip when the (player, team) connection's most-recent color is GREEN
+                // (the strongest signal — not light green).
+                if (isWorkout && ev.player && ev.team && getLatestColor(ev.player, ev.team) === 'green') {{
+                    cls2 += ' workout-green-conn';
+                }}
+                html += '<div class="' + cls2 + '" style="' + style + '" ' +
+                    'onclick="openEventChip(\\'' + cid + '\\')" ' +
+                    'title="' + safeTitle + '">' +
+                    prefix + _chipLabel(ev) + marker + '</div>';
+            }});
+            html += '</div>';
+        }}
+        html += '</div></div>';   // close cal-month-grid + cal-month-block
+    }});
+    const gridEl = document.getElementById('calGrid');
+    gridEl.innerHTML = html;
+    gridEl.classList.toggle('multi', isMulti);
+
+    // ----- Agenda (mobile + always-visible bottom block) -----
+    // Spans every month in the active range.
+    const agendaDates = Object.keys(byDate).filter(d => monthKeys.has(d.slice(0,7))).sort();
+    // Always surface draft days even if empty (only within the active range).
     ['2026-07-11','2026-07-12','2026-07-13'].forEach(d => {{
-        if (d.slice(0,7) === monthKey && agendaDates.indexOf(d) === -1) agendaDates.push(d);
+        if (monthKeys.has(d.slice(0,7)) && agendaDates.indexOf(d) === -1) agendaDates.push(d);
     }});
     agendaDates.sort();
     let agendaHtml = '';
     if (!agendaDates.length) {{
-        agendaHtml = '<div class="agenda-empty">No events this month.</div>';
+        agendaHtml = '<div class="agenda-empty">No events in this range.</div>';
     }} else {{
         const dowNames = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
         agendaDates.forEach(iso => {{
@@ -3858,6 +4108,7 @@ function renderCalendar() {{
             agendaHtml += '<div class="agenda-date">';
             agendaHtml += '<div class="agenda-dow">' + dowNames[d.getDay()] + '</div>';
             agendaHtml += '<div class="agenda-dnum">' + d.getDate() + '</div>';
+            if (isMulti) agendaHtml += '<div style="font-size:9px;color:#888;font-weight:600;">' + MONTH_SHORT[d.getMonth()] + '</div>';
             if (isDraft) agendaHtml += '<div class="agenda-drafttag">DRAFT</div>';
             agendaHtml += '</div>';
             agendaHtml += '<div class="agenda-chips">';
@@ -3899,12 +4150,10 @@ function renderCalendar() {{
     }}
     document.getElementById('calAgenda').innerHTML = agendaHtml;
 
-    // Legend: show unique teams active in the merged set this month
+    // Legend: unique workout teams across every month in the active range.
     const activeTeams = new Set();
     merged.forEach(ev => {{
-        if (ev.date.slice(0,7) === year + '-' + String(month+1).padStart(2,'0')) {{
-            if (ev.type === 'workout' && ev.team) activeTeams.add(ev.team);
-        }}
+        if (monthKeys.has(ev.date.slice(0,7)) && ev.type === 'workout' && ev.team) activeTeams.add(ev.team);
     }});
     let legend = '';
     [...activeTeams].sort().forEach(t => {{
