@@ -1153,6 +1153,27 @@ def load_team_draft_info():
     return out
 
 
+def load_recommended_schedule():
+    """Read per-player tentative recommended workout schedule.
+    Returns { player_name: { 'tiers': [{ 'label': str, 'entries': [{team,schedule}] }] } }.
+    Empty dict if the file is missing. This is the SV recommendation that appears
+    on the right side of each player block in the PDF — distinct from the
+    auto-generated PDW Invites table on the left (which comes from Slack).
+    Hand-edited at data/recommended_schedule_2026.json until we build a UI.
+    """
+    path = os.path.join(os.path.dirname(__file__), 'data', 'recommended_schedule_2026.json')
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f'WARN: recommended_schedule_2026.json parse error: {e}')
+        return {}
+    # Drop the README key so it doesn't get treated as a player.
+    return {k: v for k, v in data.items() if not k.startswith('_')}
+
+
 def build_html(records, password="SVintel2026", games=None, slack_workspace_url=None):
     records_js = json.dumps(records)
     games_js = json.dumps(games or [])
@@ -1162,6 +1183,7 @@ def build_html(records, password="SVintel2026", games=None, slack_workspace_url=
     # Serialize alias map (sets aren't JSON-safe — convert to lists)
     player_aliases_js = json.dumps({name: sorted(aliases) for name, aliases in PLAYER_ALIASES.items()})
     team_draft_js = json.dumps(load_team_draft_info())
+    recommended_schedule_js = json.dumps(load_recommended_schedule())
     slack_workspace_js = json.dumps(slack_workspace_url or '')
 
     html = f'''<!DOCTYPE html>
@@ -2166,6 +2188,10 @@ const ALL_TEAMS = {json.dumps(ALL_TEAMS)};
 const ALL_2026_PLAYERS = {all_2026_js};
 const PLAYER_ALIASES = {player_aliases_js};
 const TEAM_DRAFT = {team_draft_js};
+// Per-player SV recommendation that shows on the right side of each PDF
+// player block. Distinct from the auto-generated PDW Invites table on the
+// left. Shape: see data/recommended_schedule_2026.json.
+const RECOMMENDED_SCHEDULE = {recommended_schedule_js};
 // Slack workspace base URL (e.g. https://stadium-ventures.slack.com). Empty
 // string when auth_test failed at fetch time — UI hides the "View in Slack"
 // link in that case.
@@ -3793,17 +3819,26 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
         || monthKeySet.has(COMBINE_INFO.endIso.slice(0,7));
     const HDR_STYLE = 'font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;'
         + 'text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:3px;';
-    // page-break-after:avoid + break-after:avoid keep the section title glued
-    // to the player grid below it instead of getting orphaned at the bottom of
-    // a print page when the grid can't fit on the same page.
+    const SUB_HEADER_STYLE = 'font-size:11px;font-weight:800;color:#000;'
+        + 'letter-spacing:0.4px;border-bottom:1.5px solid #000;padding-bottom:3px;margin-bottom:8px;';
+    // Single-column layout of full-width player blocks. Each block splits
+    // internally into a left half (auto-generated PDW Invites from Slack) and
+    // a right half (SV recommendation hand-curated in
+    // data/recommended_schedule_2026.json). page-break-after on the section
+    // title keeps it glued to the first player block.
     let html = '<div style="margin-top:18px;">'
              + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;page-break-after:avoid;break-after:avoid;">Pre-Draft Workout Invites</div>'
-             + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;page-break-before:avoid;break-before:avoid;">';
+             + '<div style="display:flex;flex-direction:column;gap:14px;page-break-before:avoid;break-before:avoid;">';
     players.forEach(p => {{
         const groups = _gatherPdwGroupsForPlayer(p, monthKeySet);
         const totalEntries = groups.reduce((sum, g) => sum + g.entries.length, 0);
-        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 12px;break-inside:avoid;">';
-        html += '<div style="font-size:12px;font-weight:700;color:#000;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
+        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 14px;break-inside:avoid;">';
+        html += '<div style="font-size:13px;font-weight:800;color:#000;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px;letter-spacing:0.2px;">' + _escHtml(p) + '</div>';
+        // Internal 2-col split: auto-generated on the left, SV recommendation on the right.
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:18px;">';
+        // ----- LEFT: auto-generated PDW Invites -----
+        html += '<div>';
+        html += '<div style="' + SUB_HEADER_STYLE + '">Invites Received</div>';
         if (!totalEntries && !combineOverlap) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
         }} else {{
@@ -3843,9 +3878,47 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             }}
             html += '</div>';
         }}
-        html += '</div>';
+        html += '</div>';   // close LEFT
+        // ----- RIGHT: SV recommended schedule -----
+        html += '<div>';
+        html += '<div style="' + SUB_HEADER_STYLE + '">Our Recommendation</div>';
+        html += _buildPdwRecommendationHtml(p);
+        html += '</div>';   // close RIGHT
+        html += '</div>';   // close internal 2-col split
+        html += '</div>';   // close player block
     }});
     html += '</div></div>';
+    return html;
+}}
+
+// SV's tentative recommended workout schedule for a player. Pulls from the
+// hand-curated RECOMMENDED_SCHEDULE map; picks are looked up from TEAM_DRAFT
+// and filtered to picks <= 40 (round 1 + comp-balance A range) and capped at 2.
+function _buildPdwRecommendationHtml(player) {{
+    const rec = RECOMMENDED_SCHEDULE[player];
+    if (!rec || !rec.tiers || !rec.tiers.length) {{
+        return '<div style="font-size:10px;color:#999;font-style:italic;">No recommendation entered yet.</div>';
+    }}
+    let html = '';
+    rec.tiers.forEach((tier, ti) => {{
+        if (ti > 0) html += '<div style="height:6px;"></div>';
+        html += '<div style="font-size:10px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;">'
+             + _escHtml(tier.label || ('Tier ' + (ti + 1))) + '</div>';
+        (tier.entries || []).forEach(entry => {{
+            const team = (entry.team || '').toUpperCase();
+            const di = TEAM_DRAFT[team] || {{}};
+            const earlyPicks = (di.picks || [])
+                .map(p => parseInt(p, 10))
+                .filter(p => !isNaN(p) && p <= 40)
+                .slice(0, 2)
+                .join(', ');
+            html += '<div style="font-size:10px;color:#222;line-height:1.4;padding:1px 0;">'
+                 +    '<span style="font-weight:800;color:#000;">' + _escHtml(team) + '</span>'
+                 +    (earlyPicks ? ' \\u00b7 <span style="color:#555;">' + earlyPicks + '</span>' : '')
+                 +    (entry.schedule ? ' \\u00b7 ' + _escHtml(entry.schedule) : '')
+                 + '</div>';
+        }});
+    }});
     return html;
 }}
 

@@ -1,0 +1,32 @@
+{
+  "_README": "Per-player tentative recommended workout schedule, rendered on the right side of each player block in the PDF (Pre-Draft Workout Invites section). Hand-edit until we build a UI. Keys are full player names exactly as they appear in PLAYERS_2026/RECORDS. Team abbrevs match the rest of the project (SD not SDP, ATH not OAK).",
+  "Bo Lowrance": {
+    "tiers": [
+      {
+        "label": "Tier 1",
+        "entries": [
+          { "team": "BOS", "schedule": "5/30 or 5/31 Ft Myers" },
+          { "team": "HOU", "schedule": "6/2 or 6/3 Palm Beach or 6/8 Fayetteville, NC" },
+          { "team": "ATL", "schedule": "6/8 or 6/9 Truist" },
+          { "team": "CHC", "schedule": "5/28 Wrigley" }
+        ]
+      },
+      {
+        "label": "Tier 2",
+        "entries": [
+          { "team": "SD",  "schedule": "6/3 Charlotte, 6/2 Lakeland, 6/1 ATL" },
+          { "team": "NYM", "schedule": "5/27 ATL, 6/5 Port St Lucie, 6/8 NY" }
+        ]
+      },
+      {
+        "label": "Tier 3",
+        "entries": [
+          { "team": "PIT", "schedule": "6/9 Bradenton" },
+          { "team": "NYY", "schedule": "6/8-6/10 Tampa" },
+          { "team": "PHI", "schedule": "6/3 Clearwater" },
+          { "team": "TOR", "schedule": "6/6 Dunedin" }
+        ]
+      }
+    ]
+  }
+}
