@@ -3844,15 +3844,19 @@ function exportCalendarPDF() {{
     const filename = 'SV-TeamIntel-' + filenameRange
         + (players.length <= 3 ? '-' + players.map(p => p.split(' ').pop()).join('-') : '');
 
-    // One grid per month, separator between, then a single combined agenda below.
+    // One grid per month, each on its own page. The first month follows the
+    // PDF header on page 1; every subsequent month gets a page break before it.
+    // break-inside:avoid keeps a month's grid from splitting across pages.
     let gridsHtml = '';
     months.forEach((m, i) => {{
+        const pageBreak = i > 0 ? 'page-break-before:always;break-before:page;' : '';
+        gridsHtml += '<div style="' + pageBreak + 'page-break-inside:avoid;break-inside:avoid;">';
         if (isMulti) {{
-            gridsHtml += '<div style="font-size:13px;font-weight:800;color:#000;padding:'
-                + (i === 0 ? '0' : '12px') + ' 0 6px;border-bottom:2px solid #000;margin-bottom:6px;letter-spacing:0.4px;">'
+            gridsHtml += '<div style="font-size:13px;font-weight:800;color:#000;padding:0 0 6px;border-bottom:2px solid #000;margin-bottom:6px;letter-spacing:0.4px;">'
                 + MONTH_NAMES[m.getMonth()] + ' ' + m.getFullYear() + '</div>';
         }}
         gridsHtml += _buildPdfGridHtml(m.getFullYear(), m.getMonth(), byDate);
+        gridsHtml += '</div>';
     }});
 
     const bodyHtml =
@@ -3873,7 +3877,7 @@ function exportCalendarPDF() {{
       // into body padding so content doesn't touch the page edge.
       +   '@page {{ size: letter landscape; margin: 0; }}'
       +   '@media print {{ body {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }} }}'
-      +   'body {{ margin: 0; padding: 10mm 10mm 12mm; font-family: Arial, sans-serif; color: #222; font-size: 10px; }}'
+      +   'body {{ margin: 0; padding: 16mm 12mm 14mm; font-family: Arial, sans-serif; color: #222; font-size: 10px; }}'
       +   '.pdf-header {{ display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #ff2a22; padding-bottom: 8px; margin-bottom: 12px; }}'
       +   '.pdf-title {{ font-size: 20px; font-weight: 800; color: #000000; letter-spacing: 0.3px; }}'
       +   '.pdf-sub {{ font-size: 10px; color: #555; margin-top: 3px; }}'
