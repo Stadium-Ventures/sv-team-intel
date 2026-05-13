@@ -3770,8 +3770,10 @@ function _gatherPdwRowsForPlayer(player, monthKeySet) {{
 function _buildPdfAgendaHtml(players, monthKeySet) {{
     const combineOverlap = monthKeySet.has(COMBINE_INFO.startIso.slice(0,7))
         || monthKeySet.has(COMBINE_INFO.endIso.slice(0,7));
+    const HDR_STYLE = 'font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;'
+        + 'text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:3px;';
     let html = '<div style="margin-top:18px;">'
-             + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;">PDW Invites</div>'
+             + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;">Pre-Draft Workout Invites</div>'
              + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">';
     players.forEach(p => {{
         const rows = _gatherPdwRowsForPlayer(p, monthKeySet);
@@ -3781,6 +3783,9 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
         }} else {{
             html += '<div style="display:grid;grid-template-columns:60px 1fr 130px;column-gap:14px;row-gap:5px;font-size:10.5px;line-height:1.35;">';
+            html += '<div style="' + HDR_STYLE + '">Team</div>'
+                 +  '<div style="' + HDR_STYLE + '">Date(s)</div>'
+                 +  '<div style="' + HDR_STYLE + '">Location</div>';
             rows.forEach(row => {{
                 html += '<div style="font-weight:800;color:#000;">' + _escHtml(row.team) + '</div>';
                 html += '<div style="color:#222;">' + _escHtml(row.dates) + '</div>';
