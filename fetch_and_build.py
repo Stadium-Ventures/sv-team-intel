@@ -1111,10 +1111,19 @@ def parse_messages(messages):
 
 # --- STEP 3: BUILD HTML ---
 def load_team_draft_info():
-    """Read 2026 bonus pool + first picks per team from data/team_draft_2026.csv.
-    Returns { abbrev: { 'pool': str, 'picks': [int] } }. Empty dict if missing.
-    Source: `~/Desktop/claude/sv-org-review/Org.Review.2026.xlsx` "Review" sheet
-    rows 3 ("Pool Amount") + 4 ("Pick #"). Re-extract when org-review updates.
+    """Read 2026 bonus pool + first picks + farm system ranking per team.
+    Returns { abbrev: { 'pool': str, 'picks': [int], 'farm_rank': int|None } }.
+    Empty dict if the main draft CSV is missing.
+
+    Sources:
+      - data/team_draft_2026.csv (pool + picks). Originates from the "Review"
+        sheet rows 3 ("Pool Amount") + 4 ("Pick #") in sv-org-review.
+      - data/farm_system_2026.csv (farm_rank). Canonical source is the
+        "ORG Rankings" tab of `Org.Review.2026.update_5-3-26.xlsx` in
+        sv-org-review (column "COMP" = composite 1-30 overall rank).
+        Refresh by re-extracting that column when the xlsx updates.
+    Both files are hand-refreshed when org-review updates — keep them in sync
+    when the org review is re-run.
     """
     path = os.path.join(os.path.dirname(__file__), 'data', 'team_draft_2026.csv')
     if not os.path.exists(path):
@@ -1130,7 +1139,17 @@ def load_team_draft_info():
             out[abbr] = {
                 'pool': (row.get('pool_amount') or '').strip(),
                 'picks': picks,
+                'farm_rank': None,
             }
+    # Merge farm system rankings (optional — silently skip if file is missing).
+    farm_path = os.path.join(os.path.dirname(__file__), 'data', 'farm_system_2026.csv')
+    if os.path.exists(farm_path):
+        with open(farm_path) as f:
+            for row in csv.DictReader(f):
+                abbr = (row.get('abbrev') or '').strip().upper()
+                rank = (row.get('farm_rank') or '').strip()
+                if abbr in out and rank.isdigit():
+                    out[abbr]['farm_rank'] = int(rank)
     return out
 
 
@@ -3749,12 +3768,17 @@ function _gatherPdwGroupsForPlayer(player, monthKeySet) {{
         const entries = byTeam[team].slice().sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
         if (!entries.length) return;
         const di = TEAM_DRAFT[team] || {{}};
+        // Only the first two picks per the user's preference — keeps the cell
+        // compact in the half-page block. Farm rank rendered as "#N".
+        const firstTwoPicks = (di.picks || []).slice(0, 2).join(', ');
+        const farm = (di.farm_rank != null) ? ('#' + di.farm_rank) : '';
         groups.push({{
             team: team,
             entries: entries,
             firstDate: entries[0].date,
             pool: di.pool ? fmtPool(di.pool) : '',
-            picks: (di.picks || []).join(', '),
+            picks: firstTwoPicks,
+            farm: farm,
         }});
     }});
     groups.sort((a,b) => a.firstDate < b.firstDate ? -1 : a.firstDate > b.firstDate ? 1 : 0);
@@ -3783,13 +3807,14 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
         if (!totalEntries && !combineOverlap) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
         }} else {{
-            // 5-col layout: Team | Pool | Picks | Date | Location.
-            // Pool/Picks (and Team) only print on the first row of a team group;
-            // follow-up rows leave those cells blank so the meta isn't repeated.
-            html += '<div style="display:grid;grid-template-columns:38px 54px 96px 44px 1fr;column-gap:8px;row-gap:4px;font-size:10px;line-height:1.35;">';
+            // 6-col layout: Team | Pool | Picks | Farm | Date | Location.
+            // Pool/Picks/Farm (and Team) only print on the first row of a team
+            // group; follow-up rows leave those cells blank.
+            html += '<div style="display:grid;grid-template-columns:38px 50px 58px 36px 44px 1fr;column-gap:7px;row-gap:4px;font-size:10px;line-height:1.35;">';
             html += '<div style="' + HDR_STYLE + '">Team</div>'
                  +  '<div style="' + HDR_STYLE + '">Pool</div>'
                  +  '<div style="' + HDR_STYLE + '">Picks</div>'
+                 +  '<div style="' + HDR_STYLE + '">Farm</div>'
                  +  '<div style="' + HDR_STYLE + '">Date</div>'
                  +  '<div style="' + HDR_STYLE + '">Location</div>';
             groups.forEach((g, gi) => {{
@@ -3798,11 +3823,13 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
                     const teamCell  = (i === 0) ? _escHtml(g.team)  : '';
                     const poolCell  = (i === 0) ? _escHtml(g.pool)  : '';
                     const picksCell = (i === 0) ? _escHtml(g.picks) : '';
+                    const farmCell  = (i === 0) ? _escHtml(g.farm)  : '';
                     const d = new Date(entry.date + 'T00:00:00');
                     const dateStr = (d.getMonth()+1) + '/' + d.getDate();
                     html += '<div style="font-weight:800;color:#000;">' + teamCell + '</div>';
                     html += '<div style="color:#444;">' + poolCell + '</div>';
-                    html += '<div style="color:#444;overflow-wrap:anywhere;">' + picksCell + '</div>';
+                    html += '<div style="color:#444;">' + picksCell + '</div>';
+                    html += '<div style="color:#444;font-weight:700;">' + farmCell + '</div>';
                     html += '<div style="color:#222;">' + dateStr + '</div>';
                     html += '<div style="color:#555;">' + _escHtml(entry.location) + '</div>';
                 }});
@@ -3810,7 +3837,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             if (combineOverlap) {{
                 if (groups.length > 0) html += '<div style="grid-column:1 / -1;height:5px;"></div>';
                 html += '<div style="font-weight:800;color:#000;">MLB Combine</div>';
-                html += '<div></div><div></div>';
+                html += '<div></div><div></div><div></div>';
                 html += '<div style="color:#222;">' + COMBINE_INFO.dateLabel + '</div>';
                 html += '<div style="color:#555;">' + _escHtml(COMBINE_INFO.location) + '</div>';
             }}
