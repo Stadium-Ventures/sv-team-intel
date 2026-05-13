@@ -3776,9 +3776,12 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
         || monthKeySet.has(COMBINE_INFO.endIso.slice(0,7));
     const HDR_STYLE = 'font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;'
         + 'text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:3px;';
+    // page-break-after:avoid + break-after:avoid keep the section title glued
+    // to the player grid below it instead of getting orphaned at the bottom of
+    // a print page when the grid can't fit on the same page.
     let html = '<div style="margin-top:18px;">'
-             + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;">Pre-Draft Workout Invites</div>'
-             + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">';
+             + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;page-break-after:avoid;break-after:avoid;">Pre-Draft Workout Invites</div>'
+             + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;page-break-before:avoid;break-before:avoid;">';
     players.forEach(p => {{
         const rows = _gatherPdwRowsForPlayer(p, monthKeySet);
         html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 12px;break-inside:avoid;">';
@@ -3865,9 +3868,12 @@ function exportCalendarPDF() {{
 
     const doc = '<!DOCTYPE html>\\n<html><head><meta charset="utf-8"><title>' + filename + '</title>'
       + '<style>'
-      +   '@page {{ size: letter landscape; margin: 10mm; }}'
+      // @page margin: 0 suppresses the browser-added print header/footer
+      // (URL, page number, filename, timestamp). We move the visual margin
+      // into body padding so content doesn't touch the page edge.
+      +   '@page {{ size: letter landscape; margin: 0; }}'
       +   '@media print {{ body {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }} }}'
-      +   'body {{ margin: 0; padding: 12px; font-family: Arial, sans-serif; color: #222; font-size: 10px; }}'
+      +   'body {{ margin: 0; padding: 10mm 10mm 12mm; font-family: Arial, sans-serif; color: #222; font-size: 10px; }}'
       +   '.pdf-header {{ display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #ff2a22; padding-bottom: 8px; margin-bottom: 12px; }}'
       +   '.pdf-title {{ font-size: 20px; font-weight: 800; color: #000000; letter-spacing: 0.3px; }}'
       +   '.pdf-sub {{ font-size: 10px; color: #555; margin-top: 3px; }}'
