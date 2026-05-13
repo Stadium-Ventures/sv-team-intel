@@ -1096,14 +1096,35 @@ def parse_messages(messages):
         else:
             r['workout_dates'] = []
 
-    # Deduplicate
-    seen = set()
-    unique = []
+    # Deduplicate — but MERGE workout_dates across same-key records so a later
+    # message can't silently lose its workout dates to an earlier short one.
+    # `records` is already in chronological order (parse_messages iterates
+    # messages sorted by ts), so when we encounter a duplicate the current
+    # record is the more recent one. The merge keeps the later record's text
+    # and permalink (most recent source of truth) and unions workout_dates by
+    # date with the later entry winning. The workout flag is OR-ed.
+    seen = {}
+    order = []
     for r in records:
         key = (r['player'], r['team'], r['date'], r['score'])
         if key not in seen:
-            seen.add(key)
-            unique.append(r)
+            seen[key] = r
+            order.append(key)
+            continue
+        existing = seen[key]
+        by_date = {}
+        for wd in (existing.get('workout_dates') or []):
+            if wd.get('date'):
+                by_date[wd['date']] = wd
+        for wd in (r.get('workout_dates') or []):
+            if wd.get('date'):
+                by_date[wd['date']] = wd  # later wins for conflicting date
+        merged = dict(r)
+        merged['workout'] = bool(r.get('workout') or existing.get('workout'))
+        if by_date:
+            merged['workout_dates'] = sorted(by_date.values(), key=lambda x: x.get('date', ''))
+        seen[key] = merged
+    unique = [seen[k] for k in order]
 
     print(f"Parsed {len(unique)} unique intel records")
     return unique
