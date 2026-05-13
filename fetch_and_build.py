@@ -3818,17 +3818,18 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
     const combineOverlap = monthKeySet.has(COMBINE_INFO.startIso.slice(0,7))
         || monthKeySet.has(COMBINE_INFO.endIso.slice(0,7));
     const HDR_STYLE = 'font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;'
-        + 'text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:3px;';
+        + 'text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:2px;';
     const SUB_HEADER_STYLE = 'font-size:11px;font-weight:800;color:#000;'
-        + 'letter-spacing:0.4px;border-bottom:1.5px solid #000;padding-bottom:3px;margin-bottom:8px;';
+        + 'letter-spacing:0.4px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-bottom:5px;';
     // Single-column layout of full-width player blocks. Each block splits
     // internally into a left half (auto-generated PDW Invites from Slack) and
     // a right half (SV recommendation hand-curated in
-    // data/recommended_schedule_2026.json). page-break-after on the section
+    // data/recommended_schedule_2026.json). The whole section starts on a
+    // fresh page (page-break-before:always); page-break-after on the section
     // title keeps it glued to the first player block.
-    let html = '<div style="margin-top:18px;">'
-             + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;page-break-after:avoid;break-after:avoid;">Pre-Draft Workout Invites</div>'
-             + '<div style="display:flex;flex-direction:column;gap:14px;page-break-before:avoid;break-before:avoid;">';
+    let html = '<div style="margin-top:0;page-break-before:always;break-before:page;">'
+             + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:3px;margin-bottom:6px;letter-spacing:0.3px;page-break-after:avoid;break-after:avoid;">Pre-Draft Workout Invites</div>'
+             + '<div style="display:flex;flex-direction:column;gap:10px;page-break-before:avoid;break-before:avoid;">';
     players.forEach(p => {{
         const groups = _gatherPdwGroupsForPlayer(p, monthKeySet);
         const totalEntries = groups.reduce((sum, g) => sum + g.entries.length, 0);
@@ -3837,8 +3838,8 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
         // produced a phantom empty wrapper on one page and the actual content
         // on the next. Letting it paginate naturally fixes that; the player
         // header still re-anchors visually because of the border and bold name.
-        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 14px;">';
-        html += '<div style="font-size:13px;font-weight:800;color:#000;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px;letter-spacing:0.2px;page-break-after:avoid;break-after:avoid;">' + _escHtml(p) + '</div>';
+        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:8px 12px;">';
+        html += '<div style="font-size:13px;font-weight:800;color:#000;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:3px;letter-spacing:0.2px;page-break-after:avoid;break-after:avoid;">' + _escHtml(p) + '</div>';
         // Internal split: flexbox instead of CSS grid because Chrome/Edge
         // print pagination handles flex containers more predictably across
         // page breaks. align-items:flex-start so the two columns top-align
@@ -3856,8 +3857,10 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             // on each tbody keeps a team's rows from being split across pages.
             // <thead> with display:table-header-group lets the column headers
             // repeat at the top of each page if the table spans multiple pages.
-            const TD = 'padding:2px 4px 2px 0;vertical-align:top;font-size:10px;line-height:1.35;';
-            const TH = 'padding:2px 4px 5px 0;vertical-align:bottom;text-align:left;font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
+            // Tight vertical padding so the full PDW table for an active player
+            // (Bo's ~14 teams / 29 rows) fits on a single landscape page.
+            const TD = 'padding:1px 4px 1px 0;vertical-align:top;font-size:9.5px;line-height:1.3;';
+            const TH = 'padding:2px 4px 3px 0;vertical-align:bottom;text-align:left;font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
             html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
             html += '<colgroup>'
                  +    '<col style="width:38px;">'
@@ -3878,7 +3881,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             groups.forEach((g, gi) => {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
                 // Subtle spacer row above every team after the first.
-                if (gi > 0) html += '<tr><td colspan="6" style="height:5px;padding:0;"></td></tr>';
+                if (gi > 0) html += '<tr><td colspan="6" style="height:3px;padding:0;"></td></tr>';
                 g.entries.forEach((entry, i) => {{
                     const teamCell  = (i === 0) ? _escHtml(g.team)  : '';
                     const poolCell  = (i === 0) ? _escHtml(g.pool)  : '';
@@ -3899,7 +3902,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             }});
             if (combineOverlap) {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
-                if (groups.length > 0) html += '<tr><td colspan="6" style="height:5px;padding:0;"></td></tr>';
+                if (groups.length > 0) html += '<tr><td colspan="6" style="height:3px;padding:0;"></td></tr>';
                 html += '<tr>'
                      +    '<td style="' + TD + 'font-weight:800;color:#000;">MLB Combine</td>'
                      +    '<td style="' + TD + '"></td>'
