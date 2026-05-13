@@ -3832,12 +3832,22 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
     players.forEach(p => {{
         const groups = _gatherPdwGroupsForPlayer(p, monthKeySet);
         const totalEntries = groups.reduce((sum, g) => sum + g.entries.length, 0);
-        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 14px;break-inside:avoid;">';
-        html += '<div style="font-size:13px;font-weight:800;color:#000;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px;letter-spacing:0.2px;">' + _escHtml(p) + '</div>';
-        // Internal 2-col split: auto-generated on the left, SV recommendation on the right.
-        html += '<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:18px;">';
+        // No break-inside:avoid here — for players with many invites the block
+        // is taller than a single landscape page, which (with CSS grid inside)
+        // produced a phantom empty wrapper on one page and the actual content
+        // on the next. Letting it paginate naturally fixes that; the player
+        // header still re-anchors visually because of the border and bold name.
+        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 14px;">';
+        html += '<div style="font-size:13px;font-weight:800;color:#000;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px;letter-spacing:0.2px;page-break-after:avoid;break-after:avoid;">' + _escHtml(p) + '</div>';
+        // Internal split: flexbox instead of CSS grid because Chrome/Edge
+        // print pagination handles flex containers more predictably across
+        // page breaks. align-items:flex-start so the two columns top-align
+        // even when one is much taller than the other.
+        html += '<div style="display:flex;gap:18px;align-items:flex-start;">';
         // ----- LEFT: auto-generated PDW Invites -----
-        html += '<div>';
+        // flex:1 1 0 + min-width:0 makes both columns share width equally and
+        // lets long cells (e.g. "Birmingham, AL") shrink rather than overflow.
+        html += '<div style="flex:1 1 0;min-width:0;">';
         html += '<div style="' + SUB_HEADER_STYLE + '">Invites Received</div>';
         if (!totalEntries && !combineOverlap) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
@@ -3880,7 +3890,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
         }}
         html += '</div>';   // close LEFT
         // ----- RIGHT: SV recommended schedule -----
-        html += '<div>';
+        html += '<div style="flex:1 1 0;min-width:0;">';
         html += '<div style="' + SUB_HEADER_STYLE + '">Our Recommendation</div>';
         html += _buildPdwRecommendationHtml(p);
         html += '</div>';   // close RIGHT
