@@ -3728,14 +3728,13 @@ function _fmtPdwDateLabel(isoList) {{
     return groups.map(fmtGroup).join(' or ');
 }}
 
-// Build PDW-only rows for a single player, scoped to the active month range.
-// One row per team. Date lists collapse via _fmtPdwDateLabel. Locations:
-// distinct non-empty locations across the team's workout dates are joined
-// with " & " in date order — so a team with workouts at two different
-// venues shows "Nats Park, DC & Palm Beach" on one row.
+// Build PDW-only groups for a single player, scoped to the active month range.
+// Groups are bucketed by team; each entry within a group is one workout date
+// with its (possibly empty) location. The agenda renderer prints the team
+// once per group on the first row and leaves it blank on follow-ups.
 // Walks _getMergedEvents() (not RECORDS directly) so manual location/date
 // edits made in the calendar UI are reflected in the PDF summary.
-function _gatherPdwRowsForPlayer(player, monthKeySet) {{
+function _gatherPdwGroupsForPlayer(player, monthKeySet) {{
     const byTeam = {{}};
     _getMergedEvents().forEach(ev => {{
         if (ev.player !== player) return;
@@ -3745,27 +3744,14 @@ function _gatherPdwRowsForPlayer(player, monthKeySet) {{
         if (!byTeam[ev.team]) byTeam[ev.team] = [];
         byTeam[ev.team].push({{ date: ev.date, location: ev.location || '' }});
     }});
-    const rows = [];
+    const groups = [];
     Object.keys(byTeam).forEach(team => {{
         const entries = byTeam[team].slice().sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
-        const uniqDates = [...new Set(entries.map(e => e.date))];
-        if (!uniqDates.length) return;
-        const seen = new Set();
-        const locs = [];
-        entries.forEach(e => {{
-            if (!e.location || seen.has(e.location)) return;
-            seen.add(e.location);
-            locs.push(e.location);
-        }});
-        rows.push({{
-            team: team,
-            dates: _fmtPdwDateLabel(uniqDates),
-            location: locs.join(' & '),
-            firstDate: uniqDates[0],
-        }});
+        if (!entries.length) return;
+        groups.push({{ team: team, entries: entries, firstDate: entries[0].date }});
     }});
-    rows.sort((a,b) => a.firstDate < b.firstDate ? -1 : a.firstDate > b.firstDate ? 1 : 0);
-    return rows;
+    groups.sort((a,b) => a.firstDate < b.firstDate ? -1 : a.firstDate > b.firstDate ? 1 : 0);
+    return groups;
 }}
 
 // PDW Invites section for the PDF. One block per player; 3-col table inside
@@ -3783,22 +3769,31 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
              + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;page-break-after:avoid;break-after:avoid;">Pre-Draft Workout Invites</div>'
              + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;page-break-before:avoid;break-before:avoid;">';
     players.forEach(p => {{
-        const rows = _gatherPdwRowsForPlayer(p, monthKeySet);
+        const groups = _gatherPdwGroupsForPlayer(p, monthKeySet);
+        const totalEntries = groups.reduce((sum, g) => sum + g.entries.length, 0);
         html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 12px;break-inside:avoid;">';
         html += '<div style="font-size:12px;font-weight:700;color:#000;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
-        if (!rows.length && !combineOverlap) {{
+        if (!totalEntries && !combineOverlap) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
         }} else {{
-            html += '<div style="display:grid;grid-template-columns:60px 1fr 130px;column-gap:14px;row-gap:5px;font-size:10.5px;line-height:1.35;">';
+            html += '<div style="display:grid;grid-template-columns:60px 52px 1fr;column-gap:14px;row-gap:4px;font-size:10.5px;line-height:1.35;">';
             html += '<div style="' + HDR_STYLE + '">Team</div>'
-                 +  '<div style="' + HDR_STYLE + '">Date(s)</div>'
+                 +  '<div style="' + HDR_STYLE + '">Date</div>'
                  +  '<div style="' + HDR_STYLE + '">Location</div>';
-            rows.forEach(row => {{
-                html += '<div style="font-weight:800;color:#000;">' + _escHtml(row.team) + '</div>';
-                html += '<div style="color:#222;">' + _escHtml(row.dates) + '</div>';
-                html += '<div style="color:#555;">' + _escHtml(row.location) + '</div>';
+            groups.forEach((g, gi) => {{
+                // Subtle spacer row between teams so groups visually separate.
+                if (gi > 0) html += '<div style="grid-column:1 / -1;height:5px;"></div>';
+                g.entries.forEach((entry, i) => {{
+                    const teamCell = (i === 0) ? _escHtml(g.team) : '';
+                    const d = new Date(entry.date + 'T00:00:00');
+                    const dateStr = (d.getMonth()+1) + '/' + d.getDate();
+                    html += '<div style="font-weight:800;color:#000;">' + teamCell + '</div>';
+                    html += '<div style="color:#222;">' + dateStr + '</div>';
+                    html += '<div style="color:#555;">' + _escHtml(entry.location) + '</div>';
+                }});
             }});
             if (combineOverlap) {{
+                if (groups.length > 0) html += '<div style="grid-column:1 / -1;height:5px;"></div>';
                 html += '<div style="font-weight:800;color:#000;">MLB Combine</div>';
                 html += '<div style="color:#222;">' + COMBINE_INFO.dateLabel + '</div>';
                 html += '<div style="color:#555;">' + _escHtml(COMBINE_INFO.location) + '</div>';
