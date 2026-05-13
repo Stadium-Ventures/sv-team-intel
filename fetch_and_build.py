@@ -3729,7 +3729,10 @@ function _fmtPdwDateLabel(isoList) {{
 }}
 
 // Build PDW-only rows for a single player, scoped to the active month range.
-// One row per team — date lists from multiple Slack messages are merged.
+// One row per team. Date lists collapse via _fmtPdwDateLabel. Locations:
+// distinct non-empty locations across the team's workout dates are joined
+// with " & " in date order — so a team with workouts at two different
+// venues shows "Nats Park, DC & Palm Beach" on one row.
 // Walks _getMergedEvents() (not RECORDS directly) so manual location/date
 // edits made in the calendar UI are reflected in the PDF summary.
 function _gatherPdwRowsForPlayer(player, monthKeySet) {{
@@ -3739,23 +3742,26 @@ function _gatherPdwRowsForPlayer(player, monthKeySet) {{
         if (ev.type !== 'workout') return;
         if (!ev.team) return;
         if (!ev.date || !monthKeySet.has(ev.date.slice(0,7))) return;
-        if (!byTeam[ev.team]) byTeam[ev.team] = {{ dates: [], locations: [] }};
-        byTeam[ev.team].dates.push(ev.date);
-        if (ev.location) byTeam[ev.team].locations.push(ev.location);
+        if (!byTeam[ev.team]) byTeam[ev.team] = [];
+        byTeam[ev.team].push({{ date: ev.date, location: ev.location || '' }});
     }});
     const rows = [];
     Object.keys(byTeam).forEach(team => {{
-        const info = byTeam[team];
-        if (!info.dates.length) return;
-        const sortedDates = [...new Set(info.dates)].sort();
-        // First non-empty location wins; if data ever has true conflicts the
-        // user can spot it in the calendar grid.
-        const loc = info.locations.length ? info.locations[0] : '';
+        const entries = byTeam[team].slice().sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+        const uniqDates = [...new Set(entries.map(e => e.date))];
+        if (!uniqDates.length) return;
+        const seen = new Set();
+        const locs = [];
+        entries.forEach(e => {{
+            if (!e.location || seen.has(e.location)) return;
+            seen.add(e.location);
+            locs.push(e.location);
+        }});
         rows.push({{
             team: team,
-            dates: _fmtPdwDateLabel(sortedDates),
-            location: loc,
-            firstDate: sortedDates[0],
+            dates: _fmtPdwDateLabel(uniqDates),
+            location: locs.join(' & '),
+            firstDate: uniqDates[0],
         }});
     }});
     rows.sort((a,b) => a.firstDate < b.firstDate ? -1 : a.firstDate > b.firstDate ? 1 : 0);
