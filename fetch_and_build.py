@@ -3852,18 +3852,33 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
         if (!totalEntries && !combineOverlap) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
         }} else {{
-            // 6-col layout: Team | Pool | Picks | Farm | Date | Location.
-            // Pool/Picks/Farm (and Team) only print on the first row of a team
-            // group; follow-up rows leave those cells blank.
-            html += '<div style="display:grid;grid-template-columns:38px 50px 58px 36px 44px 1fr;column-gap:7px;row-gap:4px;font-size:10px;line-height:1.35;">';
-            html += '<div style="' + HDR_STYLE + '">Team</div>'
-                 +  '<div style="' + HDR_STYLE + '">Pool</div>'
-                 +  '<div style="' + HDR_STYLE + '">Picks</div>'
-                 +  '<div style="' + HDR_STYLE + '">Farm</div>'
-                 +  '<div style="' + HDR_STYLE + '">Date</div>'
-                 +  '<div style="' + HDR_STYLE + '">Location</div>';
+            // HTML table with one <tbody> per team — page-break-inside:avoid
+            // on each tbody keeps a team's rows from being split across pages.
+            // <thead> with display:table-header-group lets the column headers
+            // repeat at the top of each page if the table spans multiple pages.
+            const TD = 'padding:2px 4px 2px 0;vertical-align:top;font-size:10px;line-height:1.35;';
+            const TH = 'padding:2px 4px 5px 0;vertical-align:bottom;text-align:left;font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
+            html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
+            html += '<colgroup>'
+                 +    '<col style="width:38px;">'
+                 +    '<col style="width:50px;">'
+                 +    '<col style="width:58px;">'
+                 +    '<col style="width:36px;">'
+                 +    '<col style="width:44px;">'
+                 +    '<col>'
+                 +  '</colgroup>';
+            html += '<thead style="display:table-header-group;"><tr>'
+                 +    '<th style="' + TH + '">Team</th>'
+                 +    '<th style="' + TH + '">Pool</th>'
+                 +    '<th style="' + TH + '">Picks</th>'
+                 +    '<th style="' + TH + '">Farm</th>'
+                 +    '<th style="' + TH + '">Date</th>'
+                 +    '<th style="' + TH + '">Location</th>'
+                 +  '</tr></thead>';
             groups.forEach((g, gi) => {{
-                if (gi > 0) html += '<div style="grid-column:1 / -1;height:5px;"></div>';
+                html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
+                // Subtle spacer row above every team after the first.
+                if (gi > 0) html += '<tr><td colspan="6" style="height:5px;padding:0;"></td></tr>';
                 g.entries.forEach((entry, i) => {{
                     const teamCell  = (i === 0) ? _escHtml(g.team)  : '';
                     const poolCell  = (i === 0) ? _escHtml(g.pool)  : '';
@@ -3871,22 +3886,31 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
                     const farmCell  = (i === 0) ? _escHtml(g.farm)  : '';
                     const d = new Date(entry.date + 'T00:00:00');
                     const dateStr = (d.getMonth()+1) + '/' + d.getDate();
-                    html += '<div style="font-weight:800;color:#000;">' + teamCell + '</div>';
-                    html += '<div style="color:#444;">' + poolCell + '</div>';
-                    html += '<div style="color:#444;">' + picksCell + '</div>';
-                    html += '<div style="color:#444;font-weight:700;">' + farmCell + '</div>';
-                    html += '<div style="color:#222;">' + dateStr + '</div>';
-                    html += '<div style="color:#555;">' + _escHtml(entry.location) + '</div>';
+                    html += '<tr>'
+                         +    '<td style="' + TD + 'font-weight:800;color:#000;">' + teamCell + '</td>'
+                         +    '<td style="' + TD + 'color:#444;">' + poolCell + '</td>'
+                         +    '<td style="' + TD + 'color:#444;">' + picksCell + '</td>'
+                         +    '<td style="' + TD + 'color:#444;font-weight:700;">' + farmCell + '</td>'
+                         +    '<td style="' + TD + 'color:#222;">' + dateStr + '</td>'
+                         +    '<td style="' + TD + 'color:#555;">' + _escHtml(entry.location) + '</td>'
+                         +  '</tr>';
                 }});
+                html += '</tbody>';
             }});
             if (combineOverlap) {{
-                if (groups.length > 0) html += '<div style="grid-column:1 / -1;height:5px;"></div>';
-                html += '<div style="font-weight:800;color:#000;">MLB Combine</div>';
-                html += '<div></div><div></div><div></div>';
-                html += '<div style="color:#222;">' + COMBINE_INFO.dateLabel + '</div>';
-                html += '<div style="color:#555;">' + _escHtml(COMBINE_INFO.location) + '</div>';
+                html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
+                if (groups.length > 0) html += '<tr><td colspan="6" style="height:5px;padding:0;"></td></tr>';
+                html += '<tr>'
+                     +    '<td style="' + TD + 'font-weight:800;color:#000;">MLB Combine</td>'
+                     +    '<td style="' + TD + '"></td>'
+                     +    '<td style="' + TD + '"></td>'
+                     +    '<td style="' + TD + '"></td>'
+                     +    '<td style="' + TD + 'color:#222;">' + COMBINE_INFO.dateLabel + '</td>'
+                     +    '<td style="' + TD + 'color:#555;">' + _escHtml(COMBINE_INFO.location) + '</td>'
+                     +  '</tr>';
+                html += '</tbody>';
             }}
-            html += '</div>';
+            html += '</table>';
         }}
         html += '</div>';   // close LEFT
         // ----- RIGHT: SV recommended schedule -----
@@ -3911,7 +3935,10 @@ function _buildPdwRecommendationHtml(player) {{
     }}
     let html = '';
     rec.tiers.forEach((tier, ti) => {{
-        if (ti > 0) html += '<div style="height:6px;"></div>';
+        // Wrap each tier (label + entries) in a break-inside:avoid block so a
+        // tier never splits across pages.
+        html += '<div style="page-break-inside:avoid;break-inside:avoid;'
+             + (ti > 0 ? 'margin-top:6px;' : '') + '">';
         html += '<div style="font-size:10px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;">'
              + _escHtml(tier.label || ('Tier ' + (ti + 1))) + '</div>';
         (tier.entries || []).forEach(entry => {{
@@ -3928,6 +3955,7 @@ function _buildPdwRecommendationHtml(player) {{
                  +    (entry.schedule ? ' \\u00b7 ' + _escHtml(entry.schedule) : '')
                  + '</div>';
         }});
+        html += '</div>';
     }});
     return html;
 }}
