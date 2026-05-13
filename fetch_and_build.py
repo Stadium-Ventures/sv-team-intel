@@ -3748,7 +3748,14 @@ function _gatherPdwGroupsForPlayer(player, monthKeySet) {{
     Object.keys(byTeam).forEach(team => {{
         const entries = byTeam[team].slice().sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
         if (!entries.length) return;
-        groups.push({{ team: team, entries: entries, firstDate: entries[0].date }});
+        const di = TEAM_DRAFT[team] || {{}};
+        groups.push({{
+            team: team,
+            entries: entries,
+            firstDate: entries[0].date,
+            pool: di.pool ? fmtPool(di.pool) : '',
+            picks: (di.picks || []).join(', '),
+        }});
     }});
     groups.sort((a,b) => a.firstDate < b.firstDate ? -1 : a.firstDate > b.firstDate ? 1 : 0);
     return groups;
@@ -3776,18 +3783,26 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
         if (!totalEntries && !combineOverlap) {{
             html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
         }} else {{
-            html += '<div style="display:grid;grid-template-columns:60px 52px 1fr;column-gap:14px;row-gap:4px;font-size:10.5px;line-height:1.35;">';
+            // 5-col layout: Team | Pool | Picks | Date | Location.
+            // Pool/Picks (and Team) only print on the first row of a team group;
+            // follow-up rows leave those cells blank so the meta isn't repeated.
+            html += '<div style="display:grid;grid-template-columns:38px 54px 96px 44px 1fr;column-gap:8px;row-gap:4px;font-size:10px;line-height:1.35;">';
             html += '<div style="' + HDR_STYLE + '">Team</div>'
+                 +  '<div style="' + HDR_STYLE + '">Pool</div>'
+                 +  '<div style="' + HDR_STYLE + '">Picks</div>'
                  +  '<div style="' + HDR_STYLE + '">Date</div>'
                  +  '<div style="' + HDR_STYLE + '">Location</div>';
             groups.forEach((g, gi) => {{
-                // Subtle spacer row between teams so groups visually separate.
                 if (gi > 0) html += '<div style="grid-column:1 / -1;height:5px;"></div>';
                 g.entries.forEach((entry, i) => {{
-                    const teamCell = (i === 0) ? _escHtml(g.team) : '';
+                    const teamCell  = (i === 0) ? _escHtml(g.team)  : '';
+                    const poolCell  = (i === 0) ? _escHtml(g.pool)  : '';
+                    const picksCell = (i === 0) ? _escHtml(g.picks) : '';
                     const d = new Date(entry.date + 'T00:00:00');
                     const dateStr = (d.getMonth()+1) + '/' + d.getDate();
                     html += '<div style="font-weight:800;color:#000;">' + teamCell + '</div>';
+                    html += '<div style="color:#444;">' + poolCell + '</div>';
+                    html += '<div style="color:#444;overflow-wrap:anywhere;">' + picksCell + '</div>';
                     html += '<div style="color:#222;">' + dateStr + '</div>';
                     html += '<div style="color:#555;">' + _escHtml(entry.location) + '</div>';
                 }});
@@ -3795,6 +3810,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             if (combineOverlap) {{
                 if (groups.length > 0) html += '<div style="grid-column:1 / -1;height:5px;"></div>';
                 html += '<div style="font-weight:800;color:#000;">MLB Combine</div>';
+                html += '<div></div><div></div>';
                 html += '<div style="color:#222;">' + COMBINE_INFO.dateLabel + '</div>';
                 html += '<div style="color:#555;">' + _escHtml(COMBINE_INFO.location) + '</div>';
             }}
