@@ -3688,53 +3688,114 @@ function _buildPdfGridHtml(year, month, eventsByDate) {{
     return html;
 }}
 
-// Combined agenda for the PDF — spans every YYYY-MM key in monthKeySet.
-// When the range covers more than one month, the date column widens to fit
-// the month abbreviation alongside the day.
-function _buildPdfAgendaHtml(players, eventsByDate, monthKeySet) {{
-    const isMulti = monthKeySet.size > 1;
-    const byPlayer = {{}};
-    Object.keys(eventsByDate).forEach(iso => {{
-        if (!monthKeySet.has(iso.slice(0,7))) return;
-        eventsByDate[iso].forEach(ev => {{
-            (byPlayer[ev.player] = byPlayer[ev.player] || []).push(ev);
+// MLB Combine canonical info — used to append a static PDW row when the
+// active range overlaps the combine window. Edit here to change everywhere.
+const COMBINE_INFO = {{ startIso: '2026-06-21', endIso: '2026-06-26', dateLabel: '6/21\\u20136/26', location: 'Phoenix, AZ' }};
+
+// Compact date-range label for a list of ISO dates:
+//   1 date     -> "5/18"
+//   2 adjacent -> "5/17 or 5/18"
+//   3+ adjacent in same month -> "5/27\\u201329"   (en-dash + bare last day)
+//   3+ adjacent across months -> "5/30\\u20136/2"
+//   Multiple non-adjacent groups joined with " or "
+function _fmtPdwDateLabel(isoList) {{
+    if (!isoList || !isoList.length) return '';
+    const uniq = [...new Set(isoList)].sort();
+    const groups = [[uniq[0]]];
+    for (let i = 1; i < uniq.length; i++) {{
+        const prev = new Date(uniq[i-1] + 'T00:00:00');
+        const next = new Date(uniq[i] + 'T00:00:00');
+        const diffDays = Math.round((next - prev) / 86400000);
+        if (diffDays === 1) groups[groups.length-1].push(uniq[i]);
+        else groups.push([uniq[i]]);
+    }}
+    const fmtMD = (iso) => {{
+        const d = new Date(iso + 'T00:00:00');
+        return (d.getMonth()+1) + '/' + d.getDate();
+    }};
+    const fmtGroup = (g) => {{
+        if (g.length === 1) return fmtMD(g[0]);
+        if (g.length === 2) return fmtMD(g[0]) + ' or ' + fmtMD(g[1]);
+        const firstM = g[0].split('-')[1];
+        const lastM = g[g.length-1].split('-')[1];
+        if (firstM === lastM) {{
+            // same month: "5/27–29" (drop the duplicate month on the right side)
+            const lastDay = new Date(g[g.length-1] + 'T00:00:00').getDate();
+            return fmtMD(g[0]) + '\\u2013' + lastDay;
+        }}
+        return fmtMD(g[0]) + '\\u2013' + fmtMD(g[g.length-1]);
+    }};
+    return groups.map(fmtGroup).join(' or ');
+}}
+
+// Build PDW-only rows for a single player, scoped to the active month range.
+// One row per team — date lists from multiple Slack messages are merged.
+function _gatherPdwRowsForPlayer(player, monthKeySet) {{
+    const byTeam = {{}};
+    RECORDS.forEach(r => {{
+        if (r.player !== player) return;
+        const ov = (typeof scoreOverrides !== 'undefined') ? scoreOverrides['w|' + r.player + '|' + r.team] : undefined;
+        const isPDW = (ov === false) ? false : (ov === true ? true : !!r.workout);
+        if (!isPDW) return;
+        if (!r.workout_dates || !r.workout_dates.length) return;
+        if (!byTeam[r.team]) byTeam[r.team] = {{ dates: [], locations: [] }};
+        r.workout_dates.forEach(wd => {{
+            if (!wd.date || !monthKeySet.has(wd.date.slice(0,7))) return;
+            byTeam[r.team].dates.push(wd.date);
+            if (wd.location) byTeam[r.team].locations.push(wd.location);
         }});
     }});
-    let html = '<div style="margin-top:18px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">';
+    const rows = [];
+    Object.keys(byTeam).forEach(team => {{
+        const info = byTeam[team];
+        if (!info.dates.length) return;
+        const sortedDates = [...new Set(info.dates)].sort();
+        // First non-empty location wins; if data ever has true conflicts the
+        // user can spot it in the calendar grid.
+        const loc = info.locations.length ? info.locations[0] : '';
+        rows.push({{
+            team: team,
+            dates: _fmtPdwDateLabel(sortedDates),
+            location: loc,
+            firstDate: sortedDates[0],
+        }});
+    }});
+    rows.sort((a,b) => a.firstDate < b.firstDate ? -1 : a.firstDate > b.firstDate ? 1 : 0);
+    return rows;
+}}
+
+// PDW Invites section for the PDF. One block per player; 3-col table inside
+// (Team / Date(s) / Location). MLB Combine appended as a static row when the
+// active range overlaps the combine window.
+function _buildPdfAgendaHtml(players, monthKeySet) {{
+    const combineOverlap = monthKeySet.has(COMBINE_INFO.startIso.slice(0,7))
+        || monthKeySet.has(COMBINE_INFO.endIso.slice(0,7));
+    let html = '<div style="margin-top:18px;">'
+             + '<div style="font-size:14px;font-weight:800;color:#000;border-bottom:2px solid #ff2a22;padding-bottom:4px;margin-bottom:10px;letter-spacing:0.3px;">PDW Invites</div>'
+             + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">';
     players.forEach(p => {{
-        const evs = (byPlayer[p] || []).slice().sort((a,b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:8px 10px;break-inside:avoid;">';
-        html += '<div style="font-size:12px;font-weight:700;color:#000000;margin-bottom:6px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
-        if (!evs.length) {{
-            html += '<div style="font-size:10px;color:#999;font-style:italic;">No events in this range.</div>';
+        const rows = _gatherPdwRowsForPlayer(p, monthKeySet);
+        html += '<div style="border:1px solid #ddd;border-radius:4px;padding:10px 12px;break-inside:avoid;">';
+        html += '<div style="font-size:12px;font-weight:700;color:#000;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:4px;">' + _escHtml(p) + '</div>';
+        if (!rows.length && !combineOverlap) {{
+            html += '<div style="font-size:10px;color:#999;font-style:italic;">No PDW invites in this range.</div>';
         }} else {{
-            const dateColW = isMulti ? 56 : 34;
-            evs.forEach(ev => {{
-                const d = new Date(ev.date + 'T00:00:00');
-                const dateStr = isMulti
-                    ? (MONTH_SHORT[d.getMonth()] + ' ' + d.getDate())
-                    : ((d.getMonth()+1) + '/' + d.getDate());
-                const isWorkout = ev.type === 'workout';
-                const isGame = ev.type === 'game';
-                let line = '';
-                if (isWorkout) {{
-                    line = _escHtml(ev.team || '?') + (ev.confirmed ? ' (confirmed)' : ' invite') + (ev.tentative ? ' · T' : '');
-                }} else if (isGame) {{
-                    line = 'vs ' + _escHtml(ev.opponent || '?');
-                    if (ev.ballpark) line += ' @ ' + _escHtml(ev.ballpark);
-                }} else {{
-                    line = _escHtml(ev.title || ev.type || 'Event');
-                }}
-                if (ev.time) line += ' · ' + _escHtml(ev.time);
-                if (ev.location && !isGame) line += ' · ' + _escHtml(ev.location);
-                html += '<div style="font-size:10px;color:#333;padding:2px 0;">'
-                     + '<span style="display:inline-block;width:' + dateColW + 'px;color:#888;font-weight:600;">' + dateStr + '</span>'
-                     + line + '</div>';
+            html += '<div style="display:grid;grid-template-columns:60px 1fr 130px;column-gap:14px;row-gap:5px;font-size:10.5px;line-height:1.35;">';
+            rows.forEach(row => {{
+                html += '<div style="font-weight:800;color:#000;">' + _escHtml(row.team) + '</div>';
+                html += '<div style="color:#222;">' + _escHtml(row.dates) + '</div>';
+                html += '<div style="color:#555;">' + _escHtml(row.location) + '</div>';
             }});
+            if (combineOverlap) {{
+                html += '<div style="font-weight:800;color:#000;">MLB Combine</div>';
+                html += '<div style="color:#222;">' + COMBINE_INFO.dateLabel + '</div>';
+                html += '<div style="color:#555;">' + _escHtml(COMBINE_INFO.location) + '</div>';
+            }}
+            html += '</div>';
         }}
         html += '</div>';
     }});
-    html += '</div>';
+    html += '</div></div>';
     return html;
 }}
 
@@ -3791,7 +3852,7 @@ function exportCalendarPDF() {{
       +   '<div class="pdf-gen">SV TeamIntel<br>Generated ' + nowIso + '</div>'
       + '</div>'
       + gridsHtml
-      + _buildPdfAgendaHtml(players, byDate, monthKeys);
+      + _buildPdfAgendaHtml(players, monthKeys);
 
     const doc = '<!DOCTYPE html>\\n<html><head><meta charset="utf-8"><title>' + filename + '</title>'
       + '<style>'
