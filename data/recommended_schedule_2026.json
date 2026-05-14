@@ -28,5 +28,26 @@
         ]
       }
     ]
+  },
+  "Trevor Condon": {
+    "tiers": [
+      {
+        "label": "Tier 1",
+        "entries": [
+          { "team": "MIA", "schedule": "5/31 or 6/4" },
+          { "team": "STL", "schedule": "6/1 Jupiter" },
+          { "team": "SD",  "schedule": "* 6/2 Lakeland" },
+          { "team": "HOU", "schedule": "6/3 Palm Beach" }
+        ]
+      },
+      {
+        "label": "Tier 2",
+        "entries": [
+          { "team": "ATL", "schedule": "6/8 ATL" },
+          { "team": "CIN", "schedule": "6/10 ATL" },
+          { "team": "DET", "schedule": "6/11 ATL" }
+        ]
+      }
+    ]
   }
 }
