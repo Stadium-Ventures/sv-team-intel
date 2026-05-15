@@ -3841,7 +3841,8 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
     const HDR_STYLE = 'font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;'
         + 'text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:2px;';
     const SUB_HEADER_STYLE = 'font-size:11px;font-weight:800;color:#000;'
-        + 'letter-spacing:0.4px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-bottom:5px;';
+        + 'letter-spacing:0.4px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-bottom:5px;'
+        + 'text-align:center;';
     // Single-column layout of full-width player blocks. Each block splits
     // internally into a left half (auto-generated PDW Invites from Slack) and
     // a right half (SV recommendation hand-curated in
