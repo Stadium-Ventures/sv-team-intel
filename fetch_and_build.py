@@ -3882,8 +3882,8 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             // ~40 invite rows across 16 teams) still fit on a single landscape
             // page. Font shrinks to 8.5px to recover an extra ~30% of vertical
             // space; readability is still fine in a printed PDF.
-            const TD = 'padding:0 4px 0 0;vertical-align:top;font-size:8.5px;line-height:1.2;';
-            const TH = 'padding:1px 4px 2px 0;vertical-align:bottom;text-align:left;font-size:8.5px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
+            const TD = 'padding:0 4px 0 4px;vertical-align:top;text-align:center;font-size:8.5px;line-height:1.2;';
+            const TH = 'padding:1px 4px 2px 4px;vertical-align:bottom;text-align:center;font-size:8.5px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
             html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
             html += '<colgroup>'
                  +    '<col style="width:38px;">'
@@ -3965,13 +3965,13 @@ function _buildPdwRecommendationHtml(player) {{
         // tier never splits across pages.
         html += '<div style="page-break-inside:avoid;break-inside:avoid;'
              + (ti > 0 ? 'margin-top:6px;' : '') + '">';
-        html += '<div style="font-size:10px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;">'
+        html += '<div style="font-size:10px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;text-align:center;">'
              + _escHtml(tier.label || ('Tier ' + (ti + 1))) + '</div>';
         (tier.entries || []).forEach(entry => {{
             const team = (entry.team || '').toUpperCase();
             const di = TEAM_DRAFT[team] || {{}};
             const earlyPicks = (di.picks || []).slice(0, 2).join(', ');
-            html += '<div style="font-size:10px;color:#222;line-height:1.4;padding:1px 0;">'
+            html += '<div style="font-size:10px;color:#222;line-height:1.4;padding:1px 0;text-align:center;">'
                  +    '<span style="font-weight:800;color:#000;">' + _escHtml(team) + '</span>'
                  +    (earlyPicks ? ' \\u00b7 <span style="color:#555;">' + earlyPicks + '</span>' : '')
                  +    (entry.schedule ? ' \\u00b7 ' + _escHtml(entry.schedule) : '')
