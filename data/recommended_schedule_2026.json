@@ -3,28 +3,29 @@
   "Bo Lowrance": {
     "tiers": [
       {
-        "label": "Tier 1",
+        "label": "Schedule",
         "entries": [
-          { "team": "BOS", "schedule": "5/30 or 5/31 Ft Myers" },
-          { "team": "HOU", "schedule": "6/2 or 6/3 Palm Beach or 6/8 Fayetteville, NC" },
-          { "team": "ATL", "schedule": "6/8 or 6/9 Truist" },
-          { "team": "CHC", "schedule": "5/28 Wrigley" }
+          { "team": "TRAVEL", "schedule": "5/27 (fly to Chicago)" },
+          { "team": "CHC",    "schedule": "5/28 Chicago (fly to Tampa or Sarasota)" },
+          { "team": "OFF",    "schedule": "5/29 (train w/ Chris - St Pete)" },
+          { "team": "BOS",    "schedule": "5/30 Fort Myers" },
+          { "team": "TOR",    "schedule": "5/31 Dunedin (drive to Palm Beach)" },
+          { "team": "OFF",    "schedule": "6/1" },
+          { "team": "HOU",    "schedule": "6/2 Palm Beach (fly home)" },
+          { "team": "SD",     "schedule": "* 6/3 Charlotte (maybe)" }
         ]
       },
       {
-        "label": "Tier 2",
+        "label": "Additional",
         "entries": [
-          { "team": "SD",  "schedule": "6/3 Charlotte, 6/2 Lakeland, 6/1 ATL" },
-          { "team": "NYM", "schedule": "5/27 ATL, 6/5 Port St Lucie, 6/8 NY" }
+          { "team": "ATL", "schedule": "6/8 Atlanta" }
         ]
       },
       {
-        "label": "Tier 3",
+        "label": "TBD",
         "entries": [
-          { "team": "PIT", "schedule": "6/9 Bradenton" },
-          { "team": "NYY", "schedule": "6/8-6/10 Tampa" },
-          { "team": "PHI", "schedule": "6/3 Clearwater" },
-          { "team": "TOR", "schedule": "6/6 Dunedin" }
+          { "team": "—",  "schedule": "Additional training with Chris Barnard in St Pete" },
+          { "team": "SF", "schedule": "Potential workout in Greenville" }
         ]
       }
     ]
