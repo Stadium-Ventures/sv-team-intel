@@ -3878,10 +3878,12 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             // on each tbody keeps a team's rows from being split across pages.
             // <thead> with display:table-header-group lets the column headers
             // repeat at the top of each page if the table spans multiple pages.
-            // Tight vertical padding so the full PDW table for an active player
-            // (Bo's ~14 teams / 29 rows) fits on a single landscape page.
-            const TD = 'padding:1px 4px 1px 0;vertical-align:top;font-size:9.5px;line-height:1.3;';
-            const TH = 'padding:2px 4px 3px 0;vertical-align:bottom;text-align:left;font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
+            // Very tight vertical packing so high-volume players (Trevor's
+            // ~40 invite rows across 16 teams) still fit on a single landscape
+            // page. Font shrinks to 8.5px to recover an extra ~30% of vertical
+            // space; readability is still fine in a printed PDF.
+            const TD = 'padding:0 4px 0 0;vertical-align:top;font-size:8.5px;line-height:1.2;';
+            const TH = 'padding:1px 4px 2px 0;vertical-align:bottom;text-align:left;font-size:8.5px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
             html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
             html += '<colgroup>'
                  +    '<col style="width:38px;">'
@@ -3951,7 +3953,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
 
 // SV's tentative recommended workout schedule for a player. Pulls from the
 // hand-curated RECOMMENDED_SCHEDULE map; picks are looked up from TEAM_DRAFT
-// and filtered to picks <= 40 (round 1 + comp-balance A range) and capped at 2.
+// and capped at 2 (first + second pick, regardless of round).
 function _buildPdwRecommendationHtml(player) {{
     const rec = RECOMMENDED_SCHEDULE[player];
     if (!rec || !rec.tiers || !rec.tiers.length) {{
@@ -3968,11 +3970,7 @@ function _buildPdwRecommendationHtml(player) {{
         (tier.entries || []).forEach(entry => {{
             const team = (entry.team || '').toUpperCase();
             const di = TEAM_DRAFT[team] || {{}};
-            const earlyPicks = (di.picks || [])
-                .map(p => parseInt(p, 10))
-                .filter(p => !isNaN(p) && p <= 40)
-                .slice(0, 2)
-                .join(', ');
+            const earlyPicks = (di.picks || []).slice(0, 2).join(', ');
             html += '<div style="font-size:10px;color:#222;line-height:1.4;padding:1px 0;">'
                  +    '<span style="font-weight:800;color:#000;">' + _escHtml(team) + '</span>'
                  +    (earlyPicks ? ' \\u00b7 <span style="color:#555;">' + earlyPicks + '</span>' : '')
