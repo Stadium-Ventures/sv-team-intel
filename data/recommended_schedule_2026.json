@@ -35,20 +35,26 @@
       {
         "label": "Tier 1",
         "entries": [
-          { "team": "MIA", "schedule": "5/31 or 6/4" },
           { "team": "STL", "schedule": "6/1 Jupiter" },
-          { "team": "ATL", "schedule": "6/8 ATL" },
-          { "team": "CIN", "schedule": "6/10 ATL" },
-          { "team": "DET", "schedule": "6/11 ATL" }
+          { "team": "SD",  "schedule": "6/2 Lakeland" },
+          { "team": "HOU", "schedule": "6/3 Palm Beach" },
+          { "team": "MIA", "schedule": "6/4 Jupiter" },
+          { "team": "ATL", "schedule": "6/8 or 6/9 Atlanta" },
+          { "team": "CIN", "schedule": "6/10 Atlanta" },
+          { "team": "DET", "schedule": "6/11 Atlanta" }
         ]
       },
       {
-        "label": "Tier 2",
+        "label": "Combine",
         "entries": [
-          { "team": "TEX" },
-          { "team": "SD",  "schedule": "* 6/2 Lakeland" },
-          { "team": "MIL" },
-          { "team": "HOU", "schedule": "6/3 Palm Beach" },
+          { "team": "MIL", "schedule": "*" },
+          { "team": "CHC", "schedule": "*" },
+          { "team": "TEX", "schedule": "*" },
+          { "team": "ARI", "schedule": "*" },
+          { "team": "COL", "schedule": "*" },
+          { "team": "NYY" },
+          { "team": "TB" },
+          { "team": "PHI" },
           { "team": "KC" }
         ]
       }
@@ -59,19 +65,14 @@
       {
         "label": "Tier 1",
         "entries": [
-          { "team": "TB" },
-          { "team": "BAL" },
-          { "team": "PHI" },
-          { "team": "PIT" },
-          { "team": "NYY" },
-          { "team": "WSH" }
-        ]
-      },
-      {
-        "label": "Tier 2",
-        "entries": [
-          { "team": "LAA" },
-          { "team": "TOR" }
+          { "team": "SD",  "schedule": "6/2 Lakeland" },
+          { "team": "PHI", "schedule": "6/3 Clearwater" },
+          { "team": "TOR", "schedule": "6/4 Dunedin 2:30 pm" },
+          { "team": "BAL", "schedule": "6/5 Sarasota" },
+          { "team": "OFF", "schedule": "Training with Chris Barnard" },
+          { "team": "PIT", "schedule": "6/9 Bradenton" },
+          { "team": "NYY", "schedule": "6/10 Tampa" },
+          { "team": "TB",  "schedule": "6/12 St Pete" }
         ]
       }
     ]
