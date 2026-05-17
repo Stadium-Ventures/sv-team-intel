@@ -3883,7 +3883,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
             // ~40 invite rows across 16 teams) still fit on a single landscape
             // page. Font shrinks to 8.5px to recover an extra ~30% of vertical
             // space; readability is still fine in a printed PDF.
-            const TD = 'padding:0 4px 0 4px;vertical-align:top;text-align:center;font-size:8.5px;line-height:1.2;';
+            const TD = 'padding:0 4px 0 4px;vertical-align:top;text-align:center;font-size:8.5px;line-height:1.55;';
             const TH = 'padding:1px 4px 2px 4px;vertical-align:bottom;text-align:center;font-size:8.5px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
             html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
             html += '<colgroup>'
