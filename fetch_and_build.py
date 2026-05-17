@@ -3966,8 +3966,13 @@ function _buildPdwRecommendationHtml(player) {{
         // tier never splits across pages.
         html += '<div style="page-break-inside:avoid;break-inside:avoid;'
              + (ti > 0 ? 'margin-top:6px;' : '') + '">';
-        html += '<div style="font-size:10px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;text-align:center;">'
-             + _escHtml(tier.label || ('Tier ' + (ti + 1))) + '</div>';
+        // Empty string label -> render no header (clean tier-gap-only separator).
+        // Missing label falls back to "Tier N" for legacy entries.
+        const _label = (tier.label === undefined || tier.label === null) ? ('Tier ' + (ti + 1)) : tier.label;
+        if (_label !== '') {{
+            html += '<div style="font-size:10px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;text-align:center;">'
+                 + _escHtml(_label) + '</div>';
+        }}
         (tier.entries || []).forEach(entry => {{
             const team = (entry.team || '').toUpperCase();
             const di = TEAM_DRAFT[team] || {{}};

@@ -5,6 +5,12 @@
       {
         "label": "Schedule",
         "entries": [
+          { "team": "KC", "schedule": "5/18 Spartanburg" }
+        ]
+      },
+      {
+        "label": "",
+        "entries": [
           { "team": "TRAVEL", "schedule": "5/27 (fly to Chicago)" },
           { "team": "CHC",    "schedule": "5/28 Chicago (fly to Tampa or Sarasota)" },
           { "team": "OFF",    "schedule": "5/29 (train w/ Chris - St Pete)" },
@@ -16,7 +22,7 @@
         ]
       },
       {
-        "label": "Additional",
+        "label": "",
         "entries": [
           { "team": "ATL", "schedule": "6/8 Atlanta" }
         ]
