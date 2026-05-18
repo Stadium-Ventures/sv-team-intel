@@ -3977,6 +3977,11 @@ function _buildPdwRecommendationHtml(player) {{
             const team = (entry.team || '').toUpperCase();
             const di = TEAM_DRAFT[team] || {{}};
             const earlyPicks = (di.picks || []).slice(0, 2).join(', ');
+            // Empty team + no schedule -> blank spacer row (visual gap between entries).
+            if (!team && !entry.schedule) {{
+                html += '<div style="font-size:12px;line-height:1.4;padding:1px 0;">&nbsp;</div>';
+                return;
+            }}
             html += '<div style="font-size:12px;color:#222;line-height:1.4;padding:1px 0;text-align:center;">'
                  +    '<span style="font-weight:800;color:#000;">' + _escHtml(team) + '</span>'
                  +    (earlyPicks ? ' \\u00b7 <span style="color:#555;">' + earlyPicks + '</span>' : '')
