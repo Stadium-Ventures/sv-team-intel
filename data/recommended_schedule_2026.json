@@ -44,6 +44,7 @@
           { "team": "SD",  "schedule": "6/2 Lakeland" },
           { "team": "HOU", "schedule": "6/3 Palm Beach" },
           { "team": "MIA", "schedule": "6/4 Jupiter" },
+          { "team": "OFF" },
           { "team": "ATL", "schedule": "6/8 or 6/9 Atlanta" },
           { "team": "CIN", "schedule": "6/10 Atlanta" },
           { "team": "DET", "schedule": "6/11 Atlanta" }

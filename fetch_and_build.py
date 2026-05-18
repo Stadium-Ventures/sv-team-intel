@@ -3970,14 +3970,14 @@ function _buildPdwRecommendationHtml(player) {{
         // Missing label falls back to "Tier N" for legacy entries.
         const _label = (tier.label === undefined || tier.label === null) ? ('Tier ' + (ti + 1)) : tier.label;
         if (_label !== '') {{
-            html += '<div style="font-size:10px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;text-align:center;">'
+            html += '<div style="font-size:12px;font-weight:800;color:#ff2a22;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;text-align:center;">'
                  + _escHtml(_label) + '</div>';
         }}
         (tier.entries || []).forEach(entry => {{
             const team = (entry.team || '').toUpperCase();
             const di = TEAM_DRAFT[team] || {{}};
             const earlyPicks = (di.picks || []).slice(0, 2).join(', ');
-            html += '<div style="font-size:10px;color:#222;line-height:1.4;padding:1px 0;text-align:center;">'
+            html += '<div style="font-size:12px;color:#222;line-height:1.4;padding:1px 0;text-align:center;">'
                  +    '<span style="font-weight:800;color:#000;">' + _escHtml(team) + '</span>'
                  +    (earlyPicks ? ' \\u00b7 <span style="color:#555;">' + earlyPicks + '</span>' : '')
                  +    (entry.schedule ? ' \\u00b7 ' + _escHtml(entry.schedule) : '')
