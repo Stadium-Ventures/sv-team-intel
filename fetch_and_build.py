@@ -3726,7 +3726,7 @@ function _escHtml(s) {{
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }}
 
-function _buildPdfGridHtml(year, month, eventsByDate) {{
+function _buildPdfGridHtml(year, month, eventsByDate, includeCombine) {{
     const first = new Date(year, month, 1);
     const startDow = first.getDay();
     const daysInMonth = new Date(year, month+1, 0).getDate();
@@ -3743,7 +3743,7 @@ function _buildPdfGridHtml(year, month, eventsByDate) {{
         }}
         const iso = year + '-' + String(month+1).padStart(2,'0') + '-' + String(dayNum).padStart(2,'0');
         const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
-        const isCombine = (iso >= '2026-06-21' && iso <= '2026-06-26');
+        const isCombine = !!includeCombine && (iso >= '2026-06-21' && iso <= '2026-06-26');
         const bg = isDraft ? '#fff5e0' : (isCombine ? '#e8f0fb' : 'white');
         html += '<div style="background:' + bg + ';min-height:90px;padding:4px 5px;vertical-align:top;">';
         html += '<div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px;">' + dayNum
@@ -4051,6 +4051,7 @@ function exportCalendarPDF() {{
     // One grid per month, each on its own page. The first month follows the
     // PDF header on page 1; every subsequent month gets a page break before it.
     // break-inside:avoid keeps a month's grid from splitting across pages.
+    const includeCombine = _pdfLoadCombineToggle();
     let gridsHtml = '';
     months.forEach((m, i) => {{
         const pageBreak = i > 0 ? 'page-break-before:always;break-before:page;' : '';
@@ -4059,7 +4060,7 @@ function exportCalendarPDF() {{
             gridsHtml += '<div style="font-size:13px;font-weight:800;color:#000;padding:0 0 6px;border-bottom:2px solid #000;margin-bottom:6px;letter-spacing:0.4px;">'
                 + MONTH_NAMES[m.getMonth()] + ' ' + m.getFullYear() + '</div>';
         }}
-        gridsHtml += _buildPdfGridHtml(m.getFullYear(), m.getMonth(), byDate);
+        gridsHtml += _buildPdfGridHtml(m.getFullYear(), m.getMonth(), byDate, includeCombine);
         gridsHtml += '</div>';
     }});
 
@@ -4072,7 +4073,7 @@ function exportCalendarPDF() {{
       +   '<div class="pdf-gen">SV TeamIntel<br>Generated ' + nowIso + '</div>'
       + '</div>'
       + gridsHtml
-      + _buildPdfAgendaHtml(players, monthKeys, _pdfLoadCombineToggle());
+      + _buildPdfAgendaHtml(players, monthKeys, includeCombine);
 
     const doc = '<!DOCTYPE html>\\n<html><head><meta charset="utf-8"><title>' + filename + '</title>'
       + '<style>'
