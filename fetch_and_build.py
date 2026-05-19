@@ -3924,7 +3924,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
                 }});
                 html += '</tbody>';
             }});
-            if (combineOverlap) {{
+            if (combineOverlap && p !== 'Trevor Condon') {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
                 if (groups.length > 0) html += '<tr><td colspan="6" style="height:3px;padding:0;"></td></tr>';
                 html += '<tr>'
