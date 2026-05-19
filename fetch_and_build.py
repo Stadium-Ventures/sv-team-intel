@@ -2083,6 +2083,10 @@ function checkPw() {{
         </div>
         <button class="cal-addbtn" onclick="openEventModal(null, null)">+ Add Event</button>
         <button class="cal-pdfbtn" onclick="exportCalendarPDF()" title="Download this month as PDF">&#x2B07; PDF</button>
+        <label class="cal-pdfopt" title="Include MLB Combine row in the PDW Invites table" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#555;cursor:pointer;user-select:none;margin-right:4px;">
+            <input type="checkbox" id="pdfIncludeCombine" onchange="_pdfSaveCombineToggle(this.checked)" style="margin:0;cursor:pointer;">
+            Add Combine
+        </label>
         <div class="cal-filter cal-multi" id="calPlayerDropdown">
             <label>Players:</label>
             <button type="button" class="cal-multi-btn" onclick="event.stopPropagation(); toggleCalPlayerPanel()">
@@ -3395,6 +3399,7 @@ var _calMonthEnd = null;          // Date|null. null = single-month mode (uses _
 
 const _CAL_PLAYERS_LS_KEY = 'ti_cal_selected_players_v1';
 const _CAL_TYPES_LS_KEY = 'ti_cal_selected_types_v1';
+const _CAL_PDF_COMBINE_LS_KEY = 'ti_cal_pdf_include_combine_v1';
 const _CAL_TYPES_ALL = ['workout','game','other'];
 const _CAL_TYPE_LABELS = {{ workout: 'Workouts', game: 'Games', other: 'Other' }};
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -3528,6 +3533,23 @@ function _calSaveTypeSelection() {{
 }}
 function _calEnsureTypeSelection() {{
     if (_calSelectedTypes === null) _calSelectedTypes = _calLoadTypeSelection();
+}}
+// PDF "Add Combine" toggle — controls whether the MLB Combine row is appended
+// to each player's PDW Invites table in the exported PDF. Default ON.
+function _pdfLoadCombineToggle() {{
+    try {{
+        const raw = localStorage.getItem(_CAL_PDF_COMBINE_LS_KEY);
+        if (raw === '0') return false;
+        if (raw === '1') return true;
+    }} catch(e) {{ /* ignore */ }}
+    return true;
+}}
+function _pdfSaveCombineToggle(on) {{
+    try {{ localStorage.setItem(_CAL_PDF_COMBINE_LS_KEY, on ? '1' : '0'); }} catch(e) {{}}
+}}
+function _pdfSyncCombineCheckbox() {{
+    const cb = document.getElementById('pdfIncludeCombine');
+    if (cb) cb.checked = _pdfLoadCombineToggle();
 }}
 function _calRenderTypeChips() {{
     const host = document.getElementById('calTypeChips');
@@ -3835,9 +3857,9 @@ function _gatherPdwGroupsForPlayer(player, monthKeySet) {{
 // PDW Invites section for the PDF. One block per player; 3-col table inside
 // (Team / Date(s) / Location). MLB Combine appended as a static row when the
 // active range overlaps the combine window.
-function _buildPdfAgendaHtml(players, monthKeySet) {{
-    const combineOverlap = monthKeySet.has(COMBINE_INFO.startIso.slice(0,7))
-        || monthKeySet.has(COMBINE_INFO.endIso.slice(0,7));
+function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
+    const combineOverlap = !!includeCombine && (monthKeySet.has(COMBINE_INFO.startIso.slice(0,7))
+        || monthKeySet.has(COMBINE_INFO.endIso.slice(0,7)));
     const HDR_STYLE = 'font-size:9px;font-weight:800;color:#888;letter-spacing:0.6px;'
         + 'text-transform:uppercase;border-bottom:1px solid #ddd;padding-bottom:2px;';
     const SUB_HEADER_STYLE = 'font-size:11px;font-weight:800;color:#000;'
@@ -3924,7 +3946,7 @@ function _buildPdfAgendaHtml(players, monthKeySet) {{
                 }});
                 html += '</tbody>';
             }});
-            if (combineOverlap && p !== 'Trevor Condon') {{
+            if (combineOverlap) {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
                 if (groups.length > 0) html += '<tr><td colspan="6" style="height:3px;padding:0;"></td></tr>';
                 html += '<tr>'
@@ -4050,7 +4072,7 @@ function exportCalendarPDF() {{
       +   '<div class="pdf-gen">SV TeamIntel<br>Generated ' + nowIso + '</div>'
       + '</div>'
       + gridsHtml
-      + _buildPdfAgendaHtml(players, monthKeys);
+      + _buildPdfAgendaHtml(players, monthKeys, _pdfLoadCombineToggle());
 
     const doc = '<!DOCTYPE html>\\n<html><head><meta charset="utf-8"><title>' + filename + '</title>'
       + '<style>'
@@ -4766,6 +4788,7 @@ async function initCalendar() {{
     _calInitialized = true;
     buildAutoEvents();
     await loadCalendarEvents();
+    _pdfSyncCombineCheckbox();
     renderCalendar();
 }}
 
