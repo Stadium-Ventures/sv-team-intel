@@ -66,6 +66,21 @@
       }
     ]
   },
+  "Mason Eckelman": {
+    "tiers": [
+      {
+        "label": "Tier 1",
+        "entries": [
+          { "team": "DET", "schedule": "5/31 Detroit - 3 hrs (then fly to Tampa)" },
+          { "team": "TOR", "schedule": "6/1 Dunedin" },
+          { "team": "CIN", "schedule": "6/4 Cincinnati - 3.5 hrs" },
+          { "team": "MIA", "schedule": "6/6 or 6/7 North Allegheny - 1 hr 40 min" },
+          { "team": "SD",  "schedule": "6/11 Fort Wayne - 3 hrs" },
+          { "team": "LAA", "schedule": "6/12 Chicago - 5 hrs" }
+        ]
+      }
+    ]
+  },
   "Taj Marchand": {
     "tiers": [
       {
