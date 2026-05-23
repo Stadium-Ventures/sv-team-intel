@@ -3839,7 +3839,10 @@ function _gatherPdwGroupsForPlayer(player, monthKeySet) {{
         const di = TEAM_DRAFT[team] || {{}};
         // Only the first two picks per the user's preference — keeps the cell
         // compact in the half-page block. Farm rank rendered as "#N".
-        const firstTwoPicks = (di.picks || []).slice(0, 2).join(', ');
+        // Mason Eckelman: picks suppressed at his request.
+        const firstTwoPicks = (player === 'Mason Eckelman')
+            ? ''
+            : (di.picks || []).slice(0, 2).join(', ');
         const farm = (di.farm_rank != null) ? ('#' + di.farm_rank) : '';
         groups.push({{
             team: team,
@@ -3998,7 +4001,10 @@ function _buildPdwRecommendationHtml(player) {{
         (tier.entries || []).forEach(entry => {{
             const team = (entry.team || '').toUpperCase();
             const di = TEAM_DRAFT[team] || {{}};
-            const earlyPicks = (di.picks || []).slice(0, 2).join(', ');
+            // Mason Eckelman: picks suppressed at his request.
+            const earlyPicks = (player === 'Mason Eckelman')
+                ? ''
+                : (di.picks || []).slice(0, 2).join(', ');
             // Empty team + no schedule -> blank spacer row (visual gap between entries).
             if (!team && !entry.schedule) {{
                 html += '<div style="font-size:12px;line-height:1.4;padding:1px 0;">&nbsp;</div>';
