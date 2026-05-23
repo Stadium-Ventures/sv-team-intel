@@ -3839,10 +3839,7 @@ function _gatherPdwGroupsForPlayer(player, monthKeySet) {{
         const di = TEAM_DRAFT[team] || {{}};
         // Only the first two picks per the user's preference — keeps the cell
         // compact in the half-page block. Farm rank rendered as "#N".
-        // Mason Eckelman: picks suppressed at his request.
-        const firstTwoPicks = (player === 'Mason Eckelman')
-            ? ''
-            : (di.picks || []).slice(0, 2).join(', ');
+        const firstTwoPicks = (di.picks || []).slice(0, 2).join(', ');
         const farm = (di.farm_rank != null) ? ('#' + di.farm_rank) : '';
         groups.push({{
             team: team,
@@ -3908,13 +3905,17 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
             // ~40 invite rows across 16 teams) still fit on a single landscape
             // page. Font shrinks to 8.5px to recover an extra ~30% of vertical
             // space; readability is still fine in a printed PDF.
-            const TD = 'padding:0 4px 0 4px;vertical-align:top;text-align:center;font-size:8.5px;line-height:1.55;';
-            const TH = 'padding:1px 4px 2px 4px;vertical-align:bottom;text-align:center;font-size:8.5px;font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
+            // Mason Eckelman: hide the Picks column entirely and bump font.
+            const hidePicks = (p === 'Mason Eckelman');
+            const fontPx = hidePicks ? '12px' : '8.5px';
+            const colspanAll = hidePicks ? 5 : 6;
+            const TD = 'padding:0 4px 0 4px;vertical-align:top;text-align:center;font-size:' + fontPx + ';line-height:1.55;';
+            const TH = 'padding:1px 4px 2px 4px;vertical-align:bottom;text-align:center;font-size:' + fontPx + ';font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
             html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
             html += '<colgroup>'
                  +    '<col style="width:38px;">'
                  +    '<col style="width:50px;">'
-                 +    '<col style="width:58px;">'
+                 +    (hidePicks ? '' : '<col style="width:58px;">')
                  +    '<col style="width:36px;">'
                  +    '<col style="width:44px;">'
                  +    '<col>'
@@ -3922,7 +3923,7 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
             html += '<thead style="display:table-header-group;"><tr>'
                  +    '<th style="' + TH + '">Team</th>'
                  +    '<th style="' + TH + '">Pool</th>'
-                 +    '<th style="' + TH + '">Picks</th>'
+                 +    (hidePicks ? '' : '<th style="' + TH + '">Picks</th>')
                  +    '<th style="' + TH + '">Farm</th>'
                  +    '<th style="' + TH + '">Date</th>'
                  +    '<th style="' + TH + '">Location</th>'
@@ -3930,7 +3931,7 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
             groups.forEach((g, gi) => {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
                 // Subtle spacer row above every team after the first.
-                if (gi > 0) html += '<tr><td colspan="6" style="height:3px;padding:0;"></td></tr>';
+                if (gi > 0) html += '<tr><td colspan="' + colspanAll + '" style="height:3px;padding:0;"></td></tr>';
                 g.entries.forEach((entry, i) => {{
                     const teamCell  = (i === 0) ? _escHtml(g.team)  : '';
                     const poolCell  = (i === 0) ? _escHtml(g.pool)  : '';
@@ -3941,7 +3942,7 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
                     html += '<tr>'
                          +    '<td style="' + TD + 'font-weight:800;color:#000;">' + teamCell + '</td>'
                          +    '<td style="' + TD + 'color:#444;">' + poolCell + '</td>'
-                         +    '<td style="' + TD + 'color:#444;">' + picksCell + '</td>'
+                         +    (hidePicks ? '' : '<td style="' + TD + 'color:#444;">' + picksCell + '</td>')
                          +    '<td style="' + TD + 'color:#444;font-weight:700;">' + farmCell + '</td>'
                          +    '<td style="' + TD + 'color:#222;">' + dateStr + '</td>'
                          +    '<td style="' + TD + 'color:#555;">' + _escHtml(entry.location) + '</td>'
@@ -3951,11 +3952,11 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
             }});
             if (combineOverlap) {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
-                if (groups.length > 0) html += '<tr><td colspan="6" style="height:3px;padding:0;"></td></tr>';
+                if (groups.length > 0) html += '<tr><td colspan="' + colspanAll + '" style="height:3px;padding:0;"></td></tr>';
                 html += '<tr>'
                      +    '<td style="' + TD + 'font-weight:800;color:#000;">MLB Combine</td>'
                      +    '<td style="' + TD + '"></td>'
-                     +    '<td style="' + TD + '"></td>'
+                     +    (hidePicks ? '' : '<td style="' + TD + '"></td>')
                      +    '<td style="' + TD + '"></td>'
                      +    '<td style="' + TD + 'color:#222;">' + COMBINE_INFO.dateLabel + '</td>'
                      +    '<td style="' + TD + 'color:#555;">' + _escHtml(COMBINE_INFO.location) + '</td>'
