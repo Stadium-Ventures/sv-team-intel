@@ -587,6 +587,15 @@ def extract_workout_dates(full_text):
         line = raw_line.strip()
         if not line: continue
         is_date_list = bool(_WD_DATE_LIST_LINE_RE.match(line))
+        # "Atlanta, GA - June 1 (Kennesaw)" is a date entry, not a team header —
+        # without this, the leading city overwrites current_team (ATL absorbs
+        # dates belonging to the team from a prior "Workout invite - SDP" line).
+        if not is_date_list:
+            _ld = _WD_LOC_DATE_RE.match(line)
+            if _ld:
+                _cand = _ld.group(1).strip().rstrip('.,')
+                if _cand and re.search(r',\s*[A-Z]{2}\b', _cand) and _wd_is_standalone_location(_cand):
+                    is_date_list = True
         teams_in_line = find_teams_in_line(line)
         if teams_in_line and not is_date_list:
             new_team = _wd_first_team(line) or sorted(teams_in_line)[0]
