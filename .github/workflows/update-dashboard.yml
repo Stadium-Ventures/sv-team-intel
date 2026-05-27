@@ -51,7 +51,26 @@ jobs:
           # field, so any real data change still trips the guard and commits.
           if git diff --staged --quiet -I'Last updated:'; then
             echo "No data change (only the timestamp moved) — skipping commit & redeploy."
-          else
-            git commit -m "Auto-update TeamIntel dashboard $(date -u +'%Y-%m-%d %H:%M UTC')"
-            git push
+            exit 0
           fi
+          git commit -m "Auto-update TeamIntel dashboard $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # Push with retry. A transient GitHub "fatal error in commit_refs" or a
+          # concurrent push (manual run coinciding with cron) can reject the first
+          # attempt. Rebase onto the latest main between tries. If another run
+          # already pushed newer data (rebase conflict on the regenerated files),
+          # bail cleanly — the next scheduled run regenerates from source anyway.
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push attempt $attempt rejected; syncing with origin/main..."
+            if ! git pull --rebase origin main; then
+              git rebase --abort 2>/dev/null || true
+              echo "origin/main already has newer data — skipping; next run refreshes."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Push failed after 3 attempts (likely a transient GitHub issue)."
+          exit 1
