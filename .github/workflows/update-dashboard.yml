@@ -44,5 +44,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/index.html public/teamintel.json
-          git diff --staged --quiet || git commit -m "Auto-update TeamIntel dashboard $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
+          # Skip the commit (and the Vercel redeploy it triggers) when the only
+          # change is the "Last updated" timestamp stamped into index.html every
+          # build — i.e. no new/edited data this run. `-I` ignores hunks whose
+          # changed lines all match the regex; teamintel.json carries no volatile
+          # field, so any real data change still trips the guard and commits.
+          if git diff --staged --quiet -I'Last updated:'; then
+            echo "No data change (only the timestamp moved) — skipping commit & redeploy."
+          else
+            git commit -m "Auto-update TeamIntel dashboard $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
