@@ -3924,9 +3924,16 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
             // space; readability is still fine in a printed PDF.
             // Mason Eckelman: hide the Picks column entirely and bump font.
             const hidePicks = (p === 'Mason Eckelman');
+            // Trevor-volume players (~50+ rows across 20+ teams) overflow the
+            // page at the default 8.5px / 1.55 line-height. Tighten line-height
+            // and inter-team spacers when row count crosses the threshold.
+            const totalRows = groups.reduce((s, g) => s + g.entries.length, 0) + (combineOverlap ? 1 : 0);
+            const ultraTight = !hidePicks && totalRows >= 45;
             const fontPx = hidePicks ? '12px' : '8.5px';
+            const lineHt = ultraTight ? '1.3' : '1.55';
+            const spacerHt = ultraTight ? '1px' : '3px';
             const colspanAll = hidePicks ? 5 : 6;
-            const TD = 'padding:0 4px 0 4px;vertical-align:top;text-align:center;font-size:' + fontPx + ';line-height:1.55;';
+            const TD = 'padding:0 4px 0 4px;vertical-align:top;text-align:center;font-size:' + fontPx + ';line-height:' + lineHt + ';';
             const TH = 'padding:1px 4px 2px 4px;vertical-align:bottom;text-align:center;font-size:' + fontPx + ';font-weight:800;color:#888;letter-spacing:0.6px;text-transform:uppercase;border-bottom:1px solid #ddd;';
             html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
             html += '<colgroup>'
@@ -3948,7 +3955,7 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
             groups.forEach((g, gi) => {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
                 // Subtle spacer row above every team after the first.
-                if (gi > 0) html += '<tr><td colspan="' + colspanAll + '" style="height:3px;padding:0;"></td></tr>';
+                if (gi > 0) html += '<tr><td colspan="' + colspanAll + '" style="height:' + spacerHt + ';padding:0;"></td></tr>';
                 g.entries.forEach((entry, i) => {{
                     const teamCell  = (i === 0) ? _escHtml(g.team)  : '';
                     const poolCell  = (i === 0) ? _escHtml(g.pool)  : '';
@@ -3969,7 +3976,7 @@ function _buildPdfAgendaHtml(players, monthKeySet, includeCombine) {{
             }});
             if (combineOverlap) {{
                 html += '<tbody style="page-break-inside:avoid;break-inside:avoid;">';
-                if (groups.length > 0) html += '<tr><td colspan="' + colspanAll + '" style="height:3px;padding:0;"></td></tr>';
+                if (groups.length > 0) html += '<tr><td colspan="' + colspanAll + '" style="height:' + spacerHt + ';padding:0;"></td></tr>';
                 html += '<tr>'
                      +    '<td style="' + TD + 'font-weight:800;color:#000;">MLB Combine</td>'
                      +    '<td style="' + TD + '"></td>'
