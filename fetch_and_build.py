@@ -22,6 +22,7 @@ PLAYERS_2026 = {
     'steele': 'Lucas Steele', 'gillen': 'Michael Gillen', 'fowler': 'Bryce Fowler',
     'myhand': 'Will Myhand', 'mccarron': 'Duke McCarron', 'viveros': 'Easton Viveros',
     'woodward': 'Dominic Woodward', 'ellis': 'Lee Ellis', 'tryon': 'Ben Tryon',
+    'lay': 'Ethan Lay',
 }
 
 ALL_2026_PLAYERS = sorted(set(PLAYERS_2026.values()))
@@ -40,7 +41,7 @@ CHANNEL_TO_PLAYER = {
     'bryce-fowler': 'Bryce Fowler', 'will-myhand': 'Will Myhand',
     'ben-tryon': 'Ben Tryon', 'duke-mccarron': 'Duke McCarron',
     'easton-viveros': 'Easton Viveros', 'lee-ellis': 'Lee Ellis',
-    'dominic-woodward': 'Dominic Woodward',
+    'dominic-woodward': 'Dominic Woodward', 'ethan-lay': 'Ethan Lay',
 }
 
 TEAM_ABBR = {
@@ -95,7 +96,7 @@ CHANNELS = [
     ("bryce-fowler", "C08C6RT634P"), ("will-myhand", "C08DA7A0P6C"),
     ("ben-tryon", "C0A3EKND2P4"), ("duke-mccarron", "C0A605KCVJ7"),
     ("easton-viveros", "C0ACP8YSA00"), ("lee-ellis", "C0A844F4SUF"),
-    ("dominic-woodward", "C0ADA5H22C8"),
+    ("dominic-woodward", "C0ADA5H22C8"), ("ethan-lay", "C0AT6H9ME9G"),
 ]
 
 
@@ -219,6 +220,11 @@ def find_players_in_text(text):
     found = set()
     tl = text.lower()
     for last, full in PLAYERS_2026.items():
+        # 'lay' is a substring of common words (player, playoff, display, relay,
+        # delay). Skip the naive substring match and detect Ethan Lay by his
+        # distinctive first name below instead.
+        if last == 'lay':
+            continue
         if last in tl:
             found.add(full)
     if re.search(r'\bcam\b', tl) and 'Cameron Flukey' not in found:
@@ -245,6 +251,8 @@ def find_players_in_text(text):
         found.add('Brady Neal')
     if re.search(r'\blee\b', tl) and 'Lee Ellis' not in found:
         found.add('Lee Ellis')
+    if re.search(r'\bethan\b', tl) and 'Ethan Lay' not in found:
+        found.add('Ethan Lay')
     return found
 
 # Single-player Slack channels — every message in these is already scoped to one player,
