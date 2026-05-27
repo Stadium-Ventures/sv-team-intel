@@ -2,9 +2,14 @@ name: Update TeamIntel Dashboard
 
 on:
   schedule:
-    # Run hourly
-    - cron: '0 * * * *'
-  workflow_dispatch: # Allow manual trigger
+    # Hourly, but pause overnight to cut Vercel redeploys / Actions runs.
+    # GitHub cron is UTC-only. During the draft season the East Coast is on
+    # EDT (UTC-4), so the 12am-6am ET quiet window == 04:00-09:59 UTC.
+    # Runs at UTC 00-03 and 10-23 (resuming at 6am ET = 10:00 UTC).
+    # NOTE: not DST-aware — in EST/winter this window shifts an hour, but the
+    # dashboard's active window ends at the July 2026 draft (all EDT).
+    - cron: '0 0-3,10-23 * * *'
+  workflow_dispatch: # Allow manual trigger (always runs, ignores the window)
 
 permissions:
   contents: write
