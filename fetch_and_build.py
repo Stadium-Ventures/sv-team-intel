@@ -16,13 +16,10 @@ PLAYERS_2026 = {
     'robbins': 'Aiden Robbins', 'flukey': 'Cameron Flukey', 'jones': 'Kyle Jones',
     'bailey': 'Myles Bailey', 'condon': 'Trevor Condon', 'lowrance': 'Bo Lowrance',
     'marchand': 'Taj Marchand', 'tiroly': 'Joe Tiroly', 'kranzler': 'Alex Kranzler',
-    'torres': 'Boston Torres', 'neal': 'Brady Neal', 'wright': 'Brooks Wright',
-    'cleveland': 'Cole Cleveland', 'diaz': 'Devin Diaz', 'lawrence': 'Lucas Lawrence',
-    'loy': 'Griffin Loy', 'beaird': 'Phinn Beaird', 'eckelman': 'Mason Eckelman',
-    'steele': 'Lucas Steele', 'gillen': 'Michael Gillen', 'fowler': 'Bryce Fowler',
-    'myhand': 'Will Myhand', 'mccarron': 'Duke McCarron', 'viveros': 'Easton Viveros',
-    'woodward': 'Dominic Woodward', 'ellis': 'Lee Ellis', 'tryon': 'Ben Tryon',
-    'lay': 'Ethan Lay',
+    'torres': 'Boston Torres', 'neal': 'Brady Neal', 'diaz': 'Devin Diaz',
+    'lawrence': 'Lucas Lawrence', 'beaird': 'Phinn Beaird', 'eckelman': 'Mason Eckelman',
+    'fowler': 'Bryce Fowler', 'mccarron': 'Duke McCarron', 'ellis': 'Lee Ellis',
+    'tryon': 'Ben Tryon', 'lay': 'Ethan Lay',
 }
 
 ALL_2026_PLAYERS = sorted(set(PLAYERS_2026.values()))
@@ -33,15 +30,12 @@ CHANNEL_TO_PLAYER = {
     'trevor-condon': 'Trevor Condon', 'bo-lowrance': 'Bo Lowrance',
     'taj-marchand': 'Taj Marchand', 'joe-tiroly': 'Joe Tiroly',
     'alex-kranzler': 'Alex Kranzler', 'boston-torres': 'Boston Torres',
-    'brady-neal': 'Brady Neal', 'brooks-wright': 'Brooks Wright',
-    'cole-cleveland': 'Cole Cleveland', 'devin-diaz': 'Devin Diaz',
-    'lucas-lawrence': 'Lucas Lawrence', 'griffin-loy': 'Griffin Loy',
+    'brady-neal': 'Brady Neal', 'devin-diaz': 'Devin Diaz',
+    'lucas-lawrence': 'Lucas Lawrence',
     'phinn-beaird': 'Phinn Beaird', 'mason-eckelman': 'Mason Eckelman',
-    'lucas-steele': 'Lucas Steele', 'michael-gillen': 'Michael Gillen',
-    'bryce-fowler': 'Bryce Fowler', 'will-myhand': 'Will Myhand',
+    'bryce-fowler': 'Bryce Fowler',
     'ben-tryon': 'Ben Tryon', 'duke-mccarron': 'Duke McCarron',
-    'easton-viveros': 'Easton Viveros', 'lee-ellis': 'Lee Ellis',
-    'dominic-woodward': 'Dominic Woodward', 'ethan-lay': 'Ethan Lay',
+    'lee-ellis': 'Lee Ellis', 'ethan-lay': 'Ethan Lay',
 }
 
 TEAM_ABBR = {
@@ -88,15 +82,14 @@ CHANNELS = [
     ("trevor-condon", "C08CJHA0C4D"), ("bo-lowrance", "C08CJHP13V3"),
     ("taj-marchand", "C08CZQFEGCR"), ("joe-tiroly", "C08LWQUEBQE"),
     ("alex-kranzler", "C08F4HDD9TR"), ("boston-torres", "C08M293RD19"),
-    ("brady-neal", "C08FDPYARRP"), ("brooks-wright", "C08CMDB8FMY"),
-    ("cole-cleveland", "C08D03F4797"), ("devin-diaz", "C08CMD0V802"),
-    ("lucas-lawrence", "C08CMA913BL"), ("griffin-loy", "C09LQL4ENAX"),
+    ("brady-neal", "C08FDPYARRP"),
+    ("devin-diaz", "C08CMD0V802"),
+    ("lucas-lawrence", "C08CMA913BL"),
     ("phinn-beaird", "C09344354UA"), ("mason-eckelman", "C09A0TL8KNY"),
-    ("lucas-steele", "C08C6RFJKSB"), ("michael-gillen", "C08DA6DJ01W"),
-    ("bryce-fowler", "C08C6RT634P"), ("will-myhand", "C08DA7A0P6C"),
+    ("bryce-fowler", "C08C6RT634P"),
     ("ben-tryon", "C0A3EKND2P4"), ("duke-mccarron", "C0A605KCVJ7"),
-    ("easton-viveros", "C0ACP8YSA00"), ("lee-ellis", "C0A844F4SUF"),
-    ("dominic-woodward", "C0ADA5H22C8"), ("ethan-lay", "C0AT6H9ME9G"),
+    ("lee-ellis", "C0A844F4SUF"),
+    ("ethan-lay", "C0AT6H9ME9G"),
 ]
 
 
