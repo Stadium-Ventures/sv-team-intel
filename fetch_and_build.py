@@ -97,6 +97,9 @@ CHANNELS = [
 def fetch_messages(token):
     client = WebClient(token=token)
     all_messages = []
+    # Per-channel fetch failures, as (channel_name, slack_error_code). main()
+    # inspects these to abort a degraded build instead of committing empty data.
+    channel_errors = []
 
     # Workspace base URL (e.g. https://stadium-ventures.slack.com/) for building
     # message permalinks. Falls back to None if auth_test fails — UI hides the
@@ -124,7 +127,19 @@ def fetch_messages(token):
             try:
                 resp = client.conversations_history(**kwargs)
             except Exception as e:
-                print(f"  Error #{name}: {e}")
+                # Pull Slack's structured error code (missing_scope, not_in_channel,
+                # invalid_auth, …) so main() can tell a fatal auth/scope loss apart
+                # from an isolated channel hiccup.
+                code = None
+                resp_obj = getattr(e, 'response', None)
+                if resp_obj is not None:
+                    try:
+                        code = resp_obj.get('error')
+                    except Exception:
+                        code = None
+                code = code or str(e)
+                print(f"  Error #{name}: {code}")
+                channel_errors.append((name, code))
                 break
 
             for msg in resp['messages']:
@@ -184,8 +199,9 @@ def fetch_messages(token):
             seen.add(m['ts'])
             unique.append(m)
 
-    print(f"Fetched {len(unique)} TeamIntel messages from {len(CHANNELS)} channels")
-    return unique, workspace_url
+    print(f"Fetched {len(unique)} TeamIntel messages from {len(CHANNELS)} channels"
+          f"{f' ({len(channel_errors)} channel error(s))' if channel_errors else ''}")
+    return unique, workspace_url, channel_errors
 
 
 # --- STEP 2: PARSE ---
@@ -5496,7 +5512,7 @@ if __name__ == '__main__':
 
     password = os.environ.get('DASHBOARD_PASSWORD', 'SVintel2026')
 
-    messages, slack_workspace_url = fetch_messages(token)
+    messages, slack_workspace_url, channel_errors = fetch_messages(token)
     records = parse_messages(messages)
 
     # Merge manual records (matrix "+ Add Entry") before building HTML and JSON.
@@ -5507,12 +5523,74 @@ if __name__ == '__main__':
         print(f"Merging {len(manual)} manual record(s) into RECORDS.")
         records = records + manual
 
+    out_dir = os.environ.get('OUTPUT_DIR', os.path.join(os.path.dirname(__file__), 'public'))
+
+    # --- Guard against silent degraded builds ---
+    # If the Slack channels flip to private without the bot having groups:* scopes
+    # (or the token is revoked, etc.), every fetch errors out and we'd otherwise
+    # commit a near-empty dataset over good data. Abort loudly instead, leaving the
+    # last good public/index.html and public/teamintel.json untouched so the cron
+    # surfaces a red run. See memory: project_teamintel_slack_private_channels.
+    FATAL_SLACK_ERRORS = {
+        'missing_scope', 'invalid_auth', 'not_authed', 'token_revoked',
+        'token_expired', 'account_inactive', 'no_permission',
+    }
+    MEMBERSHIP_ERRORS = {'not_in_channel', 'channel_not_found'}
+
+    fatal = [(n, c) for (n, c) in channel_errors if c in FATAL_SLACK_ERRORS]
+    membership = [(n, c) for (n, c) in channel_errors if c in MEMBERSHIP_ERRORS]
+
+    # Hard reasons are never overridable — they mean we cannot trust the fetch.
+    hard_reasons = []
+    if fatal:
+        codes = sorted({c for _, c in fatal})
+        hard_reasons.append(
+            f"token-wide Slack auth/scope failure on {len(fatal)} channel(s) "
+            f"{codes} (e.g. #{fatal[0][0]}). Bot needs groups:history + "
+            "groups:read for private channels (api.slack.com/apps → OAuth)."
+        )
+    # A couple of membership errors can be one un-invited channel; a broad sweep
+    # means the bot lost access to most channels and the build is untrustworthy.
+    if len(membership) >= max(2, len(CHANNELS) // 2):
+        hard_reasons.append(
+            f"bot not a member of {len(membership)}/{len(CHANNELS)} channels "
+            "(/invite @teamintel needed)."
+        )
+
+    # Soft reason: record-count collapse vs the last committed teamintel.json — a
+    # backstop for failures that don't surface as explicit errors. Overridable via
+    # ALLOW_RECORD_DROP=1 for an intentional roster purge.
+    soft_reasons = []
+    prev_json = os.path.join(out_dir, 'teamintel.json')
+    if os.path.exists(prev_json):
+        try:
+            with open(prev_json) as f:
+                prev = json.load(f)
+            prev_count = len(prev) if isinstance(prev, list) else None
+        except Exception:
+            prev_count = None
+        if prev_count and len(records) < prev_count * 0.25:
+            soft_reasons.append(
+                f"record count collapsed {prev_count} → {len(records)} "
+                "(>75% drop). Set ALLOW_RECORD_DROP=1 to override for an "
+                "intentional roster purge."
+            )
+
+    blocking = list(hard_reasons)
+    if os.environ.get('ALLOW_RECORD_DROP') != '1':
+        blocking += soft_reasons
+    if blocking:
+        print("\nERROR: aborting build to avoid overwriting good data:")
+        for r in blocking:
+            print(f"  - {r}")
+        print("Last good public/index.html and public/teamintel.json left untouched.")
+        exit(1)
+
     # Pull game schedule from the shared Google Sheet. Read-only — filtered to roster.
     games = fetch_game_schedule()
 
     html = build_html(records, password, games=games, slack_workspace_url=slack_workspace_url)
 
-    out_dir = os.environ.get('OUTPUT_DIR', os.path.join(os.path.dirname(__file__), 'public'))
     out_path = os.path.join(out_dir, 'index.html')
     with open(out_path, 'w') as f:
         f.write(html)
