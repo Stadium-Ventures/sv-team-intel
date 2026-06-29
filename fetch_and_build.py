@@ -1472,7 +1472,6 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 .score-n2 {{ background-color: #f4c7c3 !important; color: #8b1a1a; font-weight: 700; }}
 td.score-cell {{ position: relative; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #000000; outline-offset: -2px; }}
-td.workout {{ box-shadow: inset 0 0 0 1px rgba(0,0,0,0.85), inset 0 0 0 4px #d4a017; }}
 td.score-cell .cell-dot {{ position: absolute; width: 7px; height: 7px; border-radius: 50%; pointer-events: none; z-index: 1; }}
 td.score-cell .dot-pdw {{ top: 2px; left: 2px; background: #000; }}        /* pre-draft workout */
 td.score-cell .dot-combine {{ top: 2px; right: 2px; background: #1565c0; box-shadow: 0 0 0 1px rgba(255,255,255,0.6); }}  /* combine meeting */
@@ -2129,7 +2128,7 @@ function checkPw() {{
 
 <div class="legend">
     <span class="legend-title">Key:</span>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.85), inset 0 0 0 4px #d4a017;position:relative;"><span style="position:absolute;top:1px;left:1px;width:6px;height:6px;border-radius:50%;background:#000;"></span></div>Pre-Draft Workout</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;border:1px solid #ccc;position:relative;"><span style="position:absolute;top:1px;left:1px;width:6px;height:6px;border-radius:50%;background:#000;"></span></div>Pre-Draft Workout</div>
     <div class="legend-item"><div class="legend-swatch" style="background:#fff;border:1px solid #ccc;position:relative;"><span style="position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#1565c0;"></span></div>Combine Meeting</div>
     <span class="legend-title" style="margin-left:14px;">Points</span>
     <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
@@ -3090,7 +3089,7 @@ function renderMatrix() {{
                 const display = (typeof pts === 'number' && pts > 0) ? String(pts) : '';
                 const title = (pts || 0) + ' point' + (pts === 1 ? '' : 's') + (colorWord ? ' \\u2022 latest: ' + colorWord : '') + (wk ? ' \\u2022 pre-draft workout' : '') + (cm ? ' \\u2022 combine meeting' : '');
                 const dots = (wk ? '<span class="cell-dot dot-pdw"></span>' : '') + (cm ? '<span class="cell-dot dot-combine"></span>' : '');
-                html += '<td class="score-cell clickable' + (wk ? ' workout' : '') + '" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + dots + display + '</td>';
+                html += '<td class="score-cell clickable" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + dots + display + '</td>';
             }} else {{
                 // Empty cells are still clickable — drop the user on the team-filtered
                 // detail view so they can set a color or add an entry.
