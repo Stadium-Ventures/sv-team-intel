@@ -90,7 +90,15 @@ CHANNELS = [
     ("ben-tryon", "C0A3EKND2P4"), ("duke-mccarron", "C0A605KCVJ7"),
     ("lee-ellis", "C0A844F4SUF"),
     ("ethan-lay", "C0AT6H9ME9G"),
+    ("2026-mlb-combine", "C0BDQBG9G2X"),
 ]
+
+# Channels whose every record is, by definition, a combine meeting (the channel
+# itself scopes the context). Treated as unfiltered in fetch (posts here won't
+# contain the "teamintel" keyword) and every (player, team) record drawn from
+# them is flagged combine=True → blue dot in the matrix. Names are lowercase to
+# match Slack's normalization.
+_COMBINE_CHANNELS = {'2026-mlb-combine'}
 
 
 # --- STEP 1: FETCH FROM SLACK ---
@@ -149,6 +157,7 @@ def fetch_messages(token):
                 # For other channels, require "teamintel" / "team intel" keyword
                 is_teamintel = (
                     name == '2026-draft-general'
+                    or name in _COMBINE_CHANNELS
                     or 'teamintel' in tl
                     or 'team intel' in tl
                 )
@@ -372,6 +381,28 @@ def workout_match_details(text, player=None, channel=None):
         for s, e in targeted_spans:
             matches.append({'start': s, 'end': e, 'text': text[s:e], 'kind': 'targeted'})
     return matches
+
+# --- Combine-meeting detection ---
+# The MLB Combine (Phoenix, 6/21–6/26) — TeamIntel messages note when a player
+# sat down with a club there. Auto-detected from Slack: a "combine" + meeting/
+# interview phrase, attributed to whichever team is named in a short window
+# around it. Drives the matrix's blue dot. Noisier than the workout flag by
+# design — there's no manual override layer for it.
+_COMBINE_MEETING_PATTERNS = [
+    r'\bcombine\b[\s\S]{0,50}?\b(?:meeting|met|meet|interview|interviewed|sit[- ]?down|sat\s+down|spoke|talked|conversation|chat)\b',
+    r'\b(?:meeting|met|meet|interview|interviewed|sit[- ]?down|sat\s+down|spoke|talked|conversation|chat)\b[\s\S]{0,50}?\bcombine\b',
+]
+
+def combine_meeting_teams(text):
+    """Return the set of team abbrevs this message ties to a combine meeting.
+    A combine-meeting phrase must appear AND a team must be named within ~60
+    chars of it, so a multi-team post only flags the team actually mentioned."""
+    tl = text.lower()
+    teams = set()
+    for s, e in _spans_for(tl, _COMBINE_MEETING_PATTERNS):
+        window = text[max(0, s - 60):min(len(text), e + 60)]
+        teams |= find_teams_in_line(window)
+    return teams
 
 # --- Workout-date parser (pre-draft window: April 1 – July 13, 2026) ---
 _WD_MONTH_NUM = {
@@ -1113,6 +1144,9 @@ def parse_messages(messages):
         matches = workout_match_details(text, r.get('player'), r.get('channel'))
         r['workout'] = len(matches) > 0
         r['workout_matches'] = [m['text'] for m in matches]
+        # Dedicated combine channel: every record is a combine meeting. Elsewhere,
+        # fall back to keyword + team-proximity detection.
+        r['combine'] = (r.get('channel') in _COMBINE_CHANNELS) or (r['team'] in combine_meeting_teams(text))
 
         if r['workout']:
             ft = r.get('full_text', '')
@@ -1147,6 +1181,7 @@ def parse_messages(messages):
                 by_date[wd['date']] = wd  # later wins for conflicting date
         merged = dict(r)
         merged['workout'] = bool(r.get('workout') or existing.get('workout'))
+        merged['combine'] = bool(r.get('combine') or existing.get('combine'))
         if by_date:
             merged['workout_dates'] = sorted(by_date.values(), key=lambda x: x.get('date', ''))
         seen[key] = merged
@@ -1405,6 +1440,9 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 td.score-cell {{ position: relative; }}
 td.score-cell.clickable:hover {{ outline: 2px solid #000000; outline-offset: -2px; }}
 td.workout {{ box-shadow: inset 0 0 0 1px rgba(0,0,0,0.85), inset 0 0 0 4px #d4a017; }}
+td.score-cell .cell-dot {{ position: absolute; width: 7px; height: 7px; border-radius: 50%; pointer-events: none; z-index: 1; }}
+td.score-cell .dot-pdw {{ top: 2px; left: 2px; background: #000; }}        /* pre-draft workout */
+td.score-cell .dot-combine {{ top: 2px; right: 2px; background: #1565c0; box-shadow: 0 0 0 1px rgba(255,255,255,0.6); }}  /* combine meeting */
 .workout-badge {{ display: inline-block; background: #d4a017; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.3px; }}
 td.overridden {{ position: relative; }}
 td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: rgba(0,0,0,0.4); }}
@@ -2058,7 +2096,8 @@ function checkPw() {{
 
 <div class="legend">
     <span class="legend-title">Key:</span>
-    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.85), inset 0 0 0 4px #d4a017"></div>Pre-Draft Workout</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.85), inset 0 0 0 4px #d4a017;position:relative;"><span style="position:absolute;top:1px;left:1px;width:6px;height:6px;border-radius:50%;background:#000;"></span></div>Pre-Draft Workout</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fff;border:1px solid #ccc;position:relative;"><span style="position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#1565c0;"></span></div>Combine Meeting</div>
     <span class="legend-title" style="margin-left:14px;">Points</span>
     <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
 </div>
@@ -2881,6 +2920,7 @@ function buildMatrix() {{
     const cellPoints = {{}};       // key -> sum of tier points
     const cellLatestColor = {{}};  // key -> {{date, color}} of most-recent colored record
     const workoutMap = {{}};
+    const combineMap = {{}};        // key -> true if a combine meeting was detected
 
     activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
@@ -2892,6 +2932,7 @@ function buildMatrix() {{
             }}
         }}
         if (r.workout) workoutMap[key] = true;
+        if (r.combine) combineMap[key] = true;
     }});
     // Manual PDW overrides (matrix popup) still apply to the workout map.
     // Manual color overrides (c|player|team) override most-recent color.
@@ -2939,7 +2980,7 @@ function buildMatrix() {{
         if (tb !== ta) return tb - ta;
         return a.localeCompare(b);
     }});
-    return {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap, coloredTeamCount }};
+    return {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap, combineMap, coloredTeamCount }};
 }}
 
 function scoreClass(s) {{
@@ -2958,13 +2999,31 @@ function fmtScore(s) {{
     return (s % 1 === 0) ? String(s) : s.toFixed(1);
 }}
 
+// Earliest draft pick a team holds (Infinity if unknown) — drives column order.
+function minPickFor(team) {{
+    const info = TEAM_DRAFT[team];
+    if (info && info.picks && info.picks.length) {{
+        const n = parseInt(info.picks[0], 10);
+        if (!isNaN(n)) return n;
+    }}
+    return Infinity;
+}}
+
 function renderMatrix() {{
-    const {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap }} = buildMatrix();
+    const {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap, combineMap }} = buildMatrix();
+
+    // Columns ordered by each team's earliest pick (BAL #7 before ATH #8 …).
+    // Teams with no pick data fall to the end, alphabetically.
+    const orderedTeams = ALL_TEAMS.slice().sort((a, b) => {{
+        const pa = minPickFor(a), pb = minPickFor(b);
+        if (pa !== pb) return pa - pb;
+        return a.localeCompare(b);
+    }});
 
     var html = '<thead><tr><th rowspan="2">Client</th>';
-    ALL_TEAMS.forEach(t => html += '<th>' + t + '</th>');
+    orderedTeams.forEach(t => html += '<th>' + t + '</th>');
     html += '</tr><tr>';
-    ALL_TEAMS.forEach(t => {{
+    orderedTeams.forEach(t => {{
         const info = TEAM_DRAFT[t];
         if (info) {{
             const pool = info.pool || '';
@@ -2986,17 +3045,19 @@ function renderMatrix() {{
         const esc = player.replace(/'/g, "\\\\'");
         html += '<tr' + rowTitle + '>';
         html += '<td class="clickable" onclick="jumpToDetail(\\'' + esc + '\\')">' + player + '</td>';
-        ALL_TEAMS.forEach(team => {{
+        orderedTeams.forEach(team => {{
             const pts = playerTeams[player] && playerTeams[player][team];
             const colorWord = playerTeamColors[player] && playerTeamColors[player][team];
             const wk = workoutMap[player + '|' + team];
+            const cm = combineMap[player + '|' + team];
             const hasData = (typeof pts === 'number' && pts > 0);
-            if (hasData || colorWord || wk) {{
+            if (hasData || colorWord || wk || cm) {{
                 const bg = colorWord ? COLOR_BG[colorWord] : '';
                 const cellStyle = bg ? 'background:' + bg + ';' : '';
                 const display = (typeof pts === 'number' && pts > 0) ? String(pts) : '';
-                const title = (pts || 0) + ' point' + (pts === 1 ? '' : 's') + (colorWord ? ' \\u2022 latest: ' + colorWord : '');
-                html += '<td class="score-cell clickable' + (wk ? ' workout' : '') + '" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + display + '</td>';
+                const title = (pts || 0) + ' point' + (pts === 1 ? '' : 's') + (colorWord ? ' \\u2022 latest: ' + colorWord : '') + (wk ? ' \\u2022 pre-draft workout' : '') + (cm ? ' \\u2022 combine meeting' : '');
+                const dots = (wk ? '<span class="cell-dot dot-pdw"></span>' : '') + (cm ? '<span class="cell-dot dot-combine"></span>' : '');
+                html += '<td class="score-cell clickable' + (wk ? ' workout' : '') + '" style="' + cellStyle + '" onclick="jumpToDetail(\\'' + esc + '\\', \\'' + team + '\\')" title="' + title + '">' + dots + display + '</td>';
             }} else {{
                 // Empty cells are still clickable — drop the user on the team-filtered
                 // detail view so they can set a color or add an entry.
