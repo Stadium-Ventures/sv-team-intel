@@ -1079,6 +1079,39 @@ def parse_messages(messages):
                 })
                 _attach_tier(records[-1], best_tier_line or text)
 
+        elif channel in _COMBINE_CHANNELS:
+            # Combine reports are per-player: a header line ("Robbins - Team Intel")
+            # followed by one "<TEAM> - <note>" line per club the player met with.
+            # The player comes from the header (first line that names one); each
+            # team line becomes a (player, team) record. Differs from the generic
+            # `else` path, which would misread the first team line as a header team
+            # and emit only a single record per message.
+            lines = text.split('\n')
+            player = None
+            for line in lines:
+                pl = find_players_in_text(line)
+                if pl:
+                    player = sorted(pl)[0]
+                    break
+            if not player:
+                continue
+            for line in lines:
+                ls = line.strip()
+                if not ls or re.match(r'^[Tt]eam\s*[Ii]ntel', ls):
+                    continue
+                line_teams = find_teams_in_line(ls)
+                if not line_teams:
+                    continue
+                score = score_line_for_team(ls, text)
+                for t in line_teams:
+                    records.append({
+                        'player': player, 'team': t, 'date': date,
+                        'score': score, 'note': ls[:200],
+                        'channel': channel, 'full_text': text[:3000],
+                        'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
+                    })
+                    _attach_tier(records[-1], ls)
+
         else:
             players = find_players_in_text(text)
             header_match = re.search(r'[Tt]eam\s*[Ii]ntel\s*[-:]?\s*\n?\s*(\w+)', text)
