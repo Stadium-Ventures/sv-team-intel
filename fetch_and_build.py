@@ -91,6 +91,7 @@ CHANNELS = [
     ("lee-ellis", "C0A844F4SUF"),
     ("ethan-lay", "C0AT6H9ME9G"),
     ("2026-mlb-combine", "C0BDQBG9G2X"),
+    ("2026-private-draft-notes", "C0BEAC9UAKB"),
 ]
 
 # Channels whose every record is, by definition, a combine meeting (the channel
@@ -99,6 +100,37 @@ CHANNELS = [
 # them is flagged combine=True → blue dot in the matrix. Names are lowercase to
 # match Slack's normalization.
 _COMBINE_CHANNELS = {'2026-mlb-combine'}
+
+# Channels where the actual intel date is written in the message header as
+# "(M/D/YY)" rather than implied by the Slack post time. Notes here are often
+# back-filled days after the contact happened (e.g. an intel from 6/11 posted
+# on 6/30), so the post timestamp would mis-date the record. For these channels
+# the header date is used as the record date; we fall back to post time when no
+# header date is present.
+_HEADER_DATED_CHANNELS = {'2026-private-draft-notes'}
+
+_HEADER_DATE_RE = re.compile(r'\((\d{1,2})/(\d{1,2})/(\d{2,4})\)')
+
+
+def _header_intel_date(text):
+    """Extract a '(M/D/YY)' intel date from the first line of a message.
+
+    Returns 'YYYY-MM-DD', or None if the header has no parenthesized date or
+    the date is invalid. Two-digit years are interpreted as 20YY.
+    """
+    if not text:
+        return None
+    first_line = text.split('\n', 1)[0]
+    m = _HEADER_DATE_RE.search(first_line)
+    if not m:
+        return None
+    mo, day, yr = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    if yr < 100:
+        yr += 2000
+    try:
+        return datetime(yr, mo, day).strftime('%Y-%m-%d')
+    except ValueError:
+        return None
 
 
 # --- STEP 1: FETCH FROM SLACK ---
@@ -162,10 +194,13 @@ def fetch_messages(token):
                     or 'team intel' in tl
                 )
                 if is_teamintel:
+                    rec_date = datetime.fromtimestamp(float(msg['ts'])).strftime('%Y-%m-%d')
+                    if name in _HEADER_DATED_CHANNELS:
+                        rec_date = _header_intel_date(text) or rec_date
                     all_messages.append({
                         'channel': name, 'channel_id': cid,
                         'ts': msg['ts'],
-                        'date': datetime.fromtimestamp(float(msg['ts'])).strftime('%Y-%m-%d'),
+                        'date': rec_date,
                         'text': text, 'user': msg.get('user', ''),
                     })
 
@@ -186,10 +221,13 @@ def fetch_messages(token):
                                 continue  # skip the parent itself
                             r_text = reply.get('text', '')
                             combined = (parent_header + '\n\n' + r_text) if parent_header else r_text
+                            rep_date = datetime.fromtimestamp(float(reply['ts'])).strftime('%Y-%m-%d')
+                            if name in _HEADER_DATED_CHANNELS:
+                                rep_date = _header_intel_date(combined) or rep_date
                             all_messages.append({
                                 'channel': name, 'channel_id': cid,
                                 'ts': reply['ts'],
-                                'date': datetime.fromtimestamp(float(reply['ts'])).strftime('%Y-%m-%d'),
+                                'date': rep_date,
                                 'text': combined, 'user': reply.get('user', ''),
                                 'is_reply': True, 'parent_ts': msg['ts'],
                             })
