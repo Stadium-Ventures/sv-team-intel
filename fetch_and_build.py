@@ -998,10 +998,16 @@ def parse_messages(messages):
     # Load front-office directory once per build (tiny CSV, ~30 teams).
     _front_office = load_front_office()
 
-    def _attach_tier(rec, line_text):
+    def _attach_tier(rec, line_text, header_text=None):
         """Write attendee_tier / tier_multiplier / tier_label / raw_score / color
         onto a record in place, and bump rec['score'] to the tier floor when a
         senior attendee was detected.
+
+        `header_text` is the message header line (e.g.
+        "Team Intel - BOS - Jake Bruml"). The intel source named there weights
+        the whole report: if that contact is a known front-office higher-up,
+        their tier becomes the floor for every record in the message, even on
+        body lines that don't re-name them. More senior (lower tier #) wins.
         - Sentiment score stays visible as rec['raw_score'] (for audit / revert).
         - Negative sentiment (-1, -2) always wins — an SD being there doesn't
           override "didn't like".
@@ -1015,6 +1021,10 @@ def parse_messages(messages):
           overrides (popup) can dial this down to 0 if needed.
         """
         t, mult, label = detect_attendee_tier(line_text, rec.get('team'), _front_office)
+        if header_text:
+            ht, hmult, hlabel = detect_attendee_tier(header_text, rec.get('team'), _front_office)
+            if ht and (t == 0 or ht < t):
+                t, mult, label = ht, hmult, hlabel
         if t == 0:
             t, mult, label = 5, TIER_MULTIPLIERS[5], TIER_LABELS[5]
         rec['attendee_tier'] = t
@@ -1034,6 +1044,10 @@ def parse_messages(messages):
         text = msg['text']
         date = msg['date']
         channel = msg['channel']
+        # First line is the report header ("Team Intel - BOS - Jake Bruml ...").
+        # Passed into _attach_tier so a front-office source named there sets the
+        # tier floor for the whole report.
+        msg_header = text.split('\n', 1)[0] if text else ''
         # Slack source fields — propagated onto every record produced from this
         # message so the popup can render a clickable permalink. parent_ts is
         # only set for thread replies (used in ?thread_ts= query).
@@ -1063,7 +1077,7 @@ def parse_messages(messages):
                         'channel': channel, 'full_text': text[:3000],
                         'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                     })
-                    _attach_tier(records[-1], ls)
+                    _attach_tier(records[-1], ls, msg_header)
 
         elif channel in CHANNEL_TO_PLAYER:
             player = CHANNEL_TO_PLAYER[channel]
@@ -1115,7 +1129,7 @@ def parse_messages(messages):
                     'channel': channel, 'full_text': text[:3000],
                     'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                 })
-                _attach_tier(records[-1], best_tier_line or text)
+                _attach_tier(records[-1], best_tier_line or text, msg_header)
 
         elif channel in _COMBINE_CHANNELS:
             # Combine reports are per-player: a header line ("Robbins - Team Intel")
@@ -1148,7 +1162,7 @@ def parse_messages(messages):
                         'channel': channel, 'full_text': text[:3000],
                         'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                     })
-                    _attach_tier(records[-1], ls)
+                    _attach_tier(records[-1], ls, msg_header)
 
         else:
             players = find_players_in_text(text)
@@ -1177,7 +1191,7 @@ def parse_messages(messages):
                                 'channel': channel, 'full_text': text[:3000],
                                 'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                             })
-                            _attach_tier(records[-1], ls)
+                            _attach_tier(records[-1], ls, msg_header)
             elif players and all_teams:
                 for line in text.split('\n'):
                     ls = line.strip()
@@ -1193,7 +1207,7 @@ def parse_messages(messages):
                                     'channel': channel, 'full_text': text[:3000],
                                     'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                                 })
-                                _attach_tier(records[-1], ls)
+                                _attach_tier(records[-1], ls, msg_header)
                     elif lp and not lt and all_teams:
                         score = score_line_for_team(ls, text)
                         for p in lp:
@@ -1204,7 +1218,7 @@ def parse_messages(messages):
                                     'channel': channel, 'full_text': text[:3000],
                                     'ts': ts, 'channel_id': channel_id, 'parent_ts': parent_ts,
                                 })
-                                _attach_tier(records[-1], ls)
+                                _attach_tier(records[-1], ls, msg_header)
 
     # Add workout flag + match details based on note/full_text
     # Also attach parsed workout_dates (pre-draft window, May–Jul 2026),
