@@ -1614,6 +1614,14 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 #scorePopup .popup-pdw:hover {{ background: #fdf6e3; }}
 #scorePopup .popup-pdw.active {{ background: #ff2a22; color: white; }}
+#scorePopup .popup-combine {{
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-bottom: 8px; padding: 6px 0; border: 2px solid #1565c0; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 600; color: #1565c0; background: white;
+    transition: all 0.15s;
+}}
+#scorePopup .popup-combine:hover {{ background: #eef4fc; }}
+#scorePopup .popup-combine.active {{ background: #1565c0; color: white; }}
 #scorePopup .popup-color-label {{ font-size: 11px; color: #888; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 5px; text-transform: uppercase; }}
 .edits-tbl {{ width: 100%; border-collapse: collapse; font-size: 12px; background: white; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }}
 .edits-tbl th {{ background: #000; color: #fff; padding: 6px 10px; text-align: left; font-weight: 700; font-size: 11px; letter-spacing: 0.3px; text-transform: uppercase; }}
@@ -1631,6 +1639,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup.color-only .popup-points,
 #scorePopup.color-only .popup-scores,
 #scorePopup.color-only .popup-pdw,
+#scorePopup.color-only .popup-combine,
 #scorePopup.color-only .popup-reassign-wrap,
 #scorePopup.color-only .popup-reset {{ display: none !important; }}
 /* Default mode hides the color picker — the cell popup edits points/score/PDW;
@@ -2701,6 +2710,17 @@ function isPDW(player, team) {{
     return hasAuto;
 }}
 
+// Combine-interview flag for a (player, team) pair. Auto-detected from the
+// #2026-mlb-combine channel (r.combine); a manual 'cb|player|team' override
+// can force it on or off, mirroring the PDW flag.
+function isCombine(player, team) {{
+    var ck = 'cb|' + player + '|' + team;
+    if (scoreOverrides.hasOwnProperty(ck)) return scoreOverrides[ck];
+    var hasAuto = false;
+    RECORDS.forEach(function(r) {{ if (r.player === player && r.team === team && r.combine) hasAuto = true; }});
+    return hasAuto;
+}}
+
 // Most-recent literal color for a (player, team) pair, with manual override applied.
 // Returns null if no color is set. The override key is 'c|<player>|<team>' and the
 // value is one of: 'green', 'light green', 'yellow', 'orange', 'red'.
@@ -2886,6 +2906,51 @@ function updatePDWButton() {{
     }}
 }}
 
+async function toggleCombine() {{
+    var ck = 'cb|' + _popupPlayer + '|' + _popupTeam;
+    var hasAuto = false;
+    RECORDS.forEach(function(r) {{ if (r.player === _popupPlayer && r.team === _popupTeam && r.combine) hasAuto = true; }});
+    var current = isCombine(_popupPlayer, _popupTeam);
+    var newVal = !current;
+    // If the new value matches the auto-detected state, clear the override.
+    // Otherwise persist the explicit true/false so an auto-true flag can be turned off.
+    var toStore = (newVal === hasAuto) ? null : newVal;
+    try {{
+        const res = await fetch('/api/overrides', {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ key: ck, score: toStore }})
+        }});
+        if (!res.ok) {{
+            const body = await res.text();
+            showToast('Save failed (' + res.status + '). ' + body.slice(0, 120));
+            return;
+        }}
+        if (toStore === null) {{
+            delete scoreOverrides[ck];
+            delete scoreOverridesMeta[ck];
+        }} else {{
+            scoreOverrides[ck] = toStore;
+            scoreOverridesMeta[ck] = new Date().toISOString();
+        }}
+        showToast('Saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
+    updateCombineButton();
+    renderMatrix();
+    renderDetail();
+}}
+
+function updateCombineButton() {{
+    var btn = document.getElementById('combineToggle');
+    if (isCombine(_popupPlayer, _popupTeam)) {{
+        btn.classList.add('active');
+        btn.textContent = '\\u2713 Combine Interview';
+    }} else {{
+        btn.classList.remove('active');
+        btn.textContent = 'Combine Interview';
+    }}
+}}
+
 function openScorePopup(player, team, date, event, colorOnly) {{
     _popupPlayer = player;
     _popupTeam = team;
@@ -2927,6 +2992,7 @@ function openScorePopup(player, team, date, event, colorOnly) {{
         tBox.style.display = 'none';
     }}
     updatePDWButton();
+    updateCombineButton();
     var popup = document.getElementById('scorePopup');
     var overlay = document.getElementById('scoreOverlay');
     popup.style.display = 'block';
@@ -3022,7 +3088,11 @@ function buildMatrix() {{
     // Manual PDW overrides (matrix popup) still apply to the workout map.
     // Manual color overrides (c|player|team) override most-recent color.
     Object.keys(scoreOverrides).forEach(k => {{
-        if (k.startsWith('w|')) {{
+        if (k.startsWith('cb|')) {{
+            const parts = k.substring(3);
+            if (scoreOverrides[k]) combineMap[parts] = true;
+            else delete combineMap[parts];
+        }} else if (k.startsWith('w|')) {{
             const parts = k.substring(2);
             if (scoreOverrides[k]) workoutMap[parts] = true;
             else delete workoutMap[parts];
@@ -3451,7 +3521,11 @@ async function renderEdits() {{
     Object.keys(scoreOverrides).forEach(k => {{
         const v = scoreOverrides[k];
         const ts = scoreOverridesMeta[k] || '';
-        if (k.startsWith('w|')) {{
+        if (k.startsWith('cb|')) {{
+            const p = k.substring(3).split('|');
+            if (p.length !== 2) return;
+            rows.push({{ edited_at: ts, ref_date: '', type: 'Combine Flag', player: p[0], team: p[1], details: v ? 'On' : 'Off' }});
+        }} else if (k.startsWith('w|')) {{
             const p = k.substring(2).split('|');
             if (p.length !== 2) return;
             rows.push({{ edited_at: ts, ref_date: '', type: 'PDW Flag', player: p[0], team: p[1], details: v ? 'On' : 'Off' }});
@@ -5219,6 +5293,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <button class="psna" onclick="saveScore('NA')" title="Not a real connection — hide this record">NA</button>
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
+    <div class="popup-combine" id="combineToggle" onclick="toggleCombine()">Combine Interview</div>
     <div class="popup-reassign-wrap">
         <div class="popup-color-label">Reassign team</div>
         <div class="popup-reassign">
@@ -5337,6 +5412,7 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
 # KV blob shape (key = 'score_overrides'):
 #   "player|team|date"   -> int (-2..2) or "NA"     (score edit / exclusion)
 #   "w|player|team"      -> true | false             (PDW flag toggle)
+#   "cb|player|team"     -> true | false             (combine-interview flag toggle)
 #   "t|player|team|date" -> int 0..5                 (manual tier-points override)
 #   "c|player|team"      -> 'green'|'light green'|'yellow'|'orange'|'red'  (color override)
 #   "mt|player|orig_team|date" -> 'NEW'                  (manual team reassignment)
@@ -5531,11 +5607,16 @@ def apply_overrides(records, overrides):
 
     score_ov = {}
     pdw_ov = {}
+    combine_ov = {}  # 'cb|player|team'     → manual combine-interview flag
     points_ov = {}  # 't|player|team|date' → manual tier_multiplier override
     color_ov = {}   # 'c|player|team'      → manual most-recent-color override
     team_ov = {}    # 'mt|player|orig_team|date' → new team
     for key, val in overrides.items():
-        if key.startswith('w|'):
+        if key.startswith('cb|'):
+            parts = key.split('|', 2)
+            if len(parts) == 3:
+                combine_ov[(parts[1], parts[2])] = val
+        elif key.startswith('w|'):
             parts = key.split('|', 2)
             if len(parts) == 3:
                 pdw_ov[(parts[1], parts[2])] = val
@@ -5607,6 +5688,17 @@ def apply_overrides(records, overrides):
                 matched = True
         (pdw_flipped if matched else pdw_missing).add((player, team))
 
+    combine_flipped = set()
+    combine_missing = set()
+    for (player, team), val in combine_ov.items():
+        matched = False
+        for r in out:
+            if r.get('player') == player and r.get('team') == team:
+                r['combine'] = bool(val)
+                r['combine_overridden'] = True
+                matched = True
+        (combine_flipped if matched else combine_missing).add((player, team))
+
     # Color overrides: rewrite the color of the most-recent record for each
     # (player, team) pair so downstream consumers (teamintel.json) see the
     # manual color when picking "most recent".
@@ -5631,7 +5723,9 @@ def apply_overrides(records, overrides):
     print(
         f"Applied overrides: {applied_score} score edits, {applied_points} point edits, "
         f"{excluded} excluded, {len(pdw_flipped)} PDW pairs flipped, "
-        f"{len(pdw_missing)} PDW with no records, {len(color_applied)} color overrides, "
+        f"{len(pdw_missing)} PDW with no records, "
+        f"{len(combine_flipped)} combine pairs flipped, {len(combine_missing)} combine with no records, "
+        f"{len(color_applied)} color overrides, "
         f"{len(color_missing)} color overrides with no records, "
         f"{team_reassigned} team reassignments ({team_unmatched} unmatched)"
     )
