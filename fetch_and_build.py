@@ -3514,6 +3514,7 @@ async function renderEdits() {{
             details: 'score=' + r.score
                 + (r.color ? ', color=' + r.color : '')
                 + (r.workout ? ', PDW' : '')
+                + (r.combine ? ', Combine' : '')
                 + ((r.full_text || r.note) ? ' — ' + (r.full_text || r.note).slice(0, 200) : ''),
         }});
     }});
@@ -5170,6 +5171,7 @@ function openManualEntryModal(existingId, preselectPlayer, preselectTeam) {{
     document.getElementById('mrScore').value = String((existing && typeof existing.score === 'number') ? existing.score : 1);
     document.getElementById('mrNotes').value = (existing && existing.full_text) || '';
     document.getElementById('mrWorkout').checked = !!(existing && existing.workout);
+    document.getElementById('mrCombine').checked = !!(existing && existing.combine);
 
     // Seed workout-date rows
     const host = document.getElementById('mrWorkoutDates');
@@ -5204,6 +5206,7 @@ async function saveManualEntry() {{
         score: Number(document.getElementById('mrScore').value),
         full_text: document.getElementById('mrNotes').value || '',
         workout: document.getElementById('mrWorkout').checked,
+        combine: document.getElementById('mrCombine').checked,
         workout_dates: document.getElementById('mrWorkout').checked ? _collectWorkoutDates() : [],
     }};
     if (!body.player || !body.team || !body.date) {{
@@ -5364,6 +5367,10 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
         <div class="ev-row cb">
             <input type="checkbox" id="mrWorkout" onchange="_toggleWorkoutDatesVisibility()">
             <label for="mrWorkout">Pre-Draft Workout (invite or confirmed)</label>
+        </div>
+        <div class="ev-row cb">
+            <input type="checkbox" id="mrCombine">
+            <label for="mrCombine">Combine Interview</label>
         </div>
         <div id="mrWorkoutDatesWrap" style="display:none;margin-bottom:10px;">
             <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:6px;">Workout Dates</label>
@@ -5537,7 +5544,7 @@ def load_manual_records():
     """Read the `manual_records` Redis blob and return records in the same shape as
     Slack-parsed records so they can be concatenated into the RECORDS list.
     Each blob value becomes one record with {player, team, date, score, full_text,
-    workout, workout_dates, channel: None, is_manual: True, id}.
+    workout, combine, workout_dates, channel: None, is_manual: True, id}.
     """
     url = os.environ.get('REDIS_URL')
     if not url:
@@ -5585,6 +5592,7 @@ def load_manual_records():
                 'full_text': full,
                 'channel': None,
                 'workout': bool(val.get('workout')),
+                'combine': bool(val.get('combine')),
                 'workout_dates': val.get('workout_dates') or [],
                 'is_manual': True,
                 # Manual entries default to T5 (Area scout, +1 pt) — same floor

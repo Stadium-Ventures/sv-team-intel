@@ -29,7 +29,8 @@ function newId() {
 
 // Valid record shape:
 // { id, player, team, date: "YYYY-MM-DD", score: -2..2,
-//   full_text?, workout?: bool, workout_dates?: [{date, time?, location?, tentative?}] }
+//   full_text?, workout?: bool, combine?: bool,
+//   workout_dates?: [{date, time?, location?, tentative?}] }
 function validate(body) {
   if (!body || typeof body !== 'object') return 'body must be an object';
   if (!body.player || typeof body.player !== 'string') return 'player (string) required';
@@ -75,6 +76,7 @@ module.exports = async function handler(req, res) {
         score: Number(body.score),
         full_text: body.full_text || '',
         workout: !!body.workout,
+        combine: !!body.combine,
         workout_dates: Array.isArray(body.workout_dates) ? body.workout_dates.map(wd => ({
           date: wd.date,
           time: wd.time || null,
