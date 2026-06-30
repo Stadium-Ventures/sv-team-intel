@@ -1536,6 +1536,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     display: none; position: fixed; z-index: 9000;
     background: white; border-radius: 10px; padding: 16px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.25); min-width: 220px;
+    max-height: calc(100vh - 16px); overflow-y: auto;
 }}
 #scorePopup .popup-title {{ font-size: 13px; font-weight: 600; color: #333; margin-bottom: 10px; }}
 #scorePopup .popup-scores {{ display: flex; gap: 6px; margin-bottom: 10px; }}
@@ -2998,11 +2999,20 @@ function openScorePopup(player, team, date, event, colorOnly) {{
     popup.style.display = 'block';
     overlay.style.display = 'block';
     var rect = event.target.getBoundingClientRect();
+    // Measure the popup's actual rendered height (it's already display:block) so
+    // tall popups don't run off the bottom of the screen.
+    var ph = popup.offsetHeight;
     var x = rect.left + rect.width / 2 - 110;
     var y = rect.bottom + 6;
     if (x < 8) x = 8;
     if (x + 220 > window.innerWidth) x = window.innerWidth - 228;
-    if (y + 280 > window.innerHeight) y = Math.max(8, rect.top - 280);
+    // If it would overflow the bottom, prefer flipping above the cell; if it
+    // doesn't fit there either, clamp to the viewport (max-height + overflow-y
+    // keeps the full popup reachable by scrolling).
+    if (y + ph > window.innerHeight - 8) {{
+        var above = rect.top - 6 - ph;
+        y = (above >= 8) ? above : Math.max(8, window.innerHeight - 8 - ph);
+    }}
     popup.style.left = x + 'px';
     popup.style.top = y + 'px';
 }}
