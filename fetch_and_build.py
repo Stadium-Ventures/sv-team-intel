@@ -1177,9 +1177,10 @@ def parse_messages(messages):
         matches = workout_match_details(text, r.get('player'), r.get('channel'))
         r['workout'] = len(matches) > 0
         r['workout_matches'] = [m['text'] for m in matches]
-        # Dedicated combine channel: every record is a combine meeting. Elsewhere,
-        # fall back to keyword + team-proximity detection.
-        r['combine'] = (r.get('channel') in _COMBINE_CHANNELS) or (r['team'] in combine_meeting_teams(text))
+        # Combine dots come ONLY from the dedicated #2026-mlb-combine channel.
+        # Keyword/team-proximity detection in other channels produced false
+        # positives, so it is intentionally not used here.
+        r['combine'] = r.get('channel') in _COMBINE_CHANNELS
 
         if r['workout']:
             ft = r.get('full_text', '')
