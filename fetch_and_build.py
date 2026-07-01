@@ -2264,6 +2264,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-cell.dark .dc-bonus {{ color: rgba(255,255,255,.92); }}
 #draftCardView .dc-tag {{ font-size: 7.5px; font-weight: 800; letter-spacing: .08em; color: #777; margin-top: 1px; text-transform: uppercase; }}
 #draftCardView .dc-cell.dark .dc-tag {{ color: rgba(255,255,255,.8); }}
+#draftCardView .dc-section {{ grid-column: 1 / -1; background: #fafafa; padding: 5px 10px 4px; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #888; border-top: 2px solid #d8d8d8; }}
 /* Corner dots — always the same corner: workout top-left (black), combine top-right (blue). */
 #draftCardView .dc-work {{ position: absolute; top: 5px; left: 6px; width: 10px; height: 10px; border-radius: 50%; background: #000; pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,.7); }}
 #draftCardView .dc-cell.dark .dc-work {{ box-shadow: 0 0 0 1px rgba(255,255,255,.85); }}
@@ -2368,8 +2369,8 @@ function checkPw() {{
     </div>
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="showView('matrix')">Matrix View</div>
-        <div class="nav-tab" onclick="showView('detail')">Detail View</div>
         <div class="nav-tab" onclick="showView('draftcard')">Draft Card</div>
+        <div class="nav-tab" onclick="showView('detail')">Detail View</div>
         <div class="nav-tab" onclick="showView('edits')">Edits</div>
     </div>
 </div>
@@ -3828,13 +3829,13 @@ function showView(view) {{
     if (view === 'matrix') {{
         mx.style.display = 'block';
         document.querySelectorAll('.nav-tab')[0].classList.add('active');
-    }} else if (view === 'detail') {{
-        dt.style.display = 'block';
-        document.querySelectorAll('.nav-tab')[1].classList.add('active');
     }} else if (view === 'draftcard') {{
         dc.style.display = 'block';
-        document.querySelectorAll('.nav-tab')[2].classList.add('active');
+        document.querySelectorAll('.nav-tab')[1].classList.add('active');
         dcShow();
+    }} else if (view === 'detail') {{
+        dt.style.display = 'block';
+        document.querySelectorAll('.nav-tab')[2].classList.add('active');
     }} else if (view === 'calendar') {{
         // Calendar has no nav tab now (hidden), but stays reachable via internal
         // links (e.g. workout chips). Don't set a nav-tab active — none matches.
@@ -5639,6 +5640,13 @@ const DC_PICK_TAG = (function() {{
     for (let n = 67; n <= 74; n++) t[n] = 'COMP B';
     return t;
 }})();
+// Section header before the pick that STARTS each round/segment (2026 order).
+const DRAFT_SECTIONS = {{
+    1: 'Round 1', 26: 'PPI', 29: 'Comp Balance A', 38: 'Round 2',
+    67: 'Comp Balance B', 75: 'FA Comp', 76: 'Round 3', 104: 'Round 4',
+    136: 'Round 5', 165: 'Round 6', 194: 'Round 7', 224: 'Round 8',
+    254: 'Round 9', 284: 'Round 10',
+}};
 let dcCurrent = null;        // selected player NAME (matches getLatestColor keys)
 let dcStarted = false;
 const DC_MODAL_KEY = '__draftcard__';
@@ -5691,6 +5699,10 @@ function dcRenderGrid() {{
     g.innerHTML = '';
     DRAFT_SEED.forEach((row, i) => {{
         const slot = row[0], bonus = row[2];
+        // Full-width section header breaks the grid into rounds/segments.
+        if (DRAFT_SECTIONS[slot]) {{
+            const sd = document.createElement('div'); sd.className = 'dc-section'; sd.textContent = DRAFT_SECTIONS[slot]; g.appendChild(sd);
+        }}
         const hex = dcHexOf(i), team = dcTeamOf(i);
         const combine = dcCurrent ? isCombine(dcCurrent, team) : false;
         const workout = dcCurrent ? isPDW(dcCurrent, team) : false;
