@@ -5666,6 +5666,19 @@ const DRAFT_SECTIONS = {{
     136: 'Round 5', 165: 'Round 6', 194: 'Round 7', 224: 'Round 8',
     254: 'Round 9', 284: 'Round 10',
 }};
+// Per-pick short round/segment label (R1..R10, PPI, CBA, CBB, COMP) for the
+// square's top line, so each square shows "<round> · #<overall>".
+const DC_ROUND = (function() {{
+    const short = {{ 'Round 1':'R1','PPI':'PPI','Comp Balance A':'CBA','Round 2':'R2',
+        'Comp Balance B':'CBB','FA Comp':'COMP','Round 3':'R3','Round 4':'R4','Round 5':'R5',
+        'Round 6':'R6','Round 7':'R7','Round 8':'R8','Round 9':'R9','Round 10':'R10' }};
+    const map = {{}}; let cur = '';
+    for (let pick = 1; pick <= 313; pick++) {{
+        if (DRAFT_SECTIONS[pick]) cur = short[DRAFT_SECTIONS[pick]] || DRAFT_SECTIONS[pick];
+        map[pick] = cur;
+    }}
+    return map;
+}})();
 let dcCurrent = null;        // selected player NAME (matches getLatestColor keys)
 let dcStarted = false;
 const DC_MODAL_KEY = '__draftcard__';
@@ -5732,14 +5745,10 @@ function dcRenderGrid() {{
         // Dots always occupy fixed corners: workout top-left, combine top-right.
         if (workout) {{ const wk = document.createElement('div'); wk.className = 'dc-work'; wk.title = 'Pre-draft workout'; el.appendChild(wk); }}
         if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; el.appendChild(cb); }}
-        const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = '#' + slot;
+        const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = DC_ROUND[slot] + ' \\u00b7 #' + slot;
         const tm = document.createElement('div'); tm.className = 'dc-team'; tm.textContent = team;
-        const bottom = document.createElement('div'); bottom.className = 'dc-bottom';
         const bn = document.createElement('div'); bn.className = 'dc-bonus'; bn.textContent = dcMoney(bonus);
-        bottom.appendChild(bn);
-        const tag = DC_PICK_TAG[slot];
-        if (tag) {{ const tg = document.createElement('div'); tg.className = 'dc-tag'; tg.textContent = tag; bottom.appendChild(tg); }}
-        el.appendChild(sl); el.appendChild(tm); el.appendChild(bottom);
+        el.appendChild(sl); el.appendChild(tm); el.appendChild(bn);
         g.appendChild(el);
     }});
 }}
