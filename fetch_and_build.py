@@ -2244,8 +2244,11 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-cell.dark .dc-team {{ color: #fff; }}
 #draftCardView .dc-bonus {{ font-size: 11.5px; font-weight: 700; color: #333; margin-top: auto; line-height: 1.1; }}
 #draftCardView .dc-cell.dark .dc-bonus {{ color: rgba(255,255,255,.92); }}
+#draftCardView .dc-dots {{ display: flex; align-items: center; gap: 4px; flex: none; }}
 #draftCardView .dc-comb {{ width: 13px; height: 13px; border-radius: 50%; background: #1565c0; flex: none; pointer-events: none; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }}
 #draftCardView .dc-cell.dark .dc-comb {{ box-shadow: 0 0 0 2px rgba(0,0,0,.3); }}
+#draftCardView .dc-work {{ width: 13px; height: 13px; border-radius: 50%; background: #000; flex: none; pointer-events: none; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }}
+#draftCardView .dc-cell.dark .dc-work {{ background: #000; box-shadow: 0 0 0 2px rgba(255,255,255,.85); }}
 #draftCardView .dc-keyrow {{ display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin-top: 18px; font-size: 12px; color: #666; }}
 #draftCardView .dc-keyrow .dc-k {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }}
 #draftCardView .dc-keyrow .dc-k i {{ width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); display: inline-block; }}
@@ -5609,6 +5612,7 @@ function dcCombineOf(i) {{
 function dcRenderKey() {{
     const k = document.getElementById('dcKeyrow'); if (!k) return; k.innerHTML = '';
     DC_PALETTE.forEach(c => {{ const s = document.createElement('span'); s.className = 'dc-k'; s.innerHTML = '<i style="background:' + (COLOR_BG[c.word]||'#fff') + '"></i>' + c.name; k.appendChild(s); }});
+    const s1 = document.createElement('span'); s1.className = 'dc-k'; s1.innerHTML = '<span class="dc-work" style="position:static;box-shadow:none;margin-right:2px"></span>Pre-draft workout'; k.appendChild(s1);
     const s2 = document.createElement('span'); s2.className = 'dc-k'; s2.innerHTML = '<span class="dc-comb" style="position:static;box-shadow:none;margin-right:2px"></span>Met at combine'; k.appendChild(s2);
 }}
 
@@ -5619,6 +5623,7 @@ function dcRenderGrid() {{
     DRAFT_SEED.forEach((row, i) => {{
         const slot = row[0], bonus = row[2];
         const hex = dcHexOf(i), team = dcTeamOf(i), combine = dcCombineOf(i);
+        const workout = dcCurrent ? isPDW(dcCurrent, team) : false;
         const edited = Object.keys(dcCellOf(i)).length > 0;
         const el = document.createElement('div');
         el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '') + (dcEditIndex === i ? ' sel' : '') + (edited ? ' edited' : '');
@@ -5626,7 +5631,12 @@ function dcRenderGrid() {{
         el.onclick = (ev) => dcOpenEditor(i, el);
         const top = document.createElement('div'); top.className = 'dc-top';
         const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = '#' + slot; top.appendChild(sl);
-        if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; top.appendChild(cb); }}
+        if (workout || combine) {{
+            const dots = document.createElement('div'); dots.className = 'dc-dots';
+            if (workout) {{ const wk = document.createElement('div'); wk.className = 'dc-work'; wk.title = 'Pre-draft workout'; dots.appendChild(wk); }}
+            if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; dots.appendChild(cb); }}
+            top.appendChild(dots);
+        }}
         const tm = document.createElement('div'); tm.className = 'dc-team'; tm.textContent = team;
         const bn = document.createElement('div'); bn.className = 'dc-bonus'; bn.textContent = dcMoney(bonus);
         el.appendChild(top); el.appendChild(tm); el.appendChild(bn);
