@@ -2541,7 +2541,7 @@ function checkPw() {{
             <label>Players</label>
             <button id="dcPlayerBtn" class="dc-player-btn" onclick="dcTogglePlayerPanel(event)"><span id="dcPlayerBtnLabel">&mdash;</span><span class="dc-caret">&#9662;</span></button>
             <div id="dcPlayerPanel" class="dc-player-panel">
-                <div class="dc-pp-head"><span>Compare up to 4</span><button onclick="dcClearCompare()">Clear extra</button></div>
+                <div class="dc-pp-head"><span>Compare up to 5</span><button onclick="dcClearCompare()">Clear extra</button></div>
                 <div class="dc-pp-list" id="dcPlayerList"></div>
             </div>
         </div>
@@ -5722,7 +5722,7 @@ let dcCurrent = null;        // primary player NAME (= dcSelected[0])
 let dcSelected = [];         // 1-4 selected players; >1 = compare mode
 let dcStarted = false;
 const DC_MODAL_KEY = '__draftcard__';
-const DC_MAX_COMPARE = 4;
+const DC_MAX_COMPARE = 5;
 
 const dcMoney = (n) => '$' + Number(n).toLocaleString('en-US');
 function dcIsDark(hex) {{
