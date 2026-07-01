@@ -2483,29 +2483,18 @@ function checkPw() {{
             <label for="dcPlayer">Player</label>
             <select id="dcPlayer" onchange="dcLoadCard(this.value)"></select>
         </div>
-        <div class="dc-status"><span class="dc-dot" id="dcDot"></span><span id="dcStatusText">Connecting&hellip;</span></div>
+        <div class="dc-status"><span class="dc-dot live" id="dcDot"></span><span id="dcStatusText">Seeded from TeamIntel</span></div>
     </div>
     <div class="dc-toolbar">
-        <div class="dc-hint"><b>Click any square</b> to override its color, combine status, or team. Un-edited squares follow the latest TeamIntel color for that team.</div>
+        <div class="dc-hint"><b>Click any square</b> to see the latest TeamIntel message behind it. Colors, workout &amp; combine dots come straight from the engine.</div>
         <div class="dc-spacer"></div>
         <button class="dc-act" onclick="dcPrint()">Print / PDF</button>
-        <button class="dc-act dc-danger" onclick="dcClear()">Clear overrides</button>
     </div>
     <div class="dc-grid" id="dcGrid"></div>
     <div class="dc-keyrow" id="dcKeyrow"></div>
     <div class="dc-footer">Live shared board &middot; 2026 MLB Draft order &amp; assigned slot values &middot; seeded from TeamIntel; per-square overrides sync within a few seconds.</div>
 </div>
 
-<div id="dcTip"></div>
-<div id="dcBackdrop" onclick="dcCloseEditor()"></div>
-<div id="dcEditor" role="dialog" aria-label="Edit square">
-    <div class="dc-ed-title" id="dcEdTitle"></div>
-    <div class="dc-ed-label">Color</div>
-    <div class="dc-ed-colors" id="dcEdColors"></div>
-    <div class="dc-ed-row"><span class="dc-ed-label">Met at combine</span><button id="dcEdCombine" type="button" onclick="dcToggleCombine()">No</button></div>
-    <div class="dc-ed-row"><span class="dc-ed-label">Team</span><input id="dcEdTeam" maxlength="5" autocomplete="off" spellcheck="false"></div>
-    <div class="dc-ed-actions"><button id="dcEdReset" type="button" onclick="dcResetCell()">Reset to engine</button><button id="dcEdDone" type="button" onclick="dcCloseEditor()">Done</button></div>
-</div>
 
 </div><!-- /appContent -->
 
@@ -5578,13 +5567,9 @@ const DC_PALETTE = [
     {{ word: 'light green', name: 'Light Green' }},
     {{ word: 'green',       name: 'Green' }},
 ];
-const DC_WORD_TO_CI = {{ 'red':0, 'orange':1, 'yellow':2, 'light green':3, 'green':4 }};
-
 let dcCurrent = null;        // selected player NAME (matches getLatestColor keys)
-let dcCells = {{}};            // per-square overrides, keyed by pick index -> ci/combine/team
-let dcUpdatedAt = null;
-let dcEditIndex = null;
 let dcStarted = false;
+const DC_MODAL_KEY = '__draftcard__';
 
 const dcMoney = (n) => '$' + Number(n).toLocaleString('en-US');
 function dcIsDark(hex) {{
@@ -5595,30 +5580,13 @@ function dcIsDark(hex) {{
     else {{ const h = hex.replace('#',''); if (h.length < 6) return false; r = parseInt(h.substr(0,2),16); g = parseInt(h.substr(2,2),16); b = parseInt(h.substr(4,2),16); }}
     return (0.299*r + 0.587*g + 0.114*b) < 150;
 }}
-function dcSetStatus(cls, txt) {{ const d = document.getElementById('dcDot'); if (d) d.className = 'dc-dot' + (cls ? ' ' + cls : ''); const t = document.getElementById('dcStatusText'); if (t) t.textContent = txt; }}
-const dcCellOf = (i) => dcCells[i] || {{}};
-const dcTeamOf = (i) => {{ const t = dcCellOf(i).team; return (t != null && t !== '') ? t : DRAFT_SEED[i][1]; }};
-// Resolved color hex for a square: explicit override wins; else the engine's
-// most-recent color for that pick's team; else blank white.
+const dcTeamOf = (i) => DRAFT_SEED[i][1];
+// Square color = the engine's most-recent color for that pick's team (or blank).
 function dcHexOf(i) {{
-    const ov = dcCellOf(i);
-    if (ov.ci != null) {{ return (ov.ci < 0) ? '#FFFFFF' : (COLOR_BG[DC_PALETTE[ov.ci].word] || '#FFFFFF'); }}
     const word = dcCurrent ? getLatestColor(dcCurrent, dcTeamOf(i)) : null;
     return word ? (COLOR_BG[word] || '#FFFFFF') : '#FFFFFF';
 }}
-// Which palette swatch is "active" for the editor (resolved, override or engine).
-function dcActiveCi(i) {{
-    const ov = dcCellOf(i);
-    if (ov.ci != null) return ov.ci;  // may be -1 (blank)
-    const word = dcCurrent ? getLatestColor(dcCurrent, dcTeamOf(i)) : null;
-    return (word && word in DC_WORD_TO_CI) ? DC_WORD_TO_CI[word] : -1;
-}}
-function dcCombineOf(i) {{
-    const ov = dcCellOf(i);
-    if (ov.combine != null) return !!ov.combine;
-    return dcCurrent ? isCombine(dcCurrent, dcTeamOf(i)) : false;
-}}
-// Most-recent intel record for (player, team) — powers the hover tooltip.
+// Most-recent intel record for (player, team) — opened on click.
 function dcLatestRecord(player, team) {{
     let best = null;
     RECORDS.forEach(function(r) {{
@@ -5629,30 +5597,14 @@ function dcLatestRecord(player, team) {{
     }});
     return best;
 }}
-function dcShowTip(i, anchor) {{
-    if (dcEditIndex !== null) return;  // editor open — don't cover it
+// Click a square -> open the full most-recent Slack/notes message behind it.
+function dcOpenMessage(i) {{
     const team = dcTeamOf(i);
     const rec = dcCurrent ? dcLatestRecord(dcCurrent, team) : null;
-    const tip = document.getElementById('dcTip');
-    let html = '<div class="dc-tip-head">' + _escapeHtml(dcCurrent || '') + ' \\u2014 ' + _escapeHtml(team) + ' \\u00b7 #' + DRAFT_SEED[i][0] + '</div>';
-    if (!rec) {{
-        html += '<div class="dc-tip-empty">No intel on file for this team.</div>';
-    }} else {{
-        const src = rec.is_manual ? 'Manual entry' : ('#' + (rec.channel || 'slack'));
-        const col = rec.color ? (' \\u00b7 ' + rec.color) : '';
-        html += '<div class="dc-tip-meta">' + _escapeHtml(src) + ' \\u00b7 ' + _escapeHtml(rec.date || '') + col + '</div>';
-        html += '<div class="dc-tip-body">' + _escapeHtml((rec.full_text || rec.note || '').slice(0, 500)) + '</div>';
-    }}
-    tip.innerHTML = html;
-    tip.style.display = 'block';
-    const r = anchor.getBoundingClientRect(); const tw = tip.offsetWidth, th = tip.offsetHeight;
-    let left = r.left, top = r.top - 8 - th;
-    if (top < 8) top = r.bottom + 8;
-    if (left + tw > window.innerWidth - 8) left = window.innerWidth - 8 - tw;
-    if (left < 8) left = 8;
-    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    if (!rec) {{ showToast('No intel on file for ' + dcCurrent + ' \\u00b7 ' + team + '.'); return; }}
+    _modalIndex[DC_MODAL_KEY] = rec;
+    openMessageModal(DC_MODAL_KEY);
 }}
-function dcHideTip() {{ const t = document.getElementById('dcTip'); if (t) t.style.display = 'none'; }}
 
 function dcRenderKey() {{
     const k = document.getElementById('dcKeyrow'); if (!k) return; k.innerHTML = '';
@@ -5667,15 +5619,13 @@ function dcRenderGrid() {{
     g.innerHTML = '';
     DRAFT_SEED.forEach((row, i) => {{
         const slot = row[0], bonus = row[2];
-        const hex = dcHexOf(i), team = dcTeamOf(i), combine = dcCombineOf(i);
+        const hex = dcHexOf(i), team = dcTeamOf(i);
+        const combine = dcCurrent ? isCombine(dcCurrent, team) : false;
         const workout = dcCurrent ? isPDW(dcCurrent, team) : false;
-        const edited = Object.keys(dcCellOf(i)).length > 0;
         const el = document.createElement('div');
-        el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '') + (dcEditIndex === i ? ' sel' : '') + (edited ? ' edited' : '');
+        el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '');
         el.style.background = hex;
-        el.onclick = (ev) => dcOpenEditor(i, el);
-        el.onmouseenter = () => dcShowTip(i, el);
-        el.onmouseleave = dcHideTip;
+        el.onclick = () => dcOpenMessage(i);
         const top = document.createElement('div'); top.className = 'dc-top';
         const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = '#' + slot; top.appendChild(sl);
         if (workout || combine) {{
@@ -5691,61 +5641,7 @@ function dcRenderGrid() {{
     }});
 }}
 
-async function dcApi(path, opts) {{ const r = await fetch(path, opts); if (!r.ok) throw new Error((await r.json().catch(()=>({{}}))).error || r.status); return r.json(); }}
-async function dcPostCell(i, patch) {{
-    if (!dcCurrent) return;
-    dcSetStatus('saving', 'Saving\\u2026');
-    try {{
-        const r = await dcApi('/api/draft-card', {{ method:'POST', headers:{{'Content-Type':'application/json'}}, body: JSON.stringify({{ player: dcCurrent, index: i, patch }}) }});
-        dcUpdatedAt = r.updated_at; dcSetStatus('live', 'Live \\u00b7 synced');
-    }} catch(e) {{ dcSetStatus('err', 'Save failed'); }}
-}}
-function dcSetColor(i, ci) {{ dcCells[i] = {{ ...dcCellOf(i), ci }}; dcRenderGrid(); if (dcEditIndex === i) dcSyncEditor(); dcPostCell(i, {{ ci }}); }}
-function dcToggleCombine() {{ if (dcEditIndex === null) return; const i = dcEditIndex; const val = !dcCombineOf(i); dcCells[i] = {{ ...dcCellOf(i), combine: val }}; dcRenderGrid(); dcSyncEditor(); dcPostCell(i, {{ combine: val }}); }}
-function dcSetTeam(i, v) {{ const base = DRAFT_SEED[i][1]; const team = (v === base ? undefined : v); const cell = {{ ...dcCellOf(i) }}; if (team) cell.team = team; else delete cell.team; dcCells[i] = cell; dcRenderGrid(); dcPostCell(i, {{ team: v }}); }}
-function dcResetCell() {{ if (dcEditIndex === null) return; const i = dcEditIndex; dcCells[i] = {{}}; dcRenderGrid(); dcSyncEditor(); dcPostCell(i, {{ ci: null, combine: null, team: null }}); }}
-
-function dcBuildColors() {{
-    const c = document.getElementById('dcEdColors'); if (!c) return; c.innerHTML = '';
-    DC_PALETTE.forEach((col, ci) => {{ const sw = document.createElement('div'); sw.className = 'dc-ed-sw'; sw.style.background = COLOR_BG[col.word] || '#fff'; sw.title = col.name; sw.dataset.ci = ci; sw.onclick = () => dcSetColor(dcEditIndex, ci); c.appendChild(sw); }});
-    const cl = document.createElement('div'); cl.className = 'dc-ed-sw clear'; cl.title = 'Force blank'; cl.textContent = '\\u2715'; cl.dataset.ci = -1; cl.onclick = () => dcSetColor(dcEditIndex, -1); c.appendChild(cl);
-}}
-function dcSyncEditor() {{
-    if (dcEditIndex === null) return;
-    const i = dcEditIndex, ci = dcActiveCi(i);
-    document.getElementById('dcEdTitle').innerHTML = 'Pick <b>#' + DRAFT_SEED[i][0] + '</b> \\u00b7 ' + dcTeamOf(i) + ' &nbsp;\\u00b7&nbsp; ' + dcMoney(DRAFT_SEED[i][2]);
-    document.getElementById('dcEdColors').querySelectorAll('.dc-ed-sw').forEach(sw => {{ const v = parseInt(sw.dataset.ci, 10); sw.classList.toggle('sel', (ci === v) || (ci < 0 && v === -1)); }});
-    const combine = dcCombineOf(i);
-    const cb = document.getElementById('dcEdCombine'); cb.textContent = combine ? 'Yes' : 'No'; cb.classList.toggle('yes', combine);
-    if (document.activeElement !== document.getElementById('dcEdTeam')) document.getElementById('dcEdTeam').value = dcTeamOf(i);
-}}
-function dcOpenEditor(i, anchor) {{
-    dcHideTip();
-    dcEditIndex = i; dcRenderGrid(); dcSyncEditor();
-    const ed = document.getElementById('dcEditor'); document.getElementById('dcBackdrop').style.display = 'block'; ed.style.display = 'block';
-    const r = anchor.getBoundingClientRect(); const ew = ed.offsetWidth, eh = ed.offsetHeight;
-    let left = r.left, top = r.bottom + 6;
-    if (left + ew > window.innerWidth - 8) left = window.innerWidth - 8 - ew;
-    if (left < 8) left = 8;
-    if (top + eh > window.innerHeight - 8) top = r.top - 6 - eh;
-    if (top < 8) top = 8;
-    ed.style.left = left + 'px'; ed.style.top = top + 'px';
-}}
-function dcCloseEditor() {{
-    if (dcEditIndex === null) return;
-    const i = dcEditIndex; dcEditIndex = null;
-    document.getElementById('dcEditor').style.display = 'none'; document.getElementById('dcBackdrop').style.display = 'none';
-    const v = document.getElementById('dcEdTeam').value.trim().toUpperCase().slice(0,5);
-    if (v && v !== dcTeamOf(i)) dcSetTeam(i, v); else dcRenderGrid();
-}}
-
-async function dcLoadCard(name) {{
-    dcCloseEditor(); dcCurrent = name; dcCells = {{}}; dcUpdatedAt = null;
-    if (!name) {{ dcRenderGrid(); return; }}
-    try {{ const c = await dcApi('/api/draft-card?player=' + encodeURIComponent(name)); dcCells = c.cells || {{}}; dcUpdatedAt = c.updated_at || null; dcSetStatus('live', 'Live \\u00b7 synced'); }}
-    catch(e) {{ dcSetStatus('err', 'Load failed'); }}
-    dcRenderGrid();
-}}
+function dcLoadCard(name) {{ dcCurrent = name; dcRenderGrid(); }}
 function dcPopulatePlayers() {{
     const sel = document.getElementById('dcPlayer'); if (!sel) return;
     const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
@@ -5753,32 +5649,10 @@ function dcPopulatePlayers() {{
     players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); }});
     if (players.length) {{ if (!dcCurrent || !players.includes(dcCurrent)) dcCurrent = players[0]; sel.value = dcCurrent; }}
 }}
-async function dcPollCard() {{
-    if (!dcCurrent || dcEditIndex !== null) return;
-    if (document.getElementById('draftCardView').style.display === 'none') return;
-    try {{ const c = await dcApi('/api/draft-card?player=' + encodeURIComponent(dcCurrent));
-        if ((c.updated_at || null) !== dcUpdatedAt) {{ dcCells = c.cells || {{}}; dcUpdatedAt = c.updated_at || null; dcRenderGrid(); }}
-        dcSetStatus('live', 'Live \\u00b7 synced');
-    }} catch(e) {{ dcSetStatus('err', 'Offline'); }}
-}}
-function dcPrint() {{ dcCloseEditor(); window.print(); }}
-async function dcClear() {{
-    if (!dcCurrent) return;
-    if (!confirm('Clear all per-square overrides for ' + dcCurrent + '? Squares will revert to the TeamIntel engine colors.')) return;
-    dcCloseEditor(); dcCells = {{}}; dcRenderGrid(); dcSetStatus('saving', 'Saving\\u2026');
-    try {{ const r = await dcApi('/api/draft-card', {{ method:'POST', headers:{{'Content-Type':'application/json'}}, body: JSON.stringify({{ player: dcCurrent, action: 'clear' }}) }}); dcUpdatedAt = r.updated_at; dcSetStatus('live', 'Live \\u00b7 synced'); }}
-    catch(e) {{ dcSetStatus('err', 'Save failed'); }}
-}}
-// Called by showView('draftcard'). Lazy-inits palette/legend/roster + poll.
+function dcPrint() {{ window.print(); }}
+// Called by showView('draftcard'). The card is a pure engine-seeded view.
 function dcShow() {{
-    if (!dcStarted) {{
-        dcStarted = true;
-        dcBuildColors(); dcRenderKey();
-        const tEl = document.getElementById('dcEdTeam');
-        if (tEl) tEl.onchange = () => {{ if (dcEditIndex !== null) dcSetTeam(dcEditIndex, tEl.value.trim().toUpperCase().slice(0,5)); }};
-        document.addEventListener('keydown', (e) => {{ if (e.key === 'Escape') dcCloseEditor(); }});
-        setInterval(dcPollCard, 4000);
-    }}
+    if (!dcStarted) {{ dcStarted = true; dcRenderKey(); }}
     dcPopulatePlayers();
     dcLoadCard(dcCurrent);
 }}
