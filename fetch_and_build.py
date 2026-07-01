@@ -2213,7 +2213,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 
 /* ===================== Client (row) filter ===================== */
 .client-hdr {{ position: relative; }}
-.client-filter-btn {{ margin-left: 6px; background: none; border: none; color: #bbb; font-size: 11px; cursor: pointer; padding: 0 2px; vertical-align: middle; line-height: 1; }}
+.client-filter-btn {{ margin-left: 7px; background: none; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 0 3px; vertical-align: middle; line-height: 1; }}
 .client-filter-btn:hover {{ color: #fff; }}
 .client-filter-btn.active {{ color: #ff5a52; }}
 #clientFilterPanel {{ position: fixed; z-index: 9300; display: none; background: #fff; border: 1px solid #d0d0d0; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); padding: 8px; width: 210px; }}
