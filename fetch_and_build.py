@@ -2747,16 +2747,28 @@ function _autoLatestColorRecord(player, team) {{
     }});
     return latest;
 }}
-function getLatestColor(player, team) {{
+// A manual color override AUTO-EXPIRES: it holds only until a Slack colored
+// record dated AFTER the override's edit supersedes it. Returns true when the
+// override exists AND is still winning. Legacy overrides with no edit timestamp
+// never expire (preserve manual work made before timestamps were tracked).
+function _colorOverrideActive(player, team) {{
     var ck = 'c|' + player + '|' + team;
-    if (scoreOverrides.hasOwnProperty(ck)) {{
-        var v = scoreOverrides[ck];
+    if (!scoreOverrides.hasOwnProperty(ck)) return false;
+    var ots = scoreOverridesMeta[ck];
+    var odate = ots ? ots.slice(0, 10) : '9999-12-31';
+    var rec = _autoLatestColorRecord(player, team);
+    if (rec && (rec.date || '') > odate) return false;  // newer Slack color wins
+    return true;
+}}
+function getLatestColor(player, team) {{
+    if (_colorOverrideActive(player, team)) {{
+        var v = scoreOverrides['c|' + player + '|' + team];
         return v || null;  // empty/null override means "no color"
     }}
     return _autoLatestColor(player, team);
 }}
 function isColorOverridden(player, team) {{
-    return scoreOverrides.hasOwnProperty('c|' + player + '|' + team);
+    return _colorOverrideActive(player, team);
 }}
 
 // Build a Slack permalink for a record. Format:
@@ -3109,8 +3121,16 @@ function buildMatrix() {{
         }} else if (k.startsWith('c|')) {{
             const key = k.substring(2);
             const val = scoreOverrides[k];
-            if (val) {{
-                cellLatestColor[key] = {{ date: '9999-12-31', color: val, manual: true }};
+            // Auto-expire: a newer Slack colored record (already in cellLatestColor)
+            // supersedes the override. Legacy overrides with no edit timestamp are
+            // dated 9999 so they never expire.
+            const ots = scoreOverridesMeta[k];
+            const odate = ots ? ots.slice(0, 10) : '9999-12-31';
+            const cur = cellLatestColor[key];
+            if (cur && (cur.date || '') > odate) {{
+                // newer Slack color wins — leave it in place
+            }} else if (val) {{
+                cellLatestColor[key] = {{ date: odate, color: val, manual: true }};
             }} else {{
                 delete cellLatestColor[key];
             }}
@@ -5524,30 +5544,36 @@ def fetch_game_schedule():
 
 
 def load_kv_overrides():
+    """Return (overrides, meta) from Redis. `meta` maps each override key to its
+    last-edit ISO timestamp (used to auto-expire color overrides against newer
+    Slack records). Both default to {} when Redis is unavailable."""
     url = os.environ.get('REDIS_URL')
     if not url:
         print("INFO: REDIS_URL not set — skipping manual overrides.")
-        return {}
+        return {}, {}
     try:
         import redis as _redis
     except ImportError:
         print("WARN: 'redis' package not installed — skipping manual overrides.")
-        return {}
+        return {}, {}
     try:
         client = _redis.from_url(url, socket_connect_timeout=10, socket_timeout=8)
         raw = client.get('score_overrides')
+        raw_meta = client.get('score_overrides_meta')
         try:
             client.close()
         except Exception:
             pass
-        if not raw:
-            return {}
-        if isinstance(raw, bytes):
-            raw = raw.decode('utf-8')
-        return json.loads(raw)
+        def _load(r):
+            if not r:
+                return {}
+            if isinstance(r, bytes):
+                r = r.decode('utf-8')
+            return json.loads(r)
+        return _load(raw), _load(raw_meta)
     except Exception as e:
         print(f"WARN: Failed to load overrides from Redis: {e}")
-        return {}
+        return {}, {}
 
 
 def load_manual_records():
@@ -5619,9 +5645,10 @@ def load_manual_records():
         return []
 
 
-def apply_overrides(records, overrides):
+def apply_overrides(records, overrides, meta=None):
     if not overrides:
         return records
+    meta = meta or {}
 
     score_ov = {}
     pdw_ov = {}
@@ -5645,7 +5672,11 @@ def apply_overrides(records, overrides):
         elif key.startswith('c|'):
             parts = key.split('|', 2)
             if len(parts) == 3:
-                color_ov[(parts[1], parts[2])] = val
+                # Store the edit date alongside the value so the override can
+                # auto-expire against a newer Slack colored record. Legacy
+                # overrides with no timestamp get 9999 (never expire).
+                edit_date = (meta.get(key) or '')[:10] or '9999-12-31'
+                color_ov[(parts[1], parts[2])] = (val, edit_date)
         elif key.startswith('mt|'):
             parts = key.split('|')
             if len(parts) == 4:
@@ -5719,22 +5750,28 @@ def apply_overrides(records, overrides):
 
     # Color overrides: rewrite the color of the most-recent record for each
     # (player, team) pair so downstream consumers (teamintel.json) see the
-    # manual color when picking "most recent".
+    # manual color when picking "most recent". AUTO-EXPIRE: if a Slack colored
+    # record is dated AFTER the override's edit, the fresh Slack color wins and
+    # the override is skipped (matches the dashboard's client-side behavior).
     color_applied = set()
     color_missing = set()
-    for (player, team), val in color_ov.items():
-        latest = None
+    color_expired = set()
+    for (player, team), (val, edit_date) in color_ov.items():
+        latest = None          # most-recent record (any) — the row we rewrite
+        latest_colored = None  # most-recent record carrying a color — expiry check
         for r in out:
             if r.get('player') == player and r.get('team') == team:
                 if latest is None or (r.get('date') or '') > (latest.get('date') or ''):
                     latest = r
+                if r.get('color') and (latest_colored is None or (r.get('date') or '') > (latest_colored.get('date') or '')):
+                    latest_colored = r
         if latest is None:
             color_missing.add((player, team))
             continue
-        if val:
-            latest['color'] = val
-        else:
-            latest['color'] = None
+        if latest_colored is not None and (latest_colored.get('date') or '') > edit_date:
+            color_expired.add((player, team))  # newer Slack color supersedes the override
+            continue
+        latest['color'] = val if val else None
         latest['color_overridden'] = True
         color_applied.add((player, team))
 
@@ -5745,12 +5782,15 @@ def apply_overrides(records, overrides):
         f"{len(combine_flipped)} combine pairs flipped, {len(combine_missing)} combine with no records, "
         f"{len(color_applied)} color overrides, "
         f"{len(color_missing)} color overrides with no records, "
+        f"{len(color_expired)} color overrides expired (newer Slack color), "
         f"{team_reassigned} team reassignments ({team_unmatched} unmatched)"
     )
     for p, t in sorted(pdw_missing):
         print(f"  (skipped PDW override {p}/{t} — no records for pair)")
     for p, t in sorted(color_missing):
         print(f"  (skipped color override {p}/{t} — no records for pair)")
+    for p, t in sorted(color_expired):
+        print(f"  (expired color override {p}/{t} — newer Slack color wins)")
     return out
 
 
@@ -5858,8 +5898,8 @@ if __name__ == '__main__':
     # Merge manual KV overrides (website edits) so PDW toggles + score edits
     # propagate downstream. Dashboard HTML applies overrides client-side,
     # so we only merge into the JSON output.
-    overrides = load_kv_overrides()
-    records_for_json = apply_overrides(records, overrides)
+    overrides, overrides_meta = load_kv_overrides()
+    records_for_json = apply_overrides(records, overrides, overrides_meta)
     json_path = os.path.join(out_dir, 'teamintel.json')
     with open(json_path, 'w') as f:
         json.dump(records_for_json, f, indent=2)
