@@ -2259,8 +2259,11 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-cell.dark .dc-slot {{ color: rgba(255,255,255,.82); }}
 #draftCardView .dc-team {{ font-size: 18px; font-weight: 800; letter-spacing: -.01em; line-height: 1; color: #111; }}
 #draftCardView .dc-cell.dark .dc-team {{ color: #fff; }}
+#draftCardView .dc-bottom {{ display: flex; flex-direction: column; align-items: center; }}
 #draftCardView .dc-bonus {{ font-size: 10.5px; font-weight: 700; color: #333; line-height: 1.1; }}
 #draftCardView .dc-cell.dark .dc-bonus {{ color: rgba(255,255,255,.92); }}
+#draftCardView .dc-tag {{ font-size: 7.5px; font-weight: 800; letter-spacing: .08em; color: #777; margin-top: 1px; text-transform: uppercase; }}
+#draftCardView .dc-cell.dark .dc-tag {{ color: rgba(255,255,255,.8); }}
 /* Corner dots — always the same corner: workout top-left (black), combine top-right (blue). */
 #draftCardView .dc-work {{ position: absolute; top: 5px; left: 6px; width: 10px; height: 10px; border-radius: 50%; background: #000; pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,.7); }}
 #draftCardView .dc-cell.dark .dc-work {{ box-shadow: 0 0 0 1px rgba(255,255,255,.85); }}
@@ -5626,6 +5629,16 @@ const DC_PALETTE = [
     {{ word: 'light green', name: 'Light Green' }},
     {{ word: 'green',       name: 'Green' }},
 ];
+// Special-pick tags (2026 MLB draft): overall pick # -> label.
+// PPI = Prospect Promotion Incentive (26, 28); Comp A = Competitive Balance
+// Round A (29-37); Comp B = Competitive Balance Round B (67-74).
+const DC_PICK_TAG = (function() {{
+    const t = {{}};
+    [26, 28].forEach(n => t[n] = 'PPI');
+    for (let n = 29; n <= 37; n++) t[n] = 'COMP A';
+    for (let n = 67; n <= 74; n++) t[n] = 'COMP B';
+    return t;
+}})();
 let dcCurrent = null;        // selected player NAME (matches getLatestColor keys)
 let dcStarted = false;
 const DC_MODAL_KEY = '__draftcard__';
@@ -5690,8 +5703,12 @@ function dcRenderGrid() {{
         if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; el.appendChild(cb); }}
         const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = '#' + slot;
         const tm = document.createElement('div'); tm.className = 'dc-team'; tm.textContent = team;
+        const bottom = document.createElement('div'); bottom.className = 'dc-bottom';
         const bn = document.createElement('div'); bn.className = 'dc-bonus'; bn.textContent = dcMoney(bonus);
-        el.appendChild(sl); el.appendChild(tm); el.appendChild(bn);
+        bottom.appendChild(bn);
+        const tag = DC_PICK_TAG[slot];
+        if (tag) {{ const tg = document.createElement('div'); tg.className = 'dc-tag'; tg.textContent = tag; bottom.appendChild(tg); }}
+        el.appendChild(sl); el.appendChild(tm); el.appendChild(bottom);
         g.appendChild(el);
     }});
 }}
