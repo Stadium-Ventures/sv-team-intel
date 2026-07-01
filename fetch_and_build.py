@@ -2275,6 +2275,9 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-keyrow .dc-k i {{ width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); display: inline-block; }}
 #draftCardView .dc-footer {{ margin-top: 18px; color: #888; font-size: 12px; }}
 #draftCardView .dc-print-head {{ display: none; }}  /* shown only when printing */
+#draftCardView .dc-head-player {{ font-size: 15px; font-weight: 800; color: #222; margin-top: 2px; }}
+#draftCardView .dc-window {{ display: flex; align-items: center; gap: 4px; }}
+#draftCardView .dc-window-label {{ font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #888; margin-right: 2px; }}
 /* Cell editor popup (fixed, shared with the dashboard overlay stack) */
 #dcBackdrop {{ position: fixed; inset: 0; background: transparent; display: none; z-index: 8500; }}
 #dcEditor {{ position: fixed; z-index: 9100; display: none; width: 252px; background: #fff; border: 1px solid #e3e3e3; border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.22); padding: 13px 14px; }}
@@ -2313,7 +2316,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     .header, .nav-tabs, .stats-bar, .legend,
     #matrixView, #detailView, #calendarView, #editsView,
     #clientFilterPanel, #scorePopup, #scoreOverlay, #toast,
-    #draftCardView .dc-controls, #draftCardView .dc-toolbar, #draftCardView .dc-status {{ display: none !important; }}
+    #draftCardView .dc-head, #draftCardView .dc-controls, #draftCardView .dc-toolbar, #draftCardView .dc-status {{ display: none !important; }}
     #dcEditor, #dcBackdrop {{ display: none !important; }}
     #draftCardView {{ display: block !important; padding: 0 !important; }}
     #draftCardView .dc-print-head {{ display: flex; justify-content: space-between; align-items: baseline;
@@ -2515,6 +2518,7 @@ function checkPw() {{
         <div class="dc-head-titles">
             <div class="dc-kicker">Stadium Ventures &middot; 2026 MLB Draft</div>
             <h2 class="dc-title">Draft Card</h2>
+            <div class="dc-head-player" id="dcHeadPlayer"></div>
         </div>
         <div class="dc-controls">
             <label for="dcPlayer">Player</label>
@@ -2525,6 +2529,13 @@ function checkPw() {{
     <div class="dc-toolbar">
         <div class="dc-hint"><b>Click any square</b> to see the latest TeamIntel message behind it. Colors, workout &amp; combine dots come straight from the engine.</div>
         <div class="dc-spacer"></div>
+        <div class="dc-window">
+            <span class="dc-window-label">Window</span>
+            <button id="dcw_0" class="dw-btn active" onclick="setDateWindow(0)" title="All intel">All</button>
+            <button id="dcw_30" class="dw-btn" onclick="setDateWindow(30)" title="Last 30 days">30d</button>
+            <button id="dcw_14" class="dw-btn" onclick="setDateWindow(14)" title="Last 14 days">14d</button>
+            <button id="dcw_7" class="dw-btn" onclick="setDateWindow(7)" title="Last 7 days">7d</button>
+        </div>
         <button class="dc-act" onclick="dcPrint()">Print / PDF</button>
     </div>
     <div class="dc-grid" id="dcGrid"></div>
@@ -2705,14 +2716,21 @@ function setDateWindow(days) {{
     }} else {{
         _dateWindowCutoff = null;
     }}
+    // Sync both toggle groups (matrix legend + draft card toolbar) — shared window.
     ['0', '30', '14', '7'].forEach(function(k) {{
         var el = document.getElementById('dw_' + k);
         if (el) el.classList.toggle('active', String(_dateWindowDays) === k);
+        var el2 = document.getElementById('dcw_' + k);
+        if (el2) el2.classList.toggle('active', String(_dateWindowDays) === k);
     }});
     renderMatrix();
     if (document.getElementById('detailView').style.display !== 'none' &&
         document.getElementById('playerSelect').value) {{
         renderDetail();
+    }}
+    if (typeof dcStarted !== 'undefined' && dcStarted &&
+        document.getElementById('draftCardView').style.display !== 'none') {{
+        dcRenderGrid();
     }}
 }}
 
@@ -5756,6 +5774,7 @@ function dcRenderGrid() {{
 function dcLoadCard(name) {{
     dcCurrent = name;
     const pp = document.getElementById('dcPrintPlayer'); if (pp) pp.textContent = name || '';
+    const hp = document.getElementById('dcHeadPlayer'); if (hp) hp.textContent = name || '';
     dcRenderGrid();
 }}
 function dcPopulatePlayers() {{
@@ -5770,6 +5789,11 @@ function dcPrint() {{ window.print(); }}
 // Called by showView('draftcard'). The card is a pure engine-seeded view.
 function dcShow() {{
     if (!dcStarted) {{ dcStarted = true; dcRenderKey(); }}
+    // Reflect the shared date window in the card's toggle.
+    ['0', '30', '14', '7'].forEach(function(k) {{
+        var el = document.getElementById('dcw_' + k);
+        if (el) el.classList.toggle('active', String(_dateWindowDays) === k);
+    }});
     dcPopulatePlayers();
     dcLoadCard(dcCurrent);
 }}
