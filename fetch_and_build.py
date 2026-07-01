@@ -2274,6 +2274,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-keyrow .dc-k {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }}
 #draftCardView .dc-keyrow .dc-k i {{ width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); display: inline-block; }}
 #draftCardView .dc-footer {{ margin-top: 18px; color: #888; font-size: 12px; }}
+#draftCardView .dc-print-head {{ display: none; }}  /* shown only when printing */
 /* Cell editor popup (fixed, shared with the dashboard overlay stack) */
 #dcBackdrop {{ position: fixed; inset: 0; background: transparent; display: none; z-index: 8500; }}
 #dcEditor {{ position: fixed; z-index: 9100; display: none; width: 252px; background: #fff; border: 1px solid #e3e3e3; border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.22); padding: 13px 14px; }}
@@ -2303,11 +2304,25 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     #draftCardView .dc-grid {{ grid-template-columns: repeat(5, 1fr); }}
 }}
 @media print {{
-    body {{ background: #fff; }}
-    .header, .nav-tabs, .stats-bar, .legend, #draftCardView .dc-controls, #draftCardView .dc-toolbar, #draftCardView .dc-status {{ display: none !important; }}
+    /* Draft Card print: landscape fits the 10-wide board; force color so the
+       cell fills actually print (browsers drop backgrounds by default). */
+    @page {{ size: landscape; margin: 0.4in; }}
+    html, body {{ background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+    * {{ -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }}
+    /* Hide all chrome + the non-printing views. */
+    .header, .nav-tabs, .stats-bar, .legend,
+    #matrixView, #detailView, #calendarView, #editsView,
+    #clientFilterPanel, #scorePopup, #scoreOverlay, #toast,
+    #draftCardView .dc-controls, #draftCardView .dc-toolbar, #draftCardView .dc-status {{ display: none !important; }}
     #dcEditor, #dcBackdrop {{ display: none !important; }}
-    #draftCardView .dc-cell {{ box-shadow: none !important; transform: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
-    #draftCardView .dc-comb, #draftCardView .dc-keyrow i {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+    #draftCardView {{ display: block !important; padding: 0 !important; }}
+    #draftCardView .dc-print-head {{ display: flex; justify-content: space-between; align-items: baseline;
+        border-bottom: 3px solid #ff2a22; padding-bottom: 6px; margin-bottom: 10px; }}
+    #draftCardView .dc-ph-title {{ font-size: 15px; font-weight: 800; letter-spacing: .02em; color: #000; }}
+    #draftCardView .dc-ph-player {{ font-size: 17px; font-weight: 800; color: #000; }}
+    #draftCardView .dc-grid {{ gap: 1px; }}
+    #draftCardView .dc-cell {{ box-shadow: none !important; transform: none !important; break-inside: avoid; }}
+    #draftCardView .dc-section {{ break-inside: avoid; break-after: avoid; }}
 }}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
@@ -2492,6 +2507,10 @@ function checkPw() {{
 </div>
 
 <div id="draftCardView" style="display:none;">
+    <div class="dc-print-head">
+        <span class="dc-ph-title">Stadium Ventures &middot; 2026 MLB Draft Card</span>
+        <span class="dc-ph-player" id="dcPrintPlayer"></span>
+    </div>
     <div class="dc-head">
         <div class="dc-head-titles">
             <div class="dc-kicker">Stadium Ventures &middot; 2026 MLB Draft</div>
@@ -5725,7 +5744,11 @@ function dcRenderGrid() {{
     }});
 }}
 
-function dcLoadCard(name) {{ dcCurrent = name; dcRenderGrid(); }}
+function dcLoadCard(name) {{
+    dcCurrent = name;
+    const pp = document.getElementById('dcPrintPlayer'); if (pp) pp.textContent = name || '';
+    dcRenderGrid();
+}}
 function dcPopulatePlayers() {{
     const sel = document.getElementById('dcPlayer'); if (!sel) return;
     // Same ordering as the matrix rows (colored-team count, then points, then name).
