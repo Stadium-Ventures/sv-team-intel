@@ -2231,24 +2231,27 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-act {{ border: 1px solid #d0d0d0; background: #fff; border-radius: 8px; padding: 8px 13px; font-size: 13px; font-weight: 700; cursor: pointer; color: #111; }}
 #draftCardView .dc-act:hover {{ background: #f3f3f3; }}
 #draftCardView .dc-act.dc-danger {{ color: #b00; }}
-#draftCardView .dc-grid {{ display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; }}
-#draftCardView .dc-cell {{ position: relative; background: #fff; border: 1px solid #e3e3e3; border-radius: 10px; min-height: 82px; padding: 6px 8px 7px; cursor: pointer; display: flex; flex-direction: column; transition: transform .06s, box-shadow .12s; overflow: hidden; }}
-#draftCardView .dc-cell:hover {{ box-shadow: 0 2px 10px rgba(0,0,0,.14); transform: translateY(-1px); }}
-#draftCardView .dc-cell.sel {{ box-shadow: 0 0 0 2px #111; }}
-#draftCardView .dc-cell.edited::after {{ content: ''; position: absolute; bottom: 5px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.45); }}
+/* Flat, matrix-style grid: contiguous cells separated by thin lines (the grid
+   gap over a light background), no rounded corners or drop shadows. */
+#draftCardView .dc-grid {{ display: grid; grid-template-columns: repeat(10, 1fr); gap: 1px; background: #ececec; border: 1px solid #ececec; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }}
+#draftCardView .dc-cell {{ position: relative; background: #fff; min-height: 64px; padding: 5px 7px 6px; cursor: pointer; display: flex; flex-direction: column; overflow: hidden; }}
+#draftCardView .dc-cell:hover {{ outline: 2px solid #000; outline-offset: -2px; z-index: 2; }}
+#draftCardView .dc-cell.sel {{ outline: 2px solid #000; outline-offset: -2px; z-index: 2; }}
+#draftCardView .dc-cell.edited::after {{ content: ''; position: absolute; bottom: 4px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.4); }}
+#draftCardView .dc-cell.dark.edited::after {{ background: rgba(255,255,255,.7); }}
 #draftCardView .dc-cell.dark.edited::after {{ background: rgba(255,255,255,.75); }}
 #draftCardView .dc-top {{ display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; }}
-#draftCardView .dc-slot {{ font-size: 11px; font-weight: 800; color: #6b6b6b; line-height: 1; }}
+#draftCardView .dc-slot {{ font-size: 10px; font-weight: 800; color: #6b6b6b; line-height: 1; }}
 #draftCardView .dc-cell.dark .dc-slot {{ color: rgba(255,255,255,.82); }}
-#draftCardView .dc-team {{ font-size: 20px; font-weight: 800; letter-spacing: -.01em; line-height: 1; margin-top: 5px; color: #111; }}
+#draftCardView .dc-team {{ font-size: 17px; font-weight: 800; letter-spacing: -.01em; line-height: 1; margin-top: 4px; color: #111; }}
 #draftCardView .dc-cell.dark .dc-team {{ color: #fff; }}
-#draftCardView .dc-bonus {{ font-size: 11.5px; font-weight: 700; color: #333; margin-top: auto; line-height: 1.1; }}
+#draftCardView .dc-bonus {{ font-size: 10.5px; font-weight: 700; color: #333; margin-top: auto; line-height: 1.1; }}
 #draftCardView .dc-cell.dark .dc-bonus {{ color: rgba(255,255,255,.92); }}
-#draftCardView .dc-dots {{ display: flex; align-items: center; gap: 4px; flex: none; }}
-#draftCardView .dc-comb {{ width: 13px; height: 13px; border-radius: 50%; background: #1565c0; flex: none; pointer-events: none; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }}
-#draftCardView .dc-cell.dark .dc-comb {{ box-shadow: 0 0 0 2px rgba(0,0,0,.3); }}
-#draftCardView .dc-work {{ width: 13px; height: 13px; border-radius: 50%; background: #000; flex: none; pointer-events: none; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }}
-#draftCardView .dc-cell.dark .dc-work {{ background: #000; box-shadow: 0 0 0 2px rgba(255,255,255,.85); }}
+#draftCardView .dc-dots {{ display: flex; align-items: center; gap: 3px; flex: none; }}
+#draftCardView .dc-comb {{ width: 9px; height: 9px; border-radius: 50%; background: #1565c0; flex: none; pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,.7); }}
+#draftCardView .dc-cell.dark .dc-comb {{ box-shadow: 0 0 0 1px rgba(0,0,0,.3); }}
+#draftCardView .dc-work {{ width: 9px; height: 9px; border-radius: 50%; background: #000; flex: none; pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,.7); }}
+#draftCardView .dc-cell.dark .dc-work {{ background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,.85); }}
 #draftCardView .dc-keyrow {{ display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin-top: 18px; font-size: 12px; color: #666; }}
 #draftCardView .dc-keyrow .dc-k {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }}
 #draftCardView .dc-keyrow .dc-k i {{ width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); display: inline-block; }}
