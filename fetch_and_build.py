@@ -1564,8 +1564,12 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 /* Source attribution: where the most-recent color came from. Sits in its own
    row below the color line so a wide chip can't push the popup off-screen. */
 #scorePopup .popup-source {{
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     margin: -4px 0 10px;
+}}
+#scorePopup .popup-source-note {{
+    font-size: 11px; color: #666; font-style: italic; font-weight: 500;
+    white-space: normal; flex-basis: 100%;
 }}
 #scorePopup .popup-source-label {{
     font-size: 10px; color: #888; font-weight: 600; letter-spacing: 0.3px;
@@ -1647,6 +1651,11 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
    color editing lives in the detail-view 'Most Recent' block (color-only mode). */
 #scorePopup .popup-set-color-wrap {{ display: none; }}
 #scorePopup.color-only .popup-set-color-wrap {{ display: block; }}
+#scorePopup .popup-color-note {{
+    width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 6px 8px;
+    font-size: 12px; border: 1px solid #ccc; border-radius: 5px; background: white;
+}}
+#scorePopup .popup-color-note::placeholder {{ color: #aaa; }}
 #scorePopup .popup-colors button {{
     flex: 1; height: 28px; border: 2px solid rgba(0,0,0,0.15); border-radius: 5px;
     cursor: pointer; padding: 0; transition: transform 0.1s, border-color 0.1s;
@@ -2399,6 +2408,7 @@ function showToast(msg, ok) {{
 }}
 
 var scoreOverridesMeta = {{}};  // 'key' -> ISO timestamp of last edit (Edits tab uses this).
+var scoreOverridesNotes = {{}};  // 'key' -> free-text reason (color overrides only, for now).
 async function loadOverrides() {{
     try {{
         const res = await fetch('/api/overrides?meta=1');
@@ -2408,13 +2418,15 @@ async function loadOverrides() {{
             return;
         }}
         const blob = await res.json();
-        // Server returns {{ values, meta }} when ?meta=1; fall back to flat shape if older.
+        // Server returns {{ values, meta, notes }} when ?meta=1; fall back to flat shape if older.
         if (blob && typeof blob === 'object' && blob.values !== undefined) {{
             scoreOverrides = blob.values || {{}};
             scoreOverridesMeta = blob.meta || {{}};
+            scoreOverridesNotes = blob.notes || {{}};
         }} else {{
             scoreOverrides = blob || {{}};
             scoreOverridesMeta = {{}};
+            scoreOverridesNotes = {{}};
         }}
     }} catch(e) {{
         showToast('Could not reach overrides API. Manual edits may not persist.');
@@ -2627,11 +2639,17 @@ async function saveTeamReassign(newTeam) {{
 async function saveColor(color) {{
     const player = _popupPlayer, team = _popupTeam;
     const ck = 'c|' + player + '|' + team;
+    // Optional reason typed into the "Set most-recent color" section. Sent only
+    // when setting a color (clearing removes the note server-side).
+    const noteEl = document.getElementById('colorNoteInput');
+    const note = (color === null || color === undefined) ? undefined : (noteEl ? noteEl.value.trim() : '');
+    const payload = {{ key: ck, score: color }};
+    if (note !== undefined) payload.note = note;
     try {{
         const res = await fetch('/api/overrides', {{
             method: 'POST',
             headers: {{ 'Content-Type': 'application/json' }},
-            body: JSON.stringify({{ key: ck, score: color }})
+            body: JSON.stringify(payload)
         }});
         if (!res.ok) {{
             const body = await res.text();
@@ -2641,9 +2659,12 @@ async function saveColor(color) {{
         if (color === null || color === undefined) {{
             delete scoreOverrides[ck];
             delete scoreOverridesMeta[ck];
+            delete scoreOverridesNotes[ck];
         }} else {{
             scoreOverrides[ck] = color;
             scoreOverridesMeta[ck] = new Date().toISOString();
+            if (note) scoreOverridesNotes[ck] = note;
+            else delete scoreOverridesNotes[ck];
         }}
         showToast('Saved', true);
     }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
@@ -2677,6 +2698,9 @@ function updateColorPicker() {{
     }});
     const clr = document.getElementById('colorClearBtn');
     if (clr) clr.style.display = ovd ? 'inline-block' : 'none';
+    // Prefill the reason field with any saved note for this cell's override.
+    const noteEl = document.getElementById('colorNoteInput');
+    if (noteEl) noteEl.value = scoreOverridesNotes['c|' + player + '|' + team] || '';
 }}
 
 // Manual tier-points override (popup buttons 5/4/3/2/1/0).
@@ -2848,7 +2872,9 @@ function _renderPopupSourceBox(player, team) {{
     var label = '<span class="popup-source-label">Source</span>';
     var chip = '';
     if (src.kind === 'override') {{
-        chip = '<span class="popup-source-chip" title="Color set manually via the popup picker">Manual override</span>';
+        var _note = scoreOverridesNotes['c|' + player + '|' + team] || '';
+        var _noteHtml = _note ? ' <span class="popup-source-note">\\u2014 ' + _escapeHtml(_note) + '</span>' : '';
+        chip = '<span class="popup-source-chip" title="Color set manually via the popup picker">Manual override</span>' + _noteHtml;
     }} else if (src.kind === 'manual_entry') {{
         var sourceRec = _autoLatestColorRecord(player, team);
         if (sourceRec) _modalIndex[_POPUP_SOURCE_MODAL_KEY] = sourceRec;
@@ -3567,7 +3593,8 @@ async function renderEdits() {{
         }} else if (k.startsWith('c|')) {{
             const p = k.substring(2).split('|');
             if (p.length !== 2) return;
-            rows.push({{ edited_at: ts, ref_date: '', type: 'Most-Recent Color', player: p[0], team: p[1], details: v || '(cleared)', _color: v || null }});
+            const cnote = scoreOverridesNotes[k] || '';
+            rows.push({{ edited_at: ts, ref_date: '', type: 'Most-Recent Color', player: p[0], team: p[1], details: (v || '(cleared)') + (cnote ? ' \\u2014 ' + cnote : ''), _color: v || null }});
         }} else if (k.startsWith('mt|')) {{
             const p = k.substring(3).split('|');
             if (p.length !== 3) return;
@@ -5337,6 +5364,8 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
     </div>
     <div class="popup-set-color-wrap">
         <div class="popup-color-label">Set most-recent color</div>
+        <input type="text" id="colorNoteInput" class="popup-color-note" maxlength="280"
+               placeholder="Reason (optional) — why this grade?">
         <div class="popup-colors">
             <button id="colorSwatch_green"       class="cs-green"   onclick="saveColor('green')"       title="Green"></button>
             <button id="colorSwatch_light_green" class="cs-lgreen"  onclick="saveColor('light green')" title="Light Green"></button>
