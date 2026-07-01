@@ -2278,6 +2278,23 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-head-player {{ font-size: 15px; font-weight: 800; color: #222; margin-top: 2px; }}
 #draftCardView .dc-window {{ display: flex; align-items: center; gap: 4px; }}
 #draftCardView .dc-window-label {{ font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #888; margin-right: 2px; }}
+/* Multi-player selector */
+#draftCardView .dc-controls {{ position: relative; }}
+#draftCardView .dc-player-btn {{ font-size: 15px; font-weight: 700; border: 1px solid #d0d0d0; border-radius: 8px; padding: 7px 12px; background: #fff; color: #111; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-width: 190px; justify-content: space-between; }}
+#draftCardView .dc-player-btn .dc-caret {{ color: #888; font-size: 11px; }}
+#draftCardView .dc-player-panel {{ display: none; position: absolute; top: 100%; left: 0; margin-top: 4px; z-index: 9300; background: #fff; border: 1px solid #d0d0d0; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); padding: 8px; width: 230px; }}
+#draftCardView .dc-pp-head {{ display: flex; justify-content: space-between; align-items: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #888; padding: 2px 2px 7px; border-bottom: 1px solid #eee; margin-bottom: 5px; }}
+#draftCardView .dc-pp-head button {{ background: none; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 10px; font-weight: 700; color: #444; cursor: pointer; padding: 2px 6px; }}
+#draftCardView .dc-pp-list {{ max-height: 340px; overflow-y: auto; }}
+#draftCardView .dc-pp-row {{ display: flex; align-items: center; gap: 8px; padding: 4px 5px; font-size: 12.5px; color: #222; cursor: pointer; border-radius: 5px; }}
+#draftCardView .dc-pp-row:hover {{ background: #f5f5f5; }}
+#draftCardView .dc-pp-row input {{ width: 15px; height: 15px; flex: none; cursor: pointer; }}
+/* Compare mode: neutral cell + one initial-chip per selected player */
+#draftCardView .dc-cell.dc-multi {{ background: #fff !important; justify-content: flex-start; gap: 3px; min-height: 78px; }}
+#draftCardView .dc-chips {{ display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin: 1px 0; }}
+#draftCardView .dc-chip {{ font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 4px; color: #222; cursor: pointer; border: 1px solid rgba(0,0,0,.12); line-height: 1.15; }}
+#draftCardView .dc-chip.dark {{ color: #fff; border-color: rgba(255,255,255,.25); }}
+#draftCardView .dc-chip.empty {{ color: #aaa; }}
 /* Cell editor popup (fixed, shared with the dashboard overlay stack) */
 #dcBackdrop {{ position: fixed; inset: 0; background: transparent; display: none; z-index: 8500; }}
 #dcEditor {{ position: fixed; z-index: 9100; display: none; width: 252px; background: #fff; border: 1px solid #e3e3e3; border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.22); padding: 13px 14px; }}
@@ -2521,8 +2538,12 @@ function checkPw() {{
             <div class="dc-head-player" id="dcHeadPlayer"></div>
         </div>
         <div class="dc-controls">
-            <label for="dcPlayer">Player</label>
-            <select id="dcPlayer" onchange="dcLoadCard(this.value)"></select>
+            <label>Players</label>
+            <button id="dcPlayerBtn" class="dc-player-btn" onclick="dcTogglePlayerPanel(event)"><span id="dcPlayerBtnLabel">&mdash;</span><span class="dc-caret">&#9662;</span></button>
+            <div id="dcPlayerPanel" class="dc-player-panel">
+                <div class="dc-pp-head"><span>Compare up to 4</span><button onclick="dcClearCompare()">Clear extra</button></div>
+                <div class="dc-pp-list" id="dcPlayerList"></div>
+            </div>
         </div>
         <div class="dc-status"><span class="dc-dot live" id="dcDot"></span><span id="dcStatusText">Seeded from TeamIntel</span></div>
     </div>
@@ -5697,9 +5718,11 @@ const DC_ROUND = (function() {{
     }}
     return map;
 }})();
-let dcCurrent = null;        // selected player NAME (matches getLatestColor keys)
+let dcCurrent = null;        // primary player NAME (= dcSelected[0])
+let dcSelected = [];         // 1-4 selected players; >1 = compare mode
 let dcStarted = false;
 const DC_MODAL_KEY = '__draftcard__';
+const DC_MAX_COMPARE = 4;
 
 const dcMoney = (n) => '$' + Number(n).toLocaleString('en-US');
 function dcIsDark(hex) {{
@@ -5728,12 +5751,18 @@ function dcLatestRecord(player, team) {{
     return best;
 }}
 // Click a square -> open the full most-recent Slack/notes message behind it.
-function dcOpenMessage(i) {{
+function dcOpenMessageFor(player, i) {{
     const team = dcTeamOf(i);
-    const rec = dcCurrent ? dcLatestRecord(dcCurrent, team) : null;
-    if (!rec) {{ showToast('No intel on file for ' + dcCurrent + ' \\u00b7 ' + team + '.'); return; }}
+    const rec = player ? dcLatestRecord(player, team) : null;
+    if (!rec) {{ showToast('No intel on file for ' + player + ' \\u00b7 ' + team + '.'); return; }}
     _modalIndex[DC_MODAL_KEY] = rec;
     openMessageModal(DC_MODAL_KEY);
+}}
+function dcOpenMessage(i) {{ dcOpenMessageFor(dcCurrent, i); }}
+function dcInitials(name) {{
+    const parts = String(name || '').trim().split(/\\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }}
 
 function dcRenderKey() {{
@@ -5745,7 +5774,8 @@ function dcRenderKey() {{
 
 function dcRenderGrid() {{
     const g = document.getElementById('dcGrid'); if (!g) return;
-    if (!dcCurrent) {{ g.innerHTML = ''; return; }}
+    if (!dcSelected.length) {{ g.innerHTML = ''; return; }}
+    const multi = dcSelected.length > 1;
     g.innerHTML = '';
     DRAFT_SEED.forEach((row, i) => {{
         const slot = row[0], bonus = row[2];
@@ -5753,49 +5783,106 @@ function dcRenderGrid() {{
         if (DRAFT_SECTIONS[slot]) {{
             const sd = document.createElement('div'); sd.className = 'dc-section'; sd.textContent = DRAFT_SECTIONS[slot]; g.appendChild(sd);
         }}
-        const hex = dcHexOf(i), team = dcTeamOf(i);
-        const combine = dcCurrent ? isCombine(dcCurrent, team) : false;
-        const workout = dcCurrent ? isPDW(dcCurrent, team) : false;
+        const team = dcTeamOf(i);
         const el = document.createElement('div');
-        el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '');
-        el.style.background = hex;
-        el.onclick = () => dcOpenMessage(i);
-        // Dots always occupy fixed corners: workout top-left, combine top-right.
-        if (workout) {{ const wk = document.createElement('div'); wk.className = 'dc-work'; wk.title = 'Pre-draft workout'; el.appendChild(wk); }}
-        if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; el.appendChild(cb); }}
         const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = DC_ROUND[slot] + ' \\u00b7 #' + slot;
         const tm = document.createElement('div'); tm.className = 'dc-team'; tm.textContent = team;
         const bn = document.createElement('div'); bn.className = 'dc-bonus'; bn.textContent = dcMoney(bonus);
-        el.appendChild(sl); el.appendChild(tm); el.appendChild(bn);
+
+        if (multi) {{
+            // Compare mode: neutral cell, one initial-chip per selected player.
+            el.className = 'dc-cell dc-multi';
+            el.appendChild(sl); el.appendChild(tm);
+            const chips = document.createElement('div'); chips.className = 'dc-chips';
+            dcSelected.forEach(pl => {{
+                const word = getLatestColor(pl, team);
+                const hex = word ? (COLOR_BG[word] || '#eee') : '#f1f1f1';
+                const chip = document.createElement('div');
+                chip.className = 'dc-chip' + (word && dcIsDark(hex) ? ' dark' : '') + (word ? '' : ' empty');
+                chip.style.background = hex;
+                chip.textContent = dcInitials(pl);
+                let tip = pl + (word ? ' \\u00b7 ' + word : ' \\u00b7 no color');
+                if (isPDW(pl, team)) tip += ' \\u00b7 PDW';
+                if (isCombine(pl, team)) tip += ' \\u00b7 combine';
+                chip.title = tip;
+                chip.onclick = (ev) => {{ ev.stopPropagation(); dcOpenMessageFor(pl, i); }};
+                chips.appendChild(chip);
+            }});
+            el.appendChild(chips); el.appendChild(bn);
+            el.onclick = () => dcOpenMessageFor(dcCurrent, i);
+        }} else {{
+            // Single-player mode: full-color cell with corner workout/combine dots.
+            const hex = dcHexOf(i);
+            const combine = isCombine(dcCurrent, team), workout = isPDW(dcCurrent, team);
+            el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '');
+            el.style.background = hex;
+            el.onclick = () => dcOpenMessage(i);
+            if (workout) {{ const wk = document.createElement('div'); wk.className = 'dc-work'; wk.title = 'Pre-draft workout'; el.appendChild(wk); }}
+            if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; el.appendChild(cb); }}
+            el.appendChild(sl); el.appendChild(tm); el.appendChild(bn);
+        }}
         g.appendChild(el);
     }});
 }}
 
-function dcLoadCard(name) {{
-    dcCurrent = name;
-    const pp = document.getElementById('dcPrintPlayer'); if (pp) pp.textContent = name || '';
-    const hp = document.getElementById('dcHeadPlayer'); if (hp) hp.textContent = name || '';
+// Set the selected players (order preserved; dcSelected[0] is primary).
+function dcSetSelected(arr) {{
+    dcSelected = (arr || []).filter(Boolean).slice(0, DC_MAX_COMPARE);
+    dcCurrent = dcSelected[0] || null;
+    const names = dcSelected.join(', ');
+    const lbl = document.getElementById('dcPlayerBtnLabel');
+    if (lbl) lbl.textContent = !dcSelected.length ? '\\u2014'
+        : (dcSelected.length === 1 ? dcSelected[0] : (dcSelected[0].split(' ')[0] + ' +' + (dcSelected.length - 1)));
+    const hp = document.getElementById('dcHeadPlayer'); if (hp) hp.textContent = dcSelected.length > 1 ? ('Compare: ' + names) : names;
+    const pp = document.getElementById('dcPrintPlayer'); if (pp) pp.textContent = dcSelected.length > 1 ? ('Compare: ' + names) : names;
+    dcBuildPlayerList();
     dcRenderGrid();
 }}
-function dcPopulatePlayers() {{
-    const sel = document.getElementById('dcPlayer'); if (!sel) return;
-    // Same ordering as the matrix rows (colored-team count, then points, then name).
-    const players = buildMatrix().sortedPlayers;
-    sel.innerHTML = '';
-    players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); }});
-    if (players.length) {{ if (!dcCurrent || !players.includes(dcCurrent)) dcCurrent = players[0]; sel.value = dcCurrent; }}
+function dcBuildPlayerList() {{
+    const host = document.getElementById('dcPlayerList'); if (!host) return;
+    const players = buildMatrix().sortedPlayers;  // matrix order
+    const atCap = dcSelected.length >= DC_MAX_COMPARE;
+    host.innerHTML = '';
+    players.forEach(p => {{
+        const on = dcSelected.includes(p);
+        const row = document.createElement('label'); row.className = 'dc-pp-row';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = on; cb.disabled = (!on && atCap);
+        cb.onchange = () => {{
+            let next = dcSelected.slice();
+            if (cb.checked) next.push(p); else next = next.filter(x => x !== p);
+            if (!next.length) next = [p];  // never empty
+            dcSetSelected(next);
+        }};
+        const span = document.createElement('span'); span.textContent = p;
+        row.appendChild(cb); row.appendChild(span); host.appendChild(row);
+    }});
 }}
+function dcTogglePlayerPanel(ev) {{
+    if (ev) ev.stopPropagation();
+    const p = document.getElementById('dcPlayerPanel'); if (!p) return;
+    p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+}}
+function dcClearCompare() {{ dcSetSelected([dcSelected[0]]); }}
+document.addEventListener('click', function(e) {{
+    const p = document.getElementById('dcPlayerPanel');
+    if (!p || p.style.display !== 'block') return;
+    const btn = document.getElementById('dcPlayerBtn');
+    if (p.contains(e.target) || (btn && btn.contains(e.target))) return;
+    p.style.display = 'none';
+}});
 function dcPrint() {{ window.print(); }}
-// Called by showView('draftcard'). The card is a pure engine-seeded view.
+// Called by showView('draftcard'). Engine-seeded view; supports compare mode.
 function dcShow() {{
     if (!dcStarted) {{ dcStarted = true; dcRenderKey(); }}
-    // Reflect the shared date window in the card's toggle.
     ['0', '30', '14', '7'].forEach(function(k) {{
         var el = document.getElementById('dcw_' + k);
         if (el) el.classList.toggle('active', String(_dateWindowDays) === k);
     }});
-    dcPopulatePlayers();
-    dcLoadCard(dcCurrent);
+    const players = buildMatrix().sortedPlayers;
+    // Keep valid current selection; default to the top matrix player.
+    let sel = dcSelected.filter(p => players.includes(p));
+    if (!sel.length) sel = players.length ? [players[0]] : [];
+    dcSetSelected(sel);
 }}
 
 async function init() {{
