@@ -5699,7 +5699,8 @@ function dcRenderGrid() {{
 function dcLoadCard(name) {{ dcCurrent = name; dcRenderGrid(); }}
 function dcPopulatePlayers() {{
     const sel = document.getElementById('dcPlayer'); if (!sel) return;
-    const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
+    // Same ordering as the matrix rows (colored-team count, then points, then name).
+    const players = buildMatrix().sortedPlayers;
     sel.innerHTML = '';
     players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); }});
     if (players.length) {{ if (!dcCurrent || !players.includes(dcCurrent)) dcCurrent = players[0]; sel.value = dcCurrent; }}
