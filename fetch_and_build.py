@@ -1452,6 +1452,14 @@ body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
 }}
 .legend-title {{ font-weight: 600; color: #666; }}
 .legend-item {{ display: flex; align-items: center; gap: 5px; }}
+.date-window {{ display: flex; align-items: center; gap: 4px; margin-left: auto; }}
+.dw-btn {{
+    font-size: 11px; font-weight: 600; padding: 3px 9px; cursor: pointer;
+    border: 1px solid #d0d0d0; background: #fff; color: #555; border-radius: 5px;
+    transition: all 0.12s;
+}}
+.dw-btn:hover {{ background: #f2f2f2; }}
+.dw-btn.active {{ background: #000; color: #fff; border-color: #000; }}
 .legend-swatch {{ width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }}
 
 .matrix-container {{ padding: 10px 14px; }}
@@ -2204,6 +2212,13 @@ function checkPw() {{
     <div class="legend-item"><div class="legend-swatch" style="background:#fff;border:1px solid #ccc;position:relative;"><span style="position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#1565c0;"></span></div>Combine Meeting</div>
     <span class="legend-title" style="margin-left:14px;">Points</span>
     <span style="font-size:11px;color:#666;">GM 5 &middot; Dir 4 &middot; NXC 3 &middot; X 2 &middot; Area 1</span>
+    <div id="dateWindowCtl" class="date-window">
+        <span class="legend-title">Window:</span>
+        <button id="dw_0"  class="dw-btn active" onclick="setDateWindow(0)"  title="Show all intel">All</button>
+        <button id="dw_30" class="dw-btn"        onclick="setDateWindow(30)" title="Only records from the last 30 days">30d</button>
+        <button id="dw_14" class="dw-btn"        onclick="setDateWindow(14)" title="Only records from the last 14 days">14d</button>
+        <button id="dw_7"  class="dw-btn"        onclick="setDateWindow(7)"  title="Only records from the last 7 days">7d</button>
+    </div>
 </div>
 
 <div id="matrixView" class="matrix-container">
@@ -2455,6 +2470,37 @@ function isPointsOverridden(r) {{
 
 function isExcluded(r) {{
     return getScore(r) === 'NA';
+}}
+
+// --- Date-range (recency) window ---
+// Filters the Slack/notes records that feed the matrix and detail view to the
+// last N days. Manual overrides (color/score/PDW/etc.) are NOT date-filtered —
+// they always apply. 0 = all time (default).
+var _dateWindowDays = 0;
+var _dateWindowCutoff = null;  // 'YYYY-MM-DD' cutoff, or null for all-time
+function _inDateWindow(r) {{
+    if (!_dateWindowCutoff) return true;
+    return (r.date || '') >= _dateWindowCutoff;
+}}
+function setDateWindow(days) {{
+    _dateWindowDays = days || 0;
+    if (_dateWindowDays) {{
+        var d = new Date();
+        d.setDate(d.getDate() - _dateWindowDays);
+        var pad = function(n) {{ return String(n).padStart(2, '0'); }};
+        _dateWindowCutoff = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    }} else {{
+        _dateWindowCutoff = null;
+    }}
+    ['0', '30', '14', '7'].forEach(function(k) {{
+        var el = document.getElementById('dw_' + k);
+        if (el) el.classList.toggle('active', String(_dateWindowDays) === k);
+    }});
+    renderMatrix();
+    if (document.getElementById('detailView').style.display !== 'none' &&
+        document.getElementById('playerSelect').value) {{
+        renderDetail();
+    }}
 }}
 
 // --- Message modal (click a row's note to see full message + highlighted PDW trigger) ---
@@ -2753,7 +2799,7 @@ function _autoLatestColor(player, team) {{
     var latest = null, latestDate = '';
     RECORDS.forEach(function(r) {{
         if (r.player !== player || r.team !== team || !r.color) return;
-        if (isExcluded(r)) return;
+        if (isExcluded(r) || !_inDateWindow(r)) return;
         if ((r.date || '') > latestDate) {{ latestDate = r.date || ''; latest = r.color; }}
     }});
     return latest;
@@ -2766,7 +2812,7 @@ function _autoLatestColorRecord(player, team) {{
     var latest = null, latestDate = '';
     RECORDS.forEach(function(r) {{
         if (r.player !== player || r.team !== team || !r.color) return;
-        if (isExcluded(r)) return;
+        if (isExcluded(r) || !_inDateWindow(r)) return;
         if ((r.date || '') > latestDate) {{ latestDate = r.date || ''; latest = r; }}
     }});
     return latest;
@@ -3115,7 +3161,7 @@ function buildMatrix() {{
     // Color = literal color word from the most recent record with one set.
     // Total column = sum of points across teams; ranks players by who has been
     // seen the most by the most senior people.
-    const activeRecords = RECORDS.filter(r => !isExcluded(r));
+    const activeRecords = RECORDS.filter(r => !isExcluded(r) && _inDateWindow(r));
     const cellPoints = {{}};       // key -> sum of tier points
     const cellLatestColor = {{}};  // key -> {{date, color}} of most-recent colored record
     const workoutMap = {{}};
@@ -3298,7 +3344,7 @@ function toggleHidden() {{
 function renderDetail() {{
     const player = document.getElementById('playerSelect').value;
     if (!player) return;
-    let allPr = RECORDS.filter(r => r.player === player).sort((a,b) => b.date.localeCompare(a.date));
+    let allPr = RECORDS.filter(r => r.player === player && _inDateWindow(r)).sort((a,b) => b.date.localeCompare(a.date));
     if (_filterTeam) allPr = allPr.filter(r => r.team === _filterTeam);
     const hiddenCount = allPr.filter(r => isExcluded(r)).length;
     const pr = _showHidden ? allPr : allPr.filter(r => !isExcluded(r));
@@ -3526,6 +3572,9 @@ function showView(view) {{
     // detail-view header's pre-filled "+ Add Entry" is the only one visible.
     const matrixAdd = document.getElementById('matrixAddEntryBtn');
     if (matrixAdd) matrixAdd.style.display = (view === 'matrix') ? '' : 'none';
+    // Date-window toggle only affects matrix + detail; hide it elsewhere.
+    const dwCtl = document.getElementById('dateWindowCtl');
+    if (dwCtl) dwCtl.style.display = (view === 'matrix' || view === 'detail') ? 'flex' : 'none';
     if (view === 'matrix') {{
         mx.style.display = 'block';
         document.querySelectorAll('.nav-tab')[0].classList.add('active');
