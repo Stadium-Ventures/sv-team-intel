@@ -3328,11 +3328,21 @@ function renderMatrix() {{
 
     let uniquePairs = 0;
     Object.keys(playerTeams).forEach(p => uniquePairs += Object.keys(playerTeams[p]).length);
+    // Intel Reports and Date Range reflect the active recency window.
+    const windowedCount = RECORDS.filter(r => _inDateWindow(r)).length;
+    let dateRangeLabel;
+    if (_dateWindowCutoff) {{
+        const _mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const _p = _dateWindowCutoff.split('-');
+        dateRangeLabel = _mon[parseInt(_p[1], 10) - 1] + ' ' + parseInt(_p[2], 10) + ', ' + _p[0] + ' - Present';
+    }} else {{
+        dateRangeLabel = 'Aug 2025 - Present';
+    }}
     document.getElementById('statsBar').innerHTML =
         '<div class="stat-item"><span class="stat-label">Players:</span><span class="stat-value">' + sortedPlayers.length + '</span></div>' +
-        '<div class="stat-item"><span class="stat-label">Intel Reports:</span><span class="stat-value">' + RECORDS.length + '</span></div>' +
+        '<div class="stat-item"><span class="stat-label">Intel Reports:</span><span class="stat-value">' + windowedCount + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Player-Team Connections:</span><span class="stat-value">' + uniquePairs + '</span></div>' +
-        '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">Aug 2025 - Present</span></div>' +
+        '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">' + dateRangeLabel + '</span></div>' +
         '<button class="mr-addentry-btn" id="matrixAddEntryBtn" onclick="openManualEntryModal(null, null, null)" title="Add a manual player-team connection">&#x2B;&nbsp;Add Entry</button>';
 }}
 
