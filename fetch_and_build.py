@@ -73,6 +73,77 @@ TEAM_ABBR = {
 
 ALL_TEAMS = sorted(set(TEAM_ABBR.values()))
 
+# 2026 MLB Draft board — every slotted pick (rounds 1-10, 313 picks):
+# [overall_pick, team_abbrev, slot_bonus_value]. Source: MLB.com 2026 bonus-pool
+# pick values. Team abbrevs normalized to repo conventions (CWS->CHW, OAK->ATH).
+# Powers the Draft Card view; each square is seeded with the engine's most-recent
+# color for that pick's team.
+DRAFT_PICKS_2026 = [
+    [1,'CHW',11350600], [2,'TB',10507000], [3,'MIN',9740100], [4,'SF',8988400], [5,'PIT',8336500],
+    [6,'KC',7746100], [7,'BAL',7327200], [8,'ATH',6982600], [9,'ATL',6675300], [10,'COL',6393100],
+    [11,'WSH',6133500], [12,'LAA',5889300], [13,'STL',5661300], [14,'MIA',5444900], [15,'ARI',5241000],
+    [16,'TEX',5051900], [17,'HOU',4868600], [18,'CIN',4695500], [19,'CLE',4530500], [20,'BOS',4373900],
+    [21,'SD',4224700], [22,'DET',4082700], [23,'CHC',3947600], [24,'SEA',3818700], [25,'MIL',3696000],
+    [26,'ATL',3578800], [27,'NYM',3466500], [28,'HOU',3363600], [29,'SF',3270200], [30,'KC',3190500],
+    [31,'ARI',3118300], [32,'STL',3044600], [33,'TB',2970200], [34,'PIT',2897400], [35,'NYY',2826700],
+    [36,'PHI',2758800], [37,'COL',2696700], [38,'COL',2633100], [39,'TOR',2571700], [40,'LAD',2504200],
+    [41,'CHW',2446100], [42,'WSH',2388800], [43,'MIN',2333200], [44,'PIT',2278700], [45,'LAA',2225800],
+    [46,'BAL',2181600], [47,'ATH',2131300], [48,'ATL',2081900], [49,'TB',2033400], [50,'STL',1982700],
+    [51,'PIT',1938100], [52,'MIA',1892500], [53,'ARI',1848200], [54,'TEX',1805300], [55,'SF',1763000],
+    [56,'KC',1721700], [57,'HOU',1677400], [58,'CIN',1637700], [59,'CLE',1598900], [60,'SD',1561000],
+    [61,'DET',1523600], [62,'CHC',1487200], [63,'NYY',1451700], [64,'PHI',1416600], [65,'SEA',1382600],
+    [66,'MIL',1353100], [67,'BOS',1317300], [68,'STL',1285500], [69,'DET',1254200], [70,'CIN',1223100],
+    [71,'MIA',1192600], [72,'STL',1174300], [73,'ATH',1156400], [74,'MIN',1138600], [75,'CHC',1120900],
+    [76,'COL',1103500], [77,'CHW',1086600], [78,'WSH',1069600], [79,'MIN',1052700], [80,'PIT',1035700],
+    [81,'LAA',1018500], [82,'BAL',1003800], [83,'ATH',988700], [84,'ATL',973700], [85,'TB',958500],
+    [86,'STL',943600], [87,'MIA',929700], [88,'ARI',915100], [89,'TEX',900800], [90,'SF',887000],
+    [91,'KC',872900], [92,'NYM',859900], [93,'HOU',846900], [94,'CIN',833800], [95,'CLE',823800],
+    [96,'BOS',815700], [97,'SD',808100], [98,'CHC',800000], [99,'NYY',792300], [100,'PHI',784400],
+    [101,'SEA',778200], [102,'MIL',770600], [103,'TOR',762900], [104,'COL',755300], [105,'CHW',747700],
+    [106,'WSH',740500], [107,'MIN',733100], [108,'PIT',725900], [109,'LAA',718700], [110,'BAL',711800],
+    [111,'ATH',704900], [112,'ATL',697700], [113,'TB',691000], [114,'STL',684300], [115,'MIA',677500],
+    [116,'ARI',670900], [117,'TEX',664500], [118,'SF',658100], [119,'KC',651500], [120,'NYM',645100],
+    [121,'HOU',638800], [122,'CIN',632500], [123,'CLE',626500], [124,'SD',620300], [125,'DET',614500],
+    [126,'CHC',609200], [127,'NYY',603500], [128,'PHI',597400], [129,'SEA',591700], [130,'MIL',585700],
+    [131,'TOR',581100], [132,'LAD',575300], [133,'HOU',569600], [134,'SD',563900], [135,'PHI',558400],
+    [136,'COL',553100], [137,'CHW',547700], [138,'WSH',542200], [139,'MIN',536900], [140,'PIT',532000],
+    [141,'LAA',526600], [142,'BAL',521500], [143,'ATH',516300], [144,'ATL',511400], [145,'TB',506100],
+    [146,'STL',501300], [147,'MIA',496400], [148,'ARI',491700], [149,'TEX',486800], [150,'SF',481800],
+    [151,'KC',476900], [152,'NYM',472500], [153,'HOU',467700], [154,'CIN',463200], [155,'CLE',458500],
+    [156,'BOS',454100], [157,'SD',449500], [158,'DET',445200], [159,'CHC',441300], [160,'NYY',437200],
+    [161,'PHI',433200], [162,'SEA',429100], [163,'MIL',425400], [164,'TOR',421300], [165,'COL',417400],
+    [166,'CHW',413900], [167,'WSH',410300], [168,'MIN',406800], [169,'PIT',403500], [170,'LAA',399800],
+    [171,'BAL',396300], [172,'ATH',393100], [173,'ATL',389900], [174,'TB',386500], [175,'STL',383400],
+    [176,'MIA',380200], [177,'ARI',377000], [178,'TEX',373800], [179,'SF',370600], [180,'KC',367600],
+    [181,'NYM',364600], [182,'HOU',361900], [183,'CIN',358900], [184,'CLE',355700], [185,'BOS',352900],
+    [186,'SD',350100], [187,'DET',347300], [188,'CHC',344400], [189,'NYY',341800], [190,'PHI',338800],
+    [191,'SEA',335900], [192,'MIL',333200], [193,'TOR',330300], [194,'COL',327700], [195,'CHW',325100],
+    [196,'WSH',322300], [197,'MIN',319600], [198,'PIT',317100], [199,'LAA',314300], [200,'BAL',311700],
+    [201,'ATH',310000], [202,'ATL',307300], [203,'TB',304800], [204,'STL',302300], [205,'MIA',299700],
+    [206,'ARI',297100], [207,'TEX',294800], [208,'SF',292300], [209,'KC',289900], [210,'NYM',287800],
+    [211,'HOU',285400], [212,'CIN',283000], [213,'CLE',280900], [214,'BOS',278700], [215,'SD',276400],
+    [216,'DET',274300], [217,'CHC',272000], [218,'NYY',270000], [219,'PHI',267800], [220,'SEA',266100],
+    [221,'MIL',264100], [222,'TOR',262300], [223,'LAD',260300], [224,'COL',258400], [225,'CHW',256500],
+    [226,'WSH',254900], [227,'MIN',253300], [228,'PIT',251500], [229,'LAA',249300], [230,'BAL',247900],
+    [231,'ATH',245800], [232,'ATL',244500], [233,'TB',242700], [234,'STL',241000], [235,'MIA',239200],
+    [236,'ARI',237800], [237,'TEX',236100], [238,'SF',234700], [239,'KC',233400], [240,'NYM',232100],
+    [241,'HOU',231000], [242,'CIN',229700], [243,'CLE',228600], [244,'BOS',227200], [245,'SD',226300],
+    [246,'DET',225300], [247,'CHC',224100], [248,'NYY',223100], [249,'PHI',222200], [250,'SEA',220900],
+    [251,'MIL',220400], [252,'TOR',219500], [253,'LAD',218500], [254,'COL',217800], [255,'CHW',217000],
+    [256,'WSH',216100], [257,'MIN',215400], [258,'PIT',214800], [259,'LAA',213900], [260,'BAL',213300],
+    [261,'ATH',212600], [262,'ATL',212000], [263,'TB',211200], [264,'STL',210600], [265,'MIA',210200],
+    [266,'ARI',209500], [267,'TEX',209000], [268,'SF',208500], [269,'KC',207900], [270,'NYM',207200],
+    [271,'HOU',206800], [272,'CIN',206300], [273,'CLE',205800], [274,'BOS',205400], [275,'SD',205000],
+    [276,'DET',204400], [277,'CHC',204100], [278,'NYY',203500], [279,'PHI',202900], [280,'SEA',202700],
+    [281,'MIL',202500], [282,'TOR',202100], [283,'LAD',201700], [284,'COL',201500], [285,'CHW',200900],
+    [286,'WSH',200100], [287,'MIN',199900], [288,'PIT',199500], [289,'LAA',199200], [290,'BAL',198900],
+    [291,'ATH',198600], [292,'ATL',198300], [293,'TB',197900], [294,'STL',197400], [295,'MIA',197200],
+    [296,'ARI',196500], [297,'TEX',196200], [298,'SF',196000], [299,'KC',195600], [300,'NYM',195200],
+    [301,'HOU',195000], [302,'CIN',194800], [303,'CLE',194500], [304,'BOS',194000], [305,'SD',193700],
+    [306,'DET',193600], [307,'CHC',193300], [308,'NYY',193000], [309,'PHI',192500], [310,'SEA',192300],
+    [311,'MIL',191900], [312,'TOR',191900], [313,'LAD',191900],
+]
+
 # Channels to search
 CHANNELS = [
     ("2026-draft-general", "C09BB2NE1D4"),
@@ -1351,6 +1422,7 @@ def build_html(records, password="SVintel2026", games=None, slack_workspace_url=
     # Serialize alias map (sets aren't JSON-safe — convert to lists)
     player_aliases_js = json.dumps({name: sorted(aliases) for name, aliases in PLAYER_ALIASES.items()})
     team_draft_js = json.dumps(load_team_draft_info())
+    draft_picks_js = json.dumps(DRAFT_PICKS_2026)
     recommended_schedule_js = json.dumps(load_recommended_schedule())
     slack_workspace_js = json.dumps(slack_workspace_url or '')
 
@@ -2138,6 +2210,75 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     .cal-agenda {{ display: block; }}
     .cal-legend {{ padding: 0 12px; }}
 }}
+
+/* ===================== Draft Card view ===================== */
+#draftCardView {{ padding: 18px 22px 48px; }}
+#draftCardView .dc-head {{ display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }}
+#draftCardView .dc-head-titles {{ display: flex; flex-direction: column; gap: 1px; }}
+#draftCardView .dc-kicker {{ font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #ff2a22; }}
+#draftCardView .dc-title {{ font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: #111; }}
+#draftCardView .dc-controls {{ display: flex; align-items: center; gap: 8px; }}
+#draftCardView .dc-controls label {{ font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #888; }}
+#draftCardView .dc-controls select {{ font-size: 15px; font-weight: 700; border: 1px solid #d0d0d0; border-radius: 8px; padding: 7px 10px; background: #fff; color: #111; min-width: 190px; cursor: pointer; }}
+#draftCardView .dc-status {{ margin-left: auto; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: #888; }}
+#draftCardView .dc-dot {{ width: 9px; height: 9px; border-radius: 50%; background: #9aa; flex: none; }}
+#draftCardView .dc-dot.live {{ background: #1faa4d; }}
+#draftCardView .dc-dot.saving {{ background: #e8a300; }}
+#draftCardView .dc-dot.err {{ background: #d33; }}
+#draftCardView .dc-toolbar {{ display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: #fff; border: 1px solid #e3e3e3; border-radius: 12px; padding: 10px 14px; margin: 12px 0 18px; }}
+#draftCardView .dc-hint {{ color: #666; font-size: 12.5px; line-height: 1.4; max-width: 640px; }}
+#draftCardView .dc-spacer {{ flex: 1; }}
+#draftCardView .dc-act {{ border: 1px solid #d0d0d0; background: #fff; border-radius: 8px; padding: 8px 13px; font-size: 13px; font-weight: 700; cursor: pointer; color: #111; }}
+#draftCardView .dc-act:hover {{ background: #f3f3f3; }}
+#draftCardView .dc-act.dc-danger {{ color: #b00; }}
+#draftCardView .dc-grid {{ display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; }}
+#draftCardView .dc-cell {{ position: relative; background: #fff; border: 1px solid #e3e3e3; border-radius: 10px; min-height: 82px; padding: 6px 8px 7px; cursor: pointer; display: flex; flex-direction: column; transition: transform .06s, box-shadow .12s; overflow: hidden; }}
+#draftCardView .dc-cell:hover {{ box-shadow: 0 2px 10px rgba(0,0,0,.14); transform: translateY(-1px); }}
+#draftCardView .dc-cell.sel {{ box-shadow: 0 0 0 2px #111; }}
+#draftCardView .dc-cell.edited::after {{ content: ''; position: absolute; bottom: 5px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.45); }}
+#draftCardView .dc-cell.dark.edited::after {{ background: rgba(255,255,255,.75); }}
+#draftCardView .dc-top {{ display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; }}
+#draftCardView .dc-slot {{ font-size: 11px; font-weight: 800; color: #6b6b6b; line-height: 1; }}
+#draftCardView .dc-cell.dark .dc-slot {{ color: rgba(255,255,255,.82); }}
+#draftCardView .dc-team {{ font-size: 20px; font-weight: 800; letter-spacing: -.01em; line-height: 1; margin-top: 5px; color: #111; }}
+#draftCardView .dc-cell.dark .dc-team {{ color: #fff; }}
+#draftCardView .dc-bonus {{ font-size: 11.5px; font-weight: 700; color: #333; margin-top: auto; line-height: 1.1; }}
+#draftCardView .dc-cell.dark .dc-bonus {{ color: rgba(255,255,255,.92); }}
+#draftCardView .dc-comb {{ width: 13px; height: 13px; border-radius: 50%; background: #1565c0; flex: none; pointer-events: none; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }}
+#draftCardView .dc-cell.dark .dc-comb {{ box-shadow: 0 0 0 2px rgba(0,0,0,.3); }}
+#draftCardView .dc-keyrow {{ display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin-top: 18px; font-size: 12px; color: #666; }}
+#draftCardView .dc-keyrow .dc-k {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }}
+#draftCardView .dc-keyrow .dc-k i {{ width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); display: inline-block; }}
+#draftCardView .dc-footer {{ margin-top: 18px; color: #888; font-size: 12px; }}
+/* Cell editor popup (fixed, shared with the dashboard overlay stack) */
+#dcBackdrop {{ position: fixed; inset: 0; background: transparent; display: none; z-index: 8500; }}
+#dcEditor {{ position: fixed; z-index: 9100; display: none; width: 252px; background: #fff; border: 1px solid #e3e3e3; border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.22); padding: 13px 14px; }}
+#dcEditor .dc-ed-title {{ font-size: 13px; font-weight: 800; margin-bottom: 11px; color: #111; }}
+#dcEditor .dc-ed-title b {{ color: #ff2a22; }}
+#dcEditor .dc-ed-label {{ font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #888; margin-bottom: 7px; }}
+#dcEditor .dc-ed-colors {{ display: flex; gap: 7px; margin-bottom: 14px; flex-wrap: wrap; }}
+#dcEditor .dc-ed-sw {{ width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(0,0,0,.18); cursor: pointer; transition: .1s; }}
+#dcEditor .dc-ed-sw:hover {{ transform: translateY(-1px); }}
+#dcEditor .dc-ed-sw.sel {{ border-color: #111; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111; }}
+#dcEditor .dc-ed-sw.clear {{ background: #fff; display: flex; align-items: center; justify-content: center; color: #b00; font-weight: 800; font-size: 15px; }}
+#dcEditor .dc-ed-row {{ display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }}
+#dcEditor .dc-ed-row .dc-ed-label {{ margin-bottom: 0; }}
+#dcEditor input#dcEdTeam {{ width: 86px; border: 1px solid #d0d0d0; border-radius: 8px; padding: 6px 8px; font-size: 14px; font-weight: 700; text-transform: uppercase; outline: none; }}
+#dcEditor #dcEdCombine {{ border: 1px solid #d0d0d0; border-radius: 8px; padding: 6px 16px; font-size: 13px; font-weight: 800; cursor: pointer; background: #fff; color: #555; min-width: 60px; }}
+#dcEditor #dcEdCombine.yes {{ background: #1565c0; border-color: #1565c0; color: #fff; }}
+#dcEditor .dc-ed-actions {{ display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px; }}
+#dcEditor #dcEdReset {{ border: none; background: none; color: #888; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }}
+#dcEditor #dcEdDone {{ border: none; background: #111; color: #fff; border-radius: 8px; padding: 7px 18px; font-size: 13px; font-weight: 800; cursor: pointer; }}
+@media (max-width: 900px) {{
+    #draftCardView .dc-grid {{ grid-template-columns: repeat(5, 1fr); }}
+}}
+@media print {{
+    body {{ background: #fff; }}
+    .header, .nav-tabs, .stats-bar, .legend, #draftCardView .dc-controls, #draftCardView .dc-toolbar, #draftCardView .dc-status {{ display: none !important; }}
+    #dcEditor, #dcBackdrop {{ display: none !important; }}
+    #draftCardView .dc-cell {{ box-shadow: none !important; transform: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+    #draftCardView .dc-comb, #draftCardView .dc-keyrow i {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 </head>
@@ -2199,7 +2340,7 @@ function checkPw() {{
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="showView('matrix')">Matrix View</div>
         <div class="nav-tab" onclick="showView('detail')">Detail View</div>
-        <div class="nav-tab" onclick="goToCalendar()">Calendar</div>
+        <div class="nav-tab" onclick="showView('draftcard')">Draft Card</div>
         <div class="nav-tab" onclick="showView('edits')">Edits</div>
     </div>
 </div>
@@ -2318,6 +2459,39 @@ function checkPw() {{
         <span id="editsCount" style="color:#666;font-size:13px;"></span>
     </div>
     <div id="editsBody"></div>
+</div>
+
+<div id="draftCardView" style="display:none;">
+    <div class="dc-head">
+        <div class="dc-head-titles">
+            <div class="dc-kicker">Stadium Ventures &middot; 2026 MLB Draft</div>
+            <h2 class="dc-title">Draft Card</h2>
+        </div>
+        <div class="dc-controls">
+            <label for="dcPlayer">Player</label>
+            <select id="dcPlayer" onchange="dcLoadCard(this.value)"></select>
+        </div>
+        <div class="dc-status"><span class="dc-dot" id="dcDot"></span><span id="dcStatusText">Connecting&hellip;</span></div>
+    </div>
+    <div class="dc-toolbar">
+        <div class="dc-hint"><b>Click any square</b> to override its color, combine status, or team. Un-edited squares follow the latest TeamIntel color for that team.</div>
+        <div class="dc-spacer"></div>
+        <button class="dc-act" onclick="dcPrint()">Print / PDF</button>
+        <button class="dc-act dc-danger" onclick="dcClear()">Clear overrides</button>
+    </div>
+    <div class="dc-grid" id="dcGrid"></div>
+    <div class="dc-keyrow" id="dcKeyrow"></div>
+    <div class="dc-footer">Live shared board &middot; 2026 MLB Draft order &amp; assigned slot values &middot; seeded from TeamIntel; per-square overrides sync within a few seconds.</div>
+</div>
+
+<div id="dcBackdrop" onclick="dcCloseEditor()"></div>
+<div id="dcEditor" role="dialog" aria-label="Edit square">
+    <div class="dc-ed-title" id="dcEdTitle"></div>
+    <div class="dc-ed-label">Color</div>
+    <div class="dc-ed-colors" id="dcEdColors"></div>
+    <div class="dc-ed-row"><span class="dc-ed-label">Met at combine</span><button id="dcEdCombine" type="button" onclick="dcToggleCombine()">No</button></div>
+    <div class="dc-ed-row"><span class="dc-ed-label">Team</span><input id="dcEdTeam" maxlength="5" autocomplete="off" spellcheck="false"></div>
+    <div class="dc-ed-actions"><button id="dcEdReset" type="button" onclick="dcResetCell()">Reset to engine</button><button id="dcEdDone" type="button" onclick="dcCloseEditor()">Done</button></div>
 </div>
 
 </div><!-- /appContent -->
@@ -3576,8 +3750,10 @@ function showView(view) {{
     const dt = document.getElementById('detailView');
     const cl = document.getElementById('calendarView');
     const ed = document.getElementById('editsView');
+    const dc = document.getElementById('draftCardView');
     mx.style.display = 'none'; dt.style.display = 'none'; cl.style.display = 'none';
     if (ed) ed.style.display = 'none';
+    if (dc) dc.style.display = 'none';
     // Top-right matrix-only "+ Add Entry" button: hide outside the matrix view so the
     // detail-view header's pre-filled "+ Add Entry" is the only one visible.
     const matrixAdd = document.getElementById('matrixAddEntryBtn');
@@ -3591,9 +3767,14 @@ function showView(view) {{
     }} else if (view === 'detail') {{
         dt.style.display = 'block';
         document.querySelectorAll('.nav-tab')[1].classList.add('active');
-    }} else if (view === 'calendar') {{
-        cl.style.display = 'block';
+    }} else if (view === 'draftcard') {{
+        dc.style.display = 'block';
         document.querySelectorAll('.nav-tab')[2].classList.add('active');
+        dcShow();
+    }} else if (view === 'calendar') {{
+        // Calendar has no nav tab now (hidden), but stays reachable via internal
+        // links (e.g. workout chips). Don't set a nav-tab active — none matches.
+        cl.style.display = 'block';
         if (!window._calInitialized) {{ initCalendar(); }}
     }} else if (view === 'edits') {{
         ed.style.display = 'block';
@@ -5371,6 +5552,177 @@ function editManualFromMessage() {{
     if (!r || !r.is_manual || !r.id) return;
     closeMessageModal();
     openManualEntryModal(r.id, r.player, r.team);
+}}
+
+// ===================== Draft Card view =====================
+// Baked-in 2026 board: [overallPick, team, slotBonus] for all 313 slotted picks.
+const DRAFT_SEED = {draft_picks_js};
+// ci 0..4 -> color word (matches the matrix palette / COLOR_BG). ci -1 = forced blank.
+const DC_PALETTE = [
+    {{ word: 'red',         name: 'Red' }},
+    {{ word: 'orange',      name: 'Orange' }},
+    {{ word: 'yellow',      name: 'Yellow' }},
+    {{ word: 'light green', name: 'Light Green' }},
+    {{ word: 'green',       name: 'Green' }},
+];
+const DC_WORD_TO_CI = {{ 'red':0, 'orange':1, 'yellow':2, 'light green':3, 'green':4 }};
+
+let dcCurrent = null;        // selected player NAME (matches getLatestColor keys)
+let dcCells = {{}};            // per-square overrides, keyed by pick index -> ci/combine/team
+let dcUpdatedAt = null;
+let dcEditIndex = null;
+let dcStarted = false;
+
+const dcMoney = (n) => '$' + Number(n).toLocaleString('en-US');
+function dcIsDark(hex) {{
+    // Accepts rgb(...) or #hex. Returns true for dark backgrounds (light text).
+    let r, g, b;
+    const m = /rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)/.exec(hex);
+    if (m) {{ r = +m[1]; g = +m[2]; b = +m[3]; }}
+    else {{ const h = hex.replace('#',''); if (h.length < 6) return false; r = parseInt(h.substr(0,2),16); g = parseInt(h.substr(2,2),16); b = parseInt(h.substr(4,2),16); }}
+    return (0.299*r + 0.587*g + 0.114*b) < 150;
+}}
+function dcSetStatus(cls, txt) {{ const d = document.getElementById('dcDot'); if (d) d.className = 'dc-dot' + (cls ? ' ' + cls : ''); const t = document.getElementById('dcStatusText'); if (t) t.textContent = txt; }}
+const dcCellOf = (i) => dcCells[i] || {{}};
+const dcTeamOf = (i) => {{ const t = dcCellOf(i).team; return (t != null && t !== '') ? t : DRAFT_SEED[i][1]; }};
+// Resolved color hex for a square: explicit override wins; else the engine's
+// most-recent color for that pick's team; else blank white.
+function dcHexOf(i) {{
+    const ov = dcCellOf(i);
+    if (ov.ci != null) {{ return (ov.ci < 0) ? '#FFFFFF' : (COLOR_BG[DC_PALETTE[ov.ci].word] || '#FFFFFF'); }}
+    const word = dcCurrent ? getLatestColor(dcCurrent, dcTeamOf(i)) : null;
+    return word ? (COLOR_BG[word] || '#FFFFFF') : '#FFFFFF';
+}}
+// Which palette swatch is "active" for the editor (resolved, override or engine).
+function dcActiveCi(i) {{
+    const ov = dcCellOf(i);
+    if (ov.ci != null) return ov.ci;  // may be -1 (blank)
+    const word = dcCurrent ? getLatestColor(dcCurrent, dcTeamOf(i)) : null;
+    return (word && word in DC_WORD_TO_CI) ? DC_WORD_TO_CI[word] : -1;
+}}
+function dcCombineOf(i) {{
+    const ov = dcCellOf(i);
+    if (ov.combine != null) return !!ov.combine;
+    return dcCurrent ? isCombine(dcCurrent, dcTeamOf(i)) : false;
+}}
+
+function dcRenderKey() {{
+    const k = document.getElementById('dcKeyrow'); if (!k) return; k.innerHTML = '';
+    DC_PALETTE.forEach(c => {{ const s = document.createElement('span'); s.className = 'dc-k'; s.innerHTML = '<i style="background:' + (COLOR_BG[c.word]||'#fff') + '"></i>' + c.name; k.appendChild(s); }});
+    const s2 = document.createElement('span'); s2.className = 'dc-k'; s2.innerHTML = '<span class="dc-comb" style="position:static;box-shadow:none;margin-right:2px"></span>Met at combine'; k.appendChild(s2);
+}}
+
+function dcRenderGrid() {{
+    const g = document.getElementById('dcGrid'); if (!g) return;
+    if (!dcCurrent) {{ g.innerHTML = ''; return; }}
+    g.innerHTML = '';
+    DRAFT_SEED.forEach((row, i) => {{
+        const slot = row[0], bonus = row[2];
+        const hex = dcHexOf(i), team = dcTeamOf(i), combine = dcCombineOf(i);
+        const edited = Object.keys(dcCellOf(i)).length > 0;
+        const el = document.createElement('div');
+        el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '') + (dcEditIndex === i ? ' sel' : '') + (edited ? ' edited' : '');
+        el.style.background = hex;
+        el.onclick = (ev) => dcOpenEditor(i, el);
+        const top = document.createElement('div'); top.className = 'dc-top';
+        const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = '#' + slot; top.appendChild(sl);
+        if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; top.appendChild(cb); }}
+        const tm = document.createElement('div'); tm.className = 'dc-team'; tm.textContent = team;
+        const bn = document.createElement('div'); bn.className = 'dc-bonus'; bn.textContent = dcMoney(bonus);
+        el.appendChild(top); el.appendChild(tm); el.appendChild(bn);
+        g.appendChild(el);
+    }});
+}}
+
+async function dcApi(path, opts) {{ const r = await fetch(path, opts); if (!r.ok) throw new Error((await r.json().catch(()=>({{}}))).error || r.status); return r.json(); }}
+async function dcPostCell(i, patch) {{
+    if (!dcCurrent) return;
+    dcSetStatus('saving', 'Saving\\u2026');
+    try {{
+        const r = await dcApi('/api/draft-card', {{ method:'POST', headers:{{'Content-Type':'application/json'}}, body: JSON.stringify({{ player: dcCurrent, index: i, patch }}) }});
+        dcUpdatedAt = r.updated_at; dcSetStatus('live', 'Live \\u00b7 synced');
+    }} catch(e) {{ dcSetStatus('err', 'Save failed'); }}
+}}
+function dcSetColor(i, ci) {{ dcCells[i] = {{ ...dcCellOf(i), ci }}; dcRenderGrid(); if (dcEditIndex === i) dcSyncEditor(); dcPostCell(i, {{ ci }}); }}
+function dcToggleCombine() {{ if (dcEditIndex === null) return; const i = dcEditIndex; const val = !dcCombineOf(i); dcCells[i] = {{ ...dcCellOf(i), combine: val }}; dcRenderGrid(); dcSyncEditor(); dcPostCell(i, {{ combine: val }}); }}
+function dcSetTeam(i, v) {{ const base = DRAFT_SEED[i][1]; const team = (v === base ? undefined : v); const cell = {{ ...dcCellOf(i) }}; if (team) cell.team = team; else delete cell.team; dcCells[i] = cell; dcRenderGrid(); dcPostCell(i, {{ team: v }}); }}
+function dcResetCell() {{ if (dcEditIndex === null) return; const i = dcEditIndex; dcCells[i] = {{}}; dcRenderGrid(); dcSyncEditor(); dcPostCell(i, {{ ci: null, combine: null, team: null }}); }}
+
+function dcBuildColors() {{
+    const c = document.getElementById('dcEdColors'); if (!c) return; c.innerHTML = '';
+    DC_PALETTE.forEach((col, ci) => {{ const sw = document.createElement('div'); sw.className = 'dc-ed-sw'; sw.style.background = COLOR_BG[col.word] || '#fff'; sw.title = col.name; sw.dataset.ci = ci; sw.onclick = () => dcSetColor(dcEditIndex, ci); c.appendChild(sw); }});
+    const cl = document.createElement('div'); cl.className = 'dc-ed-sw clear'; cl.title = 'Force blank'; cl.textContent = '\\u2715'; cl.dataset.ci = -1; cl.onclick = () => dcSetColor(dcEditIndex, -1); c.appendChild(cl);
+}}
+function dcSyncEditor() {{
+    if (dcEditIndex === null) return;
+    const i = dcEditIndex, ci = dcActiveCi(i);
+    document.getElementById('dcEdTitle').innerHTML = 'Pick <b>#' + DRAFT_SEED[i][0] + '</b> \\u00b7 ' + dcTeamOf(i) + ' &nbsp;\\u00b7&nbsp; ' + dcMoney(DRAFT_SEED[i][2]);
+    document.getElementById('dcEdColors').querySelectorAll('.dc-ed-sw').forEach(sw => {{ const v = parseInt(sw.dataset.ci, 10); sw.classList.toggle('sel', (ci === v) || (ci < 0 && v === -1)); }});
+    const combine = dcCombineOf(i);
+    const cb = document.getElementById('dcEdCombine'); cb.textContent = combine ? 'Yes' : 'No'; cb.classList.toggle('yes', combine);
+    if (document.activeElement !== document.getElementById('dcEdTeam')) document.getElementById('dcEdTeam').value = dcTeamOf(i);
+}}
+function dcOpenEditor(i, anchor) {{
+    dcEditIndex = i; dcRenderGrid(); dcSyncEditor();
+    const ed = document.getElementById('dcEditor'); document.getElementById('dcBackdrop').style.display = 'block'; ed.style.display = 'block';
+    const r = anchor.getBoundingClientRect(); const ew = ed.offsetWidth, eh = ed.offsetHeight;
+    let left = r.left, top = r.bottom + 6;
+    if (left + ew > window.innerWidth - 8) left = window.innerWidth - 8 - ew;
+    if (left < 8) left = 8;
+    if (top + eh > window.innerHeight - 8) top = r.top - 6 - eh;
+    if (top < 8) top = 8;
+    ed.style.left = left + 'px'; ed.style.top = top + 'px';
+}}
+function dcCloseEditor() {{
+    if (dcEditIndex === null) return;
+    const i = dcEditIndex; dcEditIndex = null;
+    document.getElementById('dcEditor').style.display = 'none'; document.getElementById('dcBackdrop').style.display = 'none';
+    const v = document.getElementById('dcEdTeam').value.trim().toUpperCase().slice(0,5);
+    if (v && v !== dcTeamOf(i)) dcSetTeam(i, v); else dcRenderGrid();
+}}
+
+async function dcLoadCard(name) {{
+    dcCloseEditor(); dcCurrent = name; dcCells = {{}}; dcUpdatedAt = null;
+    if (!name) {{ dcRenderGrid(); return; }}
+    try {{ const c = await dcApi('/api/draft-card?player=' + encodeURIComponent(name)); dcCells = c.cells || {{}}; dcUpdatedAt = c.updated_at || null; dcSetStatus('live', 'Live \\u00b7 synced'); }}
+    catch(e) {{ dcSetStatus('err', 'Load failed'); }}
+    dcRenderGrid();
+}}
+function dcPopulatePlayers() {{
+    const sel = document.getElementById('dcPlayer'); if (!sel) return;
+    const players = [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort();
+    sel.innerHTML = '';
+    players.forEach(p => {{ const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); }});
+    if (players.length) {{ if (!dcCurrent || !players.includes(dcCurrent)) dcCurrent = players[0]; sel.value = dcCurrent; }}
+}}
+async function dcPollCard() {{
+    if (!dcCurrent || dcEditIndex !== null) return;
+    if (document.getElementById('draftCardView').style.display === 'none') return;
+    try {{ const c = await dcApi('/api/draft-card?player=' + encodeURIComponent(dcCurrent));
+        if ((c.updated_at || null) !== dcUpdatedAt) {{ dcCells = c.cells || {{}}; dcUpdatedAt = c.updated_at || null; dcRenderGrid(); }}
+        dcSetStatus('live', 'Live \\u00b7 synced');
+    }} catch(e) {{ dcSetStatus('err', 'Offline'); }}
+}}
+function dcPrint() {{ dcCloseEditor(); window.print(); }}
+async function dcClear() {{
+    if (!dcCurrent) return;
+    if (!confirm('Clear all per-square overrides for ' + dcCurrent + '? Squares will revert to the TeamIntel engine colors.')) return;
+    dcCloseEditor(); dcCells = {{}}; dcRenderGrid(); dcSetStatus('saving', 'Saving\\u2026');
+    try {{ const r = await dcApi('/api/draft-card', {{ method:'POST', headers:{{'Content-Type':'application/json'}}, body: JSON.stringify({{ player: dcCurrent, action: 'clear' }}) }}); dcUpdatedAt = r.updated_at; dcSetStatus('live', 'Live \\u00b7 synced'); }}
+    catch(e) {{ dcSetStatus('err', 'Save failed'); }}
+}}
+// Called by showView('draftcard'). Lazy-inits palette/legend/roster + poll.
+function dcShow() {{
+    if (!dcStarted) {{
+        dcStarted = true;
+        dcBuildColors(); dcRenderKey();
+        const tEl = document.getElementById('dcEdTeam');
+        if (tEl) tEl.onchange = () => {{ if (dcEditIndex !== null) dcSetTeam(dcEditIndex, tEl.value.trim().toUpperCase().slice(0,5)); }};
+        document.addEventListener('keydown', (e) => {{ if (e.key === 'Escape') dcCloseEditor(); }});
+        setInterval(dcPollCard, 4000);
+    }}
+    dcPopulatePlayers();
+    dcLoadCard(dcCurrent);
 }}
 
 async function init() {{
