@@ -2,14 +2,16 @@ name: Update TeamIntel Dashboard
 
 on:
   schedule:
-    # Hourly, but pause overnight to cut Vercel redeploys / Actions runs.
-    # GitHub cron is UTC-only. During the draft season the East Coast is on
-    # EDT (UTC-4), so the 12am-6am ET quiet window == 04:00-09:59 UTC.
-    # Runs at UTC 00-03 and 10-23 (resuming at 6am ET = 10:00 UTC).
-    # NOTE: not DST-aware — in EST/winter this window shifts an hour, but the
-    # dashboard's active window ends at the July 2026 draft (all EDT).
-    - cron: '0 0-3,10-23 * * *'
-  workflow_dispatch: # Allow manual trigger (always runs, ignores the window)
+    # Fires every 15 min. A "cadence gate" step (below) decides whether each
+    # firing actually builds:
+    #   * Pre-draft push (until DRAFT_PUSH_END): build every firing, 24/7 —
+    #     fastest turnaround for last-minute intel.
+    #   * After the push: auto-reverts to the original cadence — hourly (top of
+    #     the hour) during UTC 00-03 and 10-23 (skips the 04:00-09:59 UTC quiet
+    #     window == 12am-6am ET). No manual change needed.
+    # GitHub's scheduler can add a few minutes of jitter/delay under load.
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Manual trigger — always builds, bypasses the gate
 
 permissions:
   contents: write
@@ -20,16 +22,39 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      - name: Cadence gate
+        id: gate
+        run: |
+          # Pre-draft fast window end (UTC). Fast mode = build every 15 min, 24/7
+          # until this instant; after it, revert to hourly-daytime. Bump to extend.
+          PUSH_END=$(date -u -d '2026-07-14 00:00:00' +%s)
+          NOW=$(date -u +%s)
+          HOUR=$((10#$(date -u +%H)))
+          MIN=$((10#$(date -u +%M)))
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual dispatch — always build."; echo "proceed=true" >> "$GITHUB_OUTPUT"
+          elif [ "$NOW" -lt "$PUSH_END" ]; then
+            echo "Pre-draft push: build (every ~15 min, 24/7)."; echo "proceed=true" >> "$GITHUB_OUTPUT"
+          elif [ "$MIN" -lt 15 ] && { [ "$HOUR" -le 3 ] || [ "$HOUR" -ge 10 ]; }; then
+            echo "Post-draft: hourly daytime build."; echo "proceed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Post-draft: skip (off-hour or overnight quiet window)."; echo "proceed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.gate.outputs.proceed == 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.gate.outputs.proceed == 'true'
         with:
           python-version: '3.12'
 
       - name: Install dependencies
+        if: steps.gate.outputs.proceed == 'true'
         run: pip install slack-sdk redis
 
       - name: Fetch and build dashboard
+        if: steps.gate.outputs.proceed == 'true'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
@@ -40,6 +65,7 @@ jobs:
           python fetch_and_build.py
 
       - name: Commit and push
+        if: steps.gate.outputs.proceed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
