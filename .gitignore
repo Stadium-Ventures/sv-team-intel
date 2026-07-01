@@ -5,3 +5,6 @@ __pycache__/
 parse_and_build.py
 dashboard.html
 .vercel
+
+# Local override backups (not for the public repo)
+color_overrides_backup_*.json
