@@ -2275,6 +2275,12 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #dcEditor .dc-ed-actions {{ display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px; }}
 #dcEditor #dcEdReset {{ border: none; background: none; color: #888; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }}
 #dcEditor #dcEdDone {{ border: none; background: #111; color: #fff; border-radius: 8px; padding: 7px 18px; font-size: 13px; font-weight: 800; cursor: pointer; }}
+/* Hover tooltip: the most-recent intel message behind a square */
+#dcTip {{ position: fixed; z-index: 9200; display: none; max-width: 340px; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.2); padding: 10px 12px; pointer-events: none; }}
+#dcTip .dc-tip-head {{ font-size: 12px; font-weight: 800; color: #111; margin-bottom: 3px; }}
+#dcTip .dc-tip-meta {{ font-size: 10px; font-weight: 600; letter-spacing: .02em; color: #888; text-transform: uppercase; margin-bottom: 6px; }}
+#dcTip .dc-tip-body {{ font-size: 11.5px; line-height: 1.42; color: #333; white-space: pre-wrap; max-height: 190px; overflow: hidden; }}
+#dcTip .dc-tip-empty {{ font-size: 11.5px; color: #999; font-style: italic; }}
 @media (max-width: 900px) {{
     #draftCardView .dc-grid {{ grid-template-columns: repeat(5, 1fr); }}
 }}
@@ -2490,6 +2496,7 @@ function checkPw() {{
     <div class="dc-footer">Live shared board &middot; 2026 MLB Draft order &amp; assigned slot values &middot; seeded from TeamIntel; per-square overrides sync within a few seconds.</div>
 </div>
 
+<div id="dcTip"></div>
 <div id="dcBackdrop" onclick="dcCloseEditor()"></div>
 <div id="dcEditor" role="dialog" aria-label="Edit square">
     <div class="dc-ed-title" id="dcEdTitle"></div>
@@ -5611,6 +5618,41 @@ function dcCombineOf(i) {{
     if (ov.combine != null) return !!ov.combine;
     return dcCurrent ? isCombine(dcCurrent, dcTeamOf(i)) : false;
 }}
+// Most-recent intel record for (player, team) — powers the hover tooltip.
+function dcLatestRecord(player, team) {{
+    let best = null;
+    RECORDS.forEach(function(r) {{
+        if (r.player !== player || r.team !== team) return;
+        if (isExcluded(r) || !_inDateWindow(r)) return;
+        if (best === null || (r.date || '') > (best.date || '') ||
+            ((r.date || '') === (best.date || '') && (r.ts || '') > (best.ts || ''))) best = r;
+    }});
+    return best;
+}}
+function dcShowTip(i, anchor) {{
+    if (dcEditIndex !== null) return;  // editor open — don't cover it
+    const team = dcTeamOf(i);
+    const rec = dcCurrent ? dcLatestRecord(dcCurrent, team) : null;
+    const tip = document.getElementById('dcTip');
+    let html = '<div class="dc-tip-head">' + _escapeHtml(dcCurrent || '') + ' \\u2014 ' + _escapeHtml(team) + ' \\u00b7 #' + DRAFT_SEED[i][0] + '</div>';
+    if (!rec) {{
+        html += '<div class="dc-tip-empty">No intel on file for this team.</div>';
+    }} else {{
+        const src = rec.is_manual ? 'Manual entry' : ('#' + (rec.channel || 'slack'));
+        const col = rec.color ? (' \\u00b7 ' + rec.color) : '';
+        html += '<div class="dc-tip-meta">' + _escapeHtml(src) + ' \\u00b7 ' + _escapeHtml(rec.date || '') + col + '</div>';
+        html += '<div class="dc-tip-body">' + _escapeHtml((rec.full_text || rec.note || '').slice(0, 500)) + '</div>';
+    }}
+    tip.innerHTML = html;
+    tip.style.display = 'block';
+    const r = anchor.getBoundingClientRect(); const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = r.left, top = r.top - 8 - th;
+    if (top < 8) top = r.bottom + 8;
+    if (left + tw > window.innerWidth - 8) left = window.innerWidth - 8 - tw;
+    if (left < 8) left = 8;
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}}
+function dcHideTip() {{ const t = document.getElementById('dcTip'); if (t) t.style.display = 'none'; }}
 
 function dcRenderKey() {{
     const k = document.getElementById('dcKeyrow'); if (!k) return; k.innerHTML = '';
@@ -5632,6 +5674,8 @@ function dcRenderGrid() {{
         el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '') + (dcEditIndex === i ? ' sel' : '') + (edited ? ' edited' : '');
         el.style.background = hex;
         el.onclick = (ev) => dcOpenEditor(i, el);
+        el.onmouseenter = () => dcShowTip(i, el);
+        el.onmouseleave = dcHideTip;
         const top = document.createElement('div'); top.className = 'dc-top';
         const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = '#' + slot; top.appendChild(sl);
         if (workout || combine) {{
@@ -5676,6 +5720,7 @@ function dcSyncEditor() {{
     if (document.activeElement !== document.getElementById('dcEdTeam')) document.getElementById('dcEdTeam').value = dcTeamOf(i);
 }}
 function dcOpenEditor(i, anchor) {{
+    dcHideTip();
     dcEditIndex = i; dcRenderGrid(); dcSyncEditor();
     const ed = document.getElementById('dcEditor'); document.getElementById('dcBackdrop').style.display = 'block'; ed.style.display = 'block';
     const r = anchor.getBoundingClientRect(); const ew = ed.offsetWidth, eh = ed.offsetHeight;
