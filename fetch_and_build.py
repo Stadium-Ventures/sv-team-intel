@@ -2211,6 +2211,20 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     .cal-legend {{ padding: 0 12px; }}
 }}
 
+/* ===================== Client (row) filter ===================== */
+.client-hdr {{ position: relative; }}
+.client-filter-btn {{ margin-left: 6px; background: none; border: none; color: #bbb; font-size: 11px; cursor: pointer; padding: 0 2px; vertical-align: middle; line-height: 1; }}
+.client-filter-btn:hover {{ color: #fff; }}
+.client-filter-btn.active {{ color: #ff5a52; }}
+#clientFilterPanel {{ position: fixed; z-index: 9300; display: none; background: #fff; border: 1px solid #d0d0d0; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); padding: 8px; width: 210px; }}
+#clientFilterPanel .cfp-head {{ display: flex; justify-content: space-between; align-items: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #888; padding: 2px 2px 7px; border-bottom: 1px solid #eee; margin-bottom: 5px; }}
+#clientFilterPanel .cfp-head button {{ background: none; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 10px; font-weight: 700; color: #444; cursor: pointer; padding: 2px 6px; margin-left: 4px; }}
+#clientFilterPanel .cfp-head button:hover {{ background: #f2f2f2; }}
+#clientFilterPanel .cfp-list {{ max-height: 340px; overflow-y: auto; }}
+#clientFilterPanel .cfp-row {{ display: flex; align-items: center; gap: 8px; padding: 4px 5px; font-size: 12.5px; color: #222; cursor: pointer; border-radius: 5px; }}
+#clientFilterPanel .cfp-row:hover {{ background: #f5f5f5; }}
+#clientFilterPanel .cfp-row input {{ width: 15px; height: 15px; cursor: pointer; flex: none; }}
+
 /* ===================== Draft Card view ===================== */
 #draftCardView {{ padding: 18px 22px 48px; }}
 #draftCardView .dc-head {{ display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }}
@@ -3442,6 +3456,49 @@ function minPickFor(team) {{
     return Infinity;
 }}
 
+// --- Client (row) filter: choose which players' rows show in the matrix ---
+var _matrixHiddenPlayers = new Set();
+try {{ _matrixHiddenPlayers = new Set(JSON.parse(localStorage.getItem('ti_matrix_hidden') || '[]')); }} catch(e) {{}}
+function _persistClientFilter() {{ try {{ localStorage.setItem('ti_matrix_hidden', JSON.stringify([..._matrixHiddenPlayers])); }} catch(e) {{}} }}
+function _allClientNames() {{ return [...new Set([...RECORDS.map(r => r.player), ...ALL_2026_PLAYERS])].sort(); }}
+function buildClientFilterList() {{
+    const host = document.getElementById('clientFilterList'); if (!host) return;
+    host.innerHTML = '';
+    _allClientNames().forEach(p => {{
+        const row = document.createElement('label'); row.className = 'cfp-row';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !_matrixHiddenPlayers.has(p);
+        cb.onchange = () => {{ if (cb.checked) _matrixHiddenPlayers.delete(p); else _matrixHiddenPlayers.add(p); _persistClientFilter(); renderMatrix(); }};
+        const span = document.createElement('span'); span.textContent = p;
+        row.appendChild(cb); row.appendChild(span); host.appendChild(row);
+    }});
+}}
+function clientFilterAll(show) {{
+    if (show) _matrixHiddenPlayers.clear();
+    else _allClientNames().forEach(p => _matrixHiddenPlayers.add(p));
+    _persistClientFilter(); buildClientFilterList(); renderMatrix();
+}}
+function toggleClientFilter(ev) {{
+    if (ev) ev.stopPropagation();
+    const p = document.getElementById('clientFilterPanel'); if (!p) return;
+    if (p.style.display === 'block') {{ p.style.display = 'none'; return; }}
+    buildClientFilterList();
+    p.style.display = 'block';
+    const btn = document.getElementById('clientFilterBtn'); const r = btn.getBoundingClientRect();
+    const pw = p.offsetWidth, ph = p.offsetHeight;
+    let left = r.left, top = r.bottom + 4;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - 8 - pw;
+    if (left < 8) left = 8;
+    if (top + ph > window.innerHeight - 8) top = Math.max(8, window.innerHeight - 8 - ph);
+    p.style.left = left + 'px'; p.style.top = top + 'px';
+}}
+document.addEventListener('click', function(e) {{
+    const p = document.getElementById('clientFilterPanel');
+    if (!p || p.style.display !== 'block') return;
+    const btn = document.getElementById('clientFilterBtn');
+    if (p.contains(e.target) || (btn && btn.contains(e.target))) return;
+    p.style.display = 'none';
+}});
+
 function renderMatrix() {{
     const {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap, combineMap }} = buildMatrix();
 
@@ -3453,7 +3510,8 @@ function renderMatrix() {{
         return a.localeCompare(b);
     }});
 
-    var html = '<thead><tr><th rowspan="2">Client</th>';
+    const filterActive = _matrixHiddenPlayers.size > 0;
+    var html = '<thead><tr><th rowspan="2" class="client-hdr">Client<button class="client-filter-btn' + (filterActive ? ' active' : '') + '" id="clientFilterBtn" onclick="toggleClientFilter(event)" title="Choose which clients to show">\\u25be</button></th>';
     orderedTeams.forEach(t => html += '<th>' + t + '</th>');
     html += '</tr><tr>';
     orderedTeams.forEach(t => {{
@@ -3472,7 +3530,8 @@ function renderMatrix() {{
     }});
     html += '</tr></thead><tbody>';
 
-    sortedPlayers.forEach(player => {{
+    const visiblePlayers = sortedPlayers.filter(p => !_matrixHiddenPlayers.has(p));
+    visiblePlayers.forEach(player => {{
         const total = playerTotals[player] || 0;
         const rowTitle = ' title="' + total + ' total point' + (total === 1 ? '' : 's') + ' (GM=5, Dir=4, NXC=3, X=2, Area=1)"';
         const esc = player.replace(/'/g, "\\\\'");
@@ -3515,7 +3574,7 @@ function renderMatrix() {{
         dateRangeLabel = 'Aug 2025 - Present';
     }}
     document.getElementById('statsBar').innerHTML =
-        '<div class="stat-item"><span class="stat-label">Players:</span><span class="stat-value">' + sortedPlayers.length + '</span></div>' +
+        '<div class="stat-item"><span class="stat-label">Players:</span><span class="stat-value">' + visiblePlayers.length + (_matrixHiddenPlayers.size ? ' of ' + sortedPlayers.length : '') + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Intel Reports:</span><span class="stat-value">' + windowedCount + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Player-Team Connections:</span><span class="stat-value">' + uniquePairs + '</span></div>' +
         '<div class="stat-item"><span class="stat-label">Date Range:</span><span class="stat-value">' + dateRangeLabel + '</span></div>' +
@@ -5803,6 +5862,10 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
             <button class="ti-slack" id="teamInfoSlackBtn" onclick="openSlackFromTeamInfo()">See Slack Message</button>
         </div>
     </div>
+</div>
+<div id="clientFilterPanel">
+    <div class="cfp-head"><span>Show clients</span><span><button onclick="clientFilterAll(true)">All</button><button onclick="clientFilterAll(false)">None</button></span></div>
+    <div class="cfp-list" id="clientFilterList"></div>
 </div>
 <div id="toast"></div>
 </body>
