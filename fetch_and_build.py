@@ -2300,6 +2300,11 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-chip {{ font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 4px; color: #222; cursor: pointer; border: 1px solid rgba(0,0,0,.12); line-height: 1.15; }}
 #draftCardView .dc-chip.dark {{ color: #fff; border-color: rgba(255,255,255,.25); }}
 #draftCardView .dc-chip.empty {{ color: #aaa; }}
+/* In-play checkbox on single-player squares (bottom-right corner) */
+#draftCardView .dc-pickbox {{ position: absolute; bottom: 4px; right: 5px; width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid rgba(0,0,0,.4); background: rgba(255,255,255,.85); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; line-height: 1; color: #111; cursor: pointer; }}
+#draftCardView .dc-pickbox:hover {{ border-color: #111; }}
+#draftCardView .dc-pickbox.on {{ background: #111; border-color: #111; color: #fff; }}
+#draftCardView .dc-cell.dark .dc-pickbox {{ border-color: rgba(255,255,255,.7); }}
 /* Cell editor popup (fixed, shared with the dashboard overlay stack) */
 #dcBackdrop {{ position: fixed; inset: 0; background: transparent; display: none; z-index: 8500; }}
 #dcEditor {{ position: fixed; z-index: 9100; display: none; width: 252px; background: #fff; border: 1px solid #e3e3e3; border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.22); padding: 13px 14px; }}
@@ -2347,6 +2352,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     #draftCardView .dc-ph-player {{ font-size: 17px; font-weight: 800; color: #000; }}
     #draftCardView .dc-grid {{ gap: 1px; }}
     #draftCardView .dc-cell {{ box-shadow: none !important; transform: none !important; break-inside: avoid; }}
+    #draftCardView .dc-pickbox {{ display: none !important; }}
     #draftCardView .dc-section {{ break-inside: avoid; break-after: avoid; }}
 }}
 </style>
@@ -3302,23 +3308,6 @@ function dcInPlay(player, team, pick) {{
     if (!scoreOverrides.hasOwnProperty(key)) return true;
     return (scoreOverrides[key] || []).indexOf(pick) !== -1;
 }}
-function renderPicksInPlay(player, team) {{
-    const wrap = document.getElementById('popupPicksWrap');
-    const host = document.getElementById('popupPicks');
-    if (!wrap || !host) return;
-    const picks = _teamPickList(team);
-    if (!picks.length) {{ wrap.style.display = 'none'; return; }}
-    host.innerHTML = '';
-    picks.forEach(pk => {{
-        const on = dcInPlay(player, team, pk);
-        const lab = document.createElement('label'); lab.className = 'pk-chip' + (on ? ' on' : '');
-        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = on;
-        cb.onchange = () => togglePickInPlay(player, team, pk);
-        const sp = document.createElement('span'); sp.textContent = (DC_ROUND[pk] ? DC_ROUND[pk] + ' ' : '') + '#' + pk;
-        lab.appendChild(cb); lab.appendChild(sp); host.appendChild(lab);
-    }});
-    wrap.style.display = 'block';
-}}
 async function togglePickInPlay(player, team, pick) {{
     const key = 'pk|' + player + '|' + team;
     const all = _teamPickList(team);
@@ -3330,9 +3319,7 @@ async function togglePickInPlay(player, team, pick) {{
         if (!res.ok) {{ const b = await res.text(); showToast('Save failed (' + res.status + '). ' + b.slice(0, 120)); return; }}
         if (toStore === null) {{ delete scoreOverrides[key]; delete scoreOverridesMeta[key]; }}
         else {{ scoreOverrides[key] = toStore; scoreOverridesMeta[key] = new Date().toISOString(); }}
-        showToast('Saved', true);
     }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
-    renderPicksInPlay(player, team);
     if (typeof dcStarted !== 'undefined' && dcStarted) dcRenderGrid();
 }}
 
@@ -3378,7 +3365,6 @@ function openScorePopup(player, team, date, event, colorOnly) {{
     }}
     updatePDWButton();
     updateCombineButton();
-    renderPicksInPlay(player, team);
     var popup = document.getElementById('scorePopup');
     var overlay = document.getElementById('scoreOverlay');
     popup.style.display = 'block';
@@ -5773,7 +5759,7 @@ const DC_ROUND = (function() {{
     return map;
 }})();
 let dcCurrent = null;        // primary player NAME (= dcSelected[0])
-let dcSelected = [];         // 1-4 selected players; >1 = compare mode
+let dcSelected = [];         // 1-5 selected players; >1 = compare mode
 let dcStarted = false;
 const DC_MODAL_KEY = '__draftcard__';
 const DC_MAX_COMPARE = 5;
@@ -5866,8 +5852,10 @@ function dcRenderGrid() {{
             el.onclick = () => dcOpenMessageFor(dcCurrent, i);
         }} else {{
             // Single-player mode: full-color cell with corner workout/combine dots.
-            // Out-of-play picks (per the matrix "in play for picks" checklist) go neutral.
-            const hex = dcInPlay(dcCurrent, team, slot) ? dcHexOf(i) : '#FFFFFF';
+            const word = getLatestColor(dcCurrent, team);
+            const inPlay = dcInPlay(dcCurrent, team, slot);
+            // Turned-off (out-of-play) picks render neutral even though interest exists.
+            const hex = (word && inPlay) ? (COLOR_BG[word] || '#FFFFFF') : '#FFFFFF';
             const combine = isCombine(dcCurrent, team), workout = isPDW(dcCurrent, team);
             el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '');
             el.style.background = hex;
@@ -5875,6 +5863,16 @@ function dcRenderGrid() {{
             if (workout) {{ const wk = document.createElement('div'); wk.className = 'dc-work'; wk.title = 'Pre-draft workout'; el.appendChild(wk); }}
             if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; el.appendChild(cb); }}
             el.appendChild(sl); el.appendChild(tm); el.appendChild(bn);
+            // In-play checkbox (only where the player has interest for this team).
+            // Checked = in play for this pick; click to turn the player off this pick.
+            if (word) {{
+                const pb = document.createElement('div');
+                pb.className = 'dc-pickbox' + (inPlay ? ' on' : '');
+                pb.textContent = inPlay ? '\\u2713' : '';
+                pb.title = inPlay ? (dcCurrent + ' in play for #' + slot + ' — click to turn off') : (dcCurrent + ' turned off for #' + slot + ' — click to turn on');
+                pb.onclick = (ev) => {{ ev.stopPropagation(); togglePickInPlay(dcCurrent, team, slot); }};
+                el.appendChild(pb);
+            }}
         }}
         g.appendChild(el);
     }});
@@ -5980,10 +5978,6 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
     <div class="popup-combine" id="combineToggle" onclick="toggleCombine()">Combine Interview</div>
-    <div class="popup-picks-wrap" id="popupPicksWrap" style="display:none;">
-        <div class="popup-color-label">In play for picks <span style="font-weight:400;text-transform:none;color:#aaa;">(Draft Card)</span></div>
-        <div class="popup-picks" id="popupPicks"></div>
-    </div>
     <div class="popup-reassign-wrap">
         <div class="popup-color-label">Reassign team</div>
         <div class="popup-reassign">
