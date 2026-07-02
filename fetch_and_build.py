@@ -1725,8 +1725,13 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #scorePopup.color-only .popup-scores,
 #scorePopup.color-only .popup-pdw,
 #scorePopup.color-only .popup-combine,
+#scorePopup.color-only .popup-picks-wrap,
 #scorePopup.color-only .popup-reassign-wrap,
 #scorePopup.color-only .popup-reset {{ display: none !important; }}
+#scorePopup .popup-picks {{ display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }}
+#scorePopup .pk-chip {{ display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #777; border: 1px solid #d5d5d5; border-radius: 5px; padding: 3px 6px; cursor: pointer; background: #fff; }}
+#scorePopup .pk-chip.on {{ color: #111; border-color: #7ba7e0; background: #eef4fc; }}
+#scorePopup .pk-chip input {{ width: 13px; height: 13px; cursor: pointer; margin: 0; }}
 /* Default mode hides the color picker — the cell popup edits points/score/PDW;
    color editing lives in the detail-view 'Most Recent' block (color-only mode). */
 #scorePopup .popup-set-color-wrap {{ display: none; }}
@@ -3288,6 +3293,49 @@ function updateCombineButton() {{
     }}
 }}
 
+// --- "In play for picks": restricts which Draft Card picks show a player's color ---
+// Stored as override 'pk|player|team' = array of in-play overall pick numbers.
+// Absent = every pick is in play (default / current behavior).
+function _teamPickList(team) {{ return DRAFT_SEED.filter(r => r[1] === team).map(r => r[0]); }}
+function dcInPlay(player, team, pick) {{
+    const key = 'pk|' + player + '|' + team;
+    if (!scoreOverrides.hasOwnProperty(key)) return true;
+    return (scoreOverrides[key] || []).indexOf(pick) !== -1;
+}}
+function renderPicksInPlay(player, team) {{
+    const wrap = document.getElementById('popupPicksWrap');
+    const host = document.getElementById('popupPicks');
+    if (!wrap || !host) return;
+    const picks = _teamPickList(team);
+    if (!picks.length) {{ wrap.style.display = 'none'; return; }}
+    host.innerHTML = '';
+    picks.forEach(pk => {{
+        const on = dcInPlay(player, team, pk);
+        const lab = document.createElement('label'); lab.className = 'pk-chip' + (on ? ' on' : '');
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = on;
+        cb.onchange = () => togglePickInPlay(player, team, pk);
+        const sp = document.createElement('span'); sp.textContent = (DC_ROUND[pk] ? DC_ROUND[pk] + ' ' : '') + '#' + pk;
+        lab.appendChild(cb); lab.appendChild(sp); host.appendChild(lab);
+    }});
+    wrap.style.display = 'block';
+}}
+async function togglePickInPlay(player, team, pick) {{
+    const key = 'pk|' + player + '|' + team;
+    const all = _teamPickList(team);
+    let arr = scoreOverrides.hasOwnProperty(key) ? (scoreOverrides[key] || []).slice() : all.slice();
+    if (arr.indexOf(pick) !== -1) arr = arr.filter(x => x !== pick); else arr.push(pick);
+    const toStore = (arr.length === all.length) ? null : arr;  // all in play → clear override
+    try {{
+        const res = await fetch('/api/overrides', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify({{ key: key, score: toStore }}) }});
+        if (!res.ok) {{ const b = await res.text(); showToast('Save failed (' + res.status + '). ' + b.slice(0, 120)); return; }}
+        if (toStore === null) {{ delete scoreOverrides[key]; delete scoreOverridesMeta[key]; }}
+        else {{ scoreOverrides[key] = toStore; scoreOverridesMeta[key] = new Date().toISOString(); }}
+        showToast('Saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
+    renderPicksInPlay(player, team);
+    if (typeof dcStarted !== 'undefined' && dcStarted) dcRenderGrid();
+}}
+
 function openScorePopup(player, team, date, event, colorOnly) {{
     _popupPlayer = player;
     _popupTeam = team;
@@ -3330,6 +3378,7 @@ function openScorePopup(player, team, date, event, colorOnly) {{
     }}
     updatePDWButton();
     updateCombineButton();
+    renderPicksInPlay(player, team);
     var popup = document.getElementById('scorePopup');
     var overlay = document.getElementById('scoreOverlay');
     popup.style.display = 'block';
@@ -3962,6 +4011,11 @@ async function renderEdits() {{
             const p = k.substring(3).split('|');
             if (p.length !== 3) return;
             rows.push({{ edited_at: ts, ref_date: p[2], type: 'Team Reassign', player: p[0], team: p[1], details: 'reassigned to ' + v }});
+        }} else if (k.startsWith('pk|')) {{
+            const p = k.substring(3).split('|');
+            if (p.length !== 2) return;
+            const picks = Array.isArray(v) ? v : [];
+            rows.push({{ edited_at: ts, ref_date: '', type: 'Picks In Play', player: p[0], team: p[1], details: picks.length ? ('#' + picks.join(', #')) : '(none)' }});
         }} else {{
             const p = k.split('|');
             if (p.length !== 3) return;
@@ -5795,7 +5849,7 @@ function dcRenderGrid() {{
             el.appendChild(sl); el.appendChild(tm);
             const chips = document.createElement('div'); chips.className = 'dc-chips';
             dcSelected.forEach(pl => {{
-                const word = getLatestColor(pl, team);
+                const word = dcInPlay(pl, team, slot) ? getLatestColor(pl, team) : null;
                 const hex = word ? (COLOR_BG[word] || '#eee') : '#f1f1f1';
                 const chip = document.createElement('div');
                 chip.className = 'dc-chip' + (word && dcIsDark(hex) ? ' dark' : '') + (word ? '' : ' empty');
@@ -5812,7 +5866,8 @@ function dcRenderGrid() {{
             el.onclick = () => dcOpenMessageFor(dcCurrent, i);
         }} else {{
             // Single-player mode: full-color cell with corner workout/combine dots.
-            const hex = dcHexOf(i);
+            // Out-of-play picks (per the matrix "in play for picks" checklist) go neutral.
+            const hex = dcInPlay(dcCurrent, team, slot) ? dcHexOf(i) : '#FFFFFF';
             const combine = isCombine(dcCurrent, team), workout = isPDW(dcCurrent, team);
             el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '');
             el.style.background = hex;
@@ -5925,6 +5980,10 @@ if (sessionStorage.getItem('sv_auth') === '1') {{
     </div>
     <div class="popup-pdw" id="pdwToggle" onclick="togglePDW()">Pre-Draft Workout</div>
     <div class="popup-combine" id="combineToggle" onclick="toggleCombine()">Combine Interview</div>
+    <div class="popup-picks-wrap" id="popupPicksWrap" style="display:none;">
+        <div class="popup-color-label">In play for picks <span style="font-weight:400;text-transform:none;color:#aaa;">(Draft Card)</span></div>
+        <div class="popup-picks" id="popupPicks"></div>
+    </div>
     <div class="popup-reassign-wrap">
         <div class="popup-color-label">Reassign team</div>
         <div class="popup-reassign">
@@ -6281,6 +6340,11 @@ def apply_overrides(records, overrides, meta=None):
                 # overrides with no timestamp get 9999 (never expire).
                 edit_date = (meta.get(key) or '')[:10] or '9999-12-31'
                 color_ov[(parts[1], parts[2])] = (val, edit_date)
+        elif key.startswith('pk|'):
+            # 'pk|player|team' -> in-play pick list; dashboard-only (drives the
+            # Draft Card). Not merged into teamintel.json — skip here so it isn't
+            # misread as a score edit.
+            continue
         elif key.startswith('mt|'):
             parts = key.split('|')
             if len(parts) == 4:
