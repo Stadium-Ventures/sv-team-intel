@@ -2283,6 +2283,9 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-head-player {{ font-size: 15px; font-weight: 800; color: #222; margin-top: 2px; }}
 #draftCardView .dc-window {{ display: flex; align-items: center; gap: 4px; }}
 #draftCardView .dc-window-label {{ font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #888; margin-right: 2px; }}
+#draftCardView .dc-range {{ display: flex; align-items: center; gap: 4px; }}
+#draftCardView .dc-range input {{ width: 54px; padding: 5px 6px; font-size: 12px; font-weight: 700; border: 1px solid #d0d0d0; border-radius: 5px; text-align: center; }}
+#draftCardView .dc-range-dash {{ color: #999; }}
 /* Multi-player selector */
 #draftCardView .dc-controls {{ position: relative; }}
 #draftCardView .dc-player-btn {{ font-size: 15px; font-weight: 700; border: 1px solid #d0d0d0; border-radius: 8px; padding: 7px 12px; background: #fff; color: #111; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-width: 190px; justify-content: space-between; }}
@@ -2561,6 +2564,12 @@ function checkPw() {{
     <div class="dc-toolbar">
         <div class="dc-hint"><b>Click any square</b> to see the latest TeamIntel message behind it. Colors, workout &amp; combine dots come straight from the engine.</div>
         <div class="dc-spacer"></div>
+        <div class="dc-range">
+            <span class="dc-window-label">Picks</span>
+            <input type="number" id="dcRangeMin" min="1" max="313" value="1" onchange="dcSetRange()" title="First pick to show">
+            <span class="dc-range-dash">&ndash;</span>
+            <input type="number" id="dcRangeMax" min="1" max="313" value="313" onchange="dcSetRange()" title="Last pick to show">
+        </div>
         <div class="dc-window">
             <span class="dc-window-label">Window</span>
             <button id="dcw_0" class="dw-btn active" onclick="setDateWindow(0)" title="All intel">All</button>
@@ -5804,6 +5813,30 @@ function dcInitials(name) {{
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }}
+// Per-player min/max pick range (localStorage). Default = all 313 picks.
+var dcRanges = {{}};
+try {{ dcRanges = JSON.parse(localStorage.getItem('ti_dc_range') || '{{}}'); }} catch(e) {{}}
+function dcCurRange() {{
+    const r = dcRanges[dcCurrent];
+    return (Array.isArray(r) && r.length === 2) ? r : [1, 313];
+}}
+function dcSyncRangeInputs() {{
+    const r = dcCurRange();
+    const mn = document.getElementById('dcRangeMin'), mx = document.getElementById('dcRangeMax');
+    if (mn) mn.value = r[0]; if (mx) mx.value = r[1];
+}}
+function dcSetRange() {{
+    if (!dcCurrent) return;
+    let mn = parseInt(document.getElementById('dcRangeMin').value, 10);
+    let mx = parseInt(document.getElementById('dcRangeMax').value, 10);
+    if (isNaN(mn)) mn = 1; if (isNaN(mx)) mx = 313;
+    mn = Math.max(1, Math.min(313, mn)); mx = Math.max(1, Math.min(313, mx));
+    if (mn > mx) {{ const t = mn; mn = mx; mx = t; }}
+    if (mn === 1 && mx === 313) delete dcRanges[dcCurrent]; else dcRanges[dcCurrent] = [mn, mx];
+    try {{ localStorage.setItem('ti_dc_range', JSON.stringify(dcRanges)); }} catch(e) {{}}
+    dcSyncRangeInputs();
+    dcRenderGrid();
+}}
 
 function dcRenderKey() {{
     const k = document.getElementById('dcKeyrow'); if (!k) return; k.innerHTML = '';
@@ -5817,12 +5850,10 @@ function dcRenderGrid() {{
     if (!dcSelected.length) {{ g.innerHTML = ''; return; }}
     const multi = dcSelected.length > 1;
     g.innerHTML = '';
+    const rmin = dcCurRange()[0], rmax = dcCurRange()[1];
     DRAFT_SEED.forEach((row, i) => {{
         const slot = row[0], bonus = row[2];
-        // Full-width section header breaks the grid into rounds/segments.
-        if (DRAFT_SECTIONS[slot]) {{
-            const sd = document.createElement('div'); sd.className = 'dc-section'; sd.textContent = DRAFT_SECTIONS[slot]; g.appendChild(sd);
-        }}
+        if (slot < rmin || slot > rmax) return;  // outside the selected pick range
         const team = dcTeamOf(i);
         const el = document.createElement('div');
         const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = DC_ROUND[slot] + ' \\u00b7 #' + slot;
@@ -5854,8 +5885,8 @@ function dcRenderGrid() {{
             // Single-player mode: full-color cell with corner workout/combine dots.
             const word = getLatestColor(dcCurrent, team);
             const inPlay = dcInPlay(dcCurrent, team, slot);
-            // Turned-off (out-of-play) picks render neutral even though interest exists.
-            const hex = (word && inPlay) ? (COLOR_BG[word] || '#FFFFFF') : '#FFFFFF';
+            // Unchecked (turned off) => RED; otherwise the engine color (or white).
+            const hex = !inPlay ? (COLOR_BG['red'] || '#e16e69') : (word ? (COLOR_BG[word] || '#FFFFFF') : '#FFFFFF');
             const combine = isCombine(dcCurrent, team), workout = isPDW(dcCurrent, team);
             el.className = 'dc-cell' + (dcIsDark(hex) ? ' dark' : '');
             el.style.background = hex;
@@ -5863,16 +5894,13 @@ function dcRenderGrid() {{
             if (workout) {{ const wk = document.createElement('div'); wk.className = 'dc-work'; wk.title = 'Pre-draft workout'; el.appendChild(wk); }}
             if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; el.appendChild(cb); }}
             el.appendChild(sl); el.appendChild(tm); el.appendChild(bn);
-            // In-play checkbox (only where the player has interest for this team).
-            // Checked = in play for this pick; click to turn the player off this pick.
-            if (word) {{
-                const pb = document.createElement('div');
-                pb.className = 'dc-pickbox' + (inPlay ? ' on' : '');
-                pb.textContent = inPlay ? '\\u2713' : '';
-                pb.title = inPlay ? (dcCurrent + ' in play for #' + slot + ' — click to turn off') : (dcCurrent + ' turned off for #' + slot + ' — click to turn on');
-                pb.onclick = (ev) => {{ ev.stopPropagation(); togglePickInPlay(dcCurrent, team, slot); }};
-                el.appendChild(pb);
-            }}
+            // In-play checkbox on EVERY pick: checked = in play; unchecked = red (off).
+            const pb = document.createElement('div');
+            pb.className = 'dc-pickbox' + (inPlay ? ' on' : '');
+            pb.textContent = inPlay ? '\\u2713' : '';
+            pb.title = inPlay ? (dcCurrent + ' in play for #' + slot + ' — click to turn off') : (dcCurrent + ' OFF for #' + slot + ' — click to turn back on');
+            pb.onclick = (ev) => {{ ev.stopPropagation(); togglePickInPlay(dcCurrent, team, slot); }};
+            el.appendChild(pb);
         }}
         g.appendChild(el);
     }});
@@ -5889,6 +5917,7 @@ function dcSetSelected(arr) {{
     const hp = document.getElementById('dcHeadPlayer'); if (hp) hp.textContent = dcSelected.length > 1 ? ('Compare: ' + names) : names;
     const pp = document.getElementById('dcPrintPlayer'); if (pp) pp.textContent = dcSelected.length > 1 ? ('Compare: ' + names) : names;
     dcBuildPlayerList();
+    dcSyncRangeInputs();
     dcRenderGrid();
 }}
 function dcBuildPlayerList() {{
