@@ -3071,7 +3071,7 @@ function _autoLatestColor(player, team) {{
     var latest = null, latestDate = '';
     RECORDS.forEach(function(r) {{
         if (r.player !== player || r.team !== team || !r.color) return;
-        if (isExcluded(r)) return;
+        if (isExcluded(r) || !_inDateWindow(r)) return;
         if ((r.date || '') > latestDate) {{ latestDate = r.date || ''; latest = r.color; }}
     }});
     return latest;
@@ -3084,7 +3084,7 @@ function _autoLatestColorRecord(player, team) {{
     var latest = null, latestDate = '';
     RECORDS.forEach(function(r) {{
         if (r.player !== player || r.team !== team || !r.color) return;
-        if (isExcluded(r)) return;
+        if (isExcluded(r) || !_inDateWindow(r)) return;
         if ((r.date || '') > latestDate) {{ latestDate = r.date || ''; latest = r; }}
     }});
     return latest;
@@ -3466,18 +3466,14 @@ function buildMatrix() {{
     activeRecords.forEach(r => {{
         const key = r.player + '|' + r.team;
         cellPoints[key] = (cellPoints[key] || 0) + getPoints(r);
+        if (r.color) {{
+            const cur = cellLatestColor[key];
+            if (!cur || (r.date || '') > (cur.date || '')) {{
+                cellLatestColor[key] = {{ date: r.date || '', color: r.color }};
+            }}
+        }}
         if (r.workout) workoutMap[key] = true;
         if (r.combine) combineMap[key] = true;
-    }});
-    // Colors are all-time: the most-recent color word shows even when its
-    // source record falls outside the active date window (points stay windowed).
-    RECORDS.forEach(r => {{
-        if (isExcluded(r) || !r.color) return;
-        const key = r.player + '|' + r.team;
-        const cur = cellLatestColor[key];
-        if (!cur || (r.date || '') > (cur.date || '')) {{
-            cellLatestColor[key] = {{ date: r.date || '', color: r.color }};
-        }}
     }});
     // Manual PDW overrides (matrix popup) still apply to the workout map.
     // Manual color overrides (c|player|team) override most-recent color.
@@ -3518,9 +3514,9 @@ function buildMatrix() {{
         if (cellLatestColor[key]) playerTeamColors[player][team] = cellLatestColor[key].color;
         playerTotals[player] = (playerTotals[player] || 0) + cellPoints[key];
     }});
-    // Colored cells paint even when the pair has no intel records in the
-    // active date window — covers manual overrides and out-of-window Slack
-    // colors (color-only cell, 0 points, no connection counted).
+    // Manual color overrides paint the cell even when the pair has no intel
+    // records in the active date window (color-only cell, 0 points, no
+    // connection counted). Auto Slack colors stay windowed.
     Object.keys(cellLatestColor).forEach(key => {{
         const [player, team] = key.split('|');
         if (!playerTeamColors[player]) playerTeamColors[player] = {{}};
@@ -3730,10 +3726,8 @@ function renderDetail() {{
     // group every team they have a literal color from, by that most-recent color.
     if (!_filterTeam) {{
         const latestByTeam = {{}};
-        // Colors are all-time: build from every record for the player, not
-        // just those inside the active date window.
-        RECORDS.forEach(r => {{
-            if (r.player !== player || isExcluded(r) || !r.color) return;
+        visible.forEach(r => {{
+            if (!r.color) return;
             const cur = latestByTeam[r.team];
             if (!cur || (r.date || '') > (cur.date || '')) {{
                 latestByTeam[r.team] = {{ date: r.date, color: r.color }};
@@ -5805,7 +5799,7 @@ function dcLatestRecord(player, team) {{
     let best = null;
     RECORDS.forEach(function(r) {{
         if (r.player !== player || r.team !== team) return;
-        if (isExcluded(r)) return;
+        if (isExcluded(r) || !_inDateWindow(r)) return;
         if (best === null || (r.date || '') > (best.date || '') ||
             ((r.date || '') === (best.date || '') && (r.ts || '') > (best.ts || ''))) best = r;
     }});
