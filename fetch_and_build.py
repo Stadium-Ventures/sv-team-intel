@@ -3098,6 +3098,9 @@ function _colorOverrideActive(player, team) {{
     if (!scoreOverrides.hasOwnProperty(ck)) return false;
     var ots = scoreOverridesMeta[ck];
     var odate = ots ? ots.slice(0, 10) : '9999-12-31';
+    // The override acts like a report dated when the edit was made: outside
+    // the active date window it doesn't apply.
+    if (!_inDateWindow({{date: odate}})) return false;
     var rec = _autoLatestColorRecord(player, team);
     if (rec && (rec.date || '') > odate) return false;  // newer Slack color wins
     return true;
@@ -3494,6 +3497,9 @@ function buildMatrix() {{
             // dated 9999 so they never expire.
             const ots = scoreOverridesMeta[k];
             const odate = ots ? ots.slice(0, 10) : '9999-12-31';
+            // The override acts like a report dated when the edit was made:
+            // outside the active date window it doesn't apply.
+            if (!_inDateWindow({{date: odate}})) return;
             const cur = cellLatestColor[key];
             if (cur && (cur.date || '') > odate) {{
                 // newer Slack color wins — leave it in place
@@ -3738,6 +3744,11 @@ function renderDetail() {{
             if (!k.startsWith('c|')) return;
             const parts = k.substring(2).split('|');
             if (parts.length !== 2 || parts[0] !== player) return;
+            // The override acts like a report dated when the edit was made:
+            // outside the active date window it doesn't apply.
+            const ots = scoreOverridesMeta[k];
+            const odate = ots ? ots.slice(0, 10) : '9999-12-31';
+            if (!_inDateWindow({{date: odate}})) return;
             const t = parts[1];
             const v = scoreOverrides[k];
             if (v) latestByTeam[t] = {{ date: '9999-12-31', color: v }};
