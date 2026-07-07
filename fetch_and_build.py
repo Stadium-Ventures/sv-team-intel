@@ -3475,6 +3475,13 @@ function buildMatrix() {{
                 cellLatestColor[key] = {{ date: r.date || '', color: r.color }};
             }}
         }}
+    }});
+    // Workout + combine flags are ALL-TIME facts, not recency-windowed intel:
+    // a pre-draft workout or combine meeting on file stays on the matrix even
+    // in the 7/14/30-day views (matches calendar + Draft Card behavior).
+    RECORDS.forEach(r => {{
+        if (isExcluded(r)) return;
+        const key = r.player + '|' + r.team;
         if (r.workout) workoutMap[key] = true;
         if (r.combine) combineMap[key] = true;
     }});
