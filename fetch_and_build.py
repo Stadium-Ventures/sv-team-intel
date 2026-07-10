@@ -2267,6 +2267,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-bottom {{ display: flex; flex-direction: column; align-items: center; }}
 #draftCardView .dc-bonus {{ font-size: 10.5px; font-weight: 700; color: #333; line-height: 1.1; }}
 #draftCardView .dc-cell.dark .dc-bonus {{ color: rgba(255,255,255,.92); }}
+#draftCardView .dc-pool {{ font-size: 8px; font-weight: 700; letter-spacing: .03em; color: #8a8a8a; line-height: 1.1; margin-top: 1px; }}
+#draftCardView .dc-cell.dark .dc-pool {{ color: rgba(255,255,255,.75); }}
 #draftCardView .dc-tag {{ font-size: 7.5px; font-weight: 800; letter-spacing: .08em; color: #777; margin-top: 1px; text-transform: uppercase; }}
 #draftCardView .dc-cell.dark .dc-tag {{ color: rgba(255,255,255,.8); }}
 #draftCardView .dc-section {{ grid-column: 1 / -1; background: #fafafa; padding: 5px 10px 4px; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #888; border-top: 2px solid #d8d8d8; }}
@@ -5883,6 +5885,8 @@ function dcRenderGrid() {{
         const sl = document.createElement('div'); sl.className = 'dc-slot'; sl.textContent = DC_ROUND[slot] + ' \\u00b7 #' + slot;
         const tm = document.createElement('div'); tm.className = 'dc-team'; tm.textContent = team;
         const bn = document.createElement('div'); bn.className = 'dc-bonus'; bn.textContent = dcMoney(bonus);
+        const tdPool = (TEAM_DRAFT[team] || {{}}).pool;
+        const pool = document.createElement('div'); pool.className = 'dc-pool'; pool.textContent = tdPool ? 'Pool ' + tdPool : '';
 
         if (multi) {{
             // Compare mode: neutral cell, one initial-chip per selected player.
@@ -5903,7 +5907,7 @@ function dcRenderGrid() {{
                 chip.onclick = (ev) => {{ ev.stopPropagation(); dcOpenMessageFor(pl, i); }};
                 chips.appendChild(chip);
             }});
-            el.appendChild(chips); el.appendChild(bn);
+            el.appendChild(chips); el.appendChild(bn); if (tdPool) el.appendChild(pool);
             el.onclick = () => dcOpenMessageFor(dcCurrent, i);
         }} else {{
             // Single-player mode: full-color cell with corner workout/combine dots.
@@ -5917,7 +5921,7 @@ function dcRenderGrid() {{
             el.onclick = () => dcOpenMessage(i);
             if (workout) {{ const wk = document.createElement('div'); wk.className = 'dc-work'; wk.title = 'Pre-draft workout'; el.appendChild(wk); }}
             if (combine) {{ const cb = document.createElement('div'); cb.className = 'dc-comb'; cb.title = 'Met at combine'; el.appendChild(cb); }}
-            el.appendChild(sl); el.appendChild(tm); el.appendChild(bn);
+            el.appendChild(sl); el.appendChild(tm); el.appendChild(bn); if (tdPool) el.appendChild(pool);
             // In-play checkbox on EVERY pick: checked = in play; unchecked = red (off).
             const pb = document.createElement('div');
             pb.className = 'dc-pickbox' + (inPlay ? ' on' : '');
