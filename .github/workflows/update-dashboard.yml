@@ -2,19 +2,19 @@ name: Update TeamIntel Dashboard
 
 on:
   schedule:
-    # Fires every 15 min at OFF-PEAK minutes. GitHub's shared cron scheduler
+    # Fires every 10 min at OFF-PEAK minutes. GitHub's shared cron scheduler
     # heavily throttles the congested :00/:15/:30/:45 slots — in practice the
     # old '*/15' schedule was delivered only every 2-3 hours. Odd minutes get
     # much better service, but the scheduler is still best-effort; the primary
     # fast-cadence driver pre-draft is an external `gh workflow run` dispatch
-    # (launchd job on Mike's Mac, every 10 min).
+    # (launchd job on Mike's Mac, every 5 min).
     # A "cadence gate" step (below) decides whether each firing actually builds:
     #   * Pre-draft push (until DRAFT_PUSH_END): build every firing, 24/7 —
     #     fastest turnaround for last-minute intel.
     #   * After the push: auto-reverts to the original cadence — hourly (the
     #     :06 firing) during UTC 00-03 and 10-23 (skips the 04:00-09:59 UTC
     #     quiet window == 12am-6am ET). No manual change needed.
-    - cron: '6,21,36,51 * * * *'
+    - cron: '6,16,26,36,46,56 * * * *'
   workflow_dispatch: # Manual trigger — always builds, bypasses the gate
 
 # Overlapping runs (external dispatch + cron landing together) queue instead of
