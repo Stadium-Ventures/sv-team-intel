@@ -2346,8 +2346,10 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 }}
 @media print {{
     /* Draft Card print: landscape fits the 10-wide board; force color so the
-       cell fills actually print (browsers drop backgrounds by default). */
-    @page {{ size: landscape; margin: 0.4in; }}
+       cell fills actually print (browsers drop backgrounds by default).
+       0.25in margins leave no room for the browser's date/URL header-footer,
+       so it's suppressed even when enabled in the print dialog. */
+    @page {{ size: landscape; margin: 0.25in; }}
     html, body {{ background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
     * {{ -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }}
     /* Hide all chrome + the non-printing views. */
@@ -2370,9 +2372,12 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     /* Legend prints under the header (the bottom key row would orphan onto its own page). */
     #draftCardView .dc-print-legend {{ display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 0 0 10px; font-size: 10px; }}
     #draftCardView .dc-keyrow:not(.dc-print-legend) {{ display: none !important; }}
-    /* Slightly shrink the grid so the 32-row board fills 3 landscape pages
-       without orphaning the last row onto a 4th. */
-    #draftCardView .dc-grid {{ gap: 1px; zoom: 0.85; }}
+    /* Print layout is set per-print by dcPrepPrint(): short pick ranges
+       reflow to 5 wide columns and zoom up to fill the page; the full
+       313-pick board keeps 10 columns at 0.85 so its 32 rows fill exactly
+       3 landscape pages without orphaning the last row. */
+    #draftCardView .dc-grid {{ gap: 1px; zoom: var(--dc-print-zoom, 0.85);
+        grid-template-columns: repeat(var(--dc-print-cols, 10), 1fr); }}
     #draftCardView .dc-cell {{ box-shadow: none !important; transform: none !important; break-inside: avoid; }}
     #draftCardView .dc-pickbox, #draftCardView .dc-paint {{ display: none !important; }}
     #draftCardView .dc-section {{ break-inside: avoid; break-after: avoid; }}
@@ -6015,11 +6020,40 @@ document.addEventListener('click', function(e) {{
     if (p.contains(e.target) || (btn && btn.contains(e.target))) return;
     p.style.display = 'none';
 }});
-function dcPrint() {{
+// Stamp the prepared date and size the grid for print. Small pick ranges
+// zoom up so the board fills the landscape page (capped so a 3-row card
+// doesn't turn into a billboard); anything too big for one page keeps the
+// 0.85 zoom that lays the full 313-pick board across exactly 3 pages.
+function dcPrepPrint() {{
     var d = document.getElementById('dcPrintDate');
     if (d) d.textContent = 'Prepared ' + new Date().toLocaleDateString('en-US', {{ month: 'long', day: 'numeric', year: 'numeric' }});
-    window.print();
+    var g = document.getElementById('dcGrid'); if (!g) return;
+    var cells = g.querySelectorAll('.dc-cell').length;
+    // Pick the column count (5-10) whose one-page layout fills the most of
+    // the landscape page. Page-1 grid budget ~660px (8in printable height
+    // minus header+legend); ~67px per row at zoom 1; 2% safety so a row
+    // never spills. Zoom is width-capped so each cell keeps >=96px logical
+    // width — below that the bonus figures clip and the workout/combine
+    // dots crowd the pick label. Ranges too big for one page at any width
+    // fall through to the 10-column 0.85 layout (full board = 3 pages).
+    var best = {{ cols: 10, z: 0.85, fill: -1 }};
+    for (var cols = 5; cols <= 10; cols++) {{
+        var rows = Math.ceil(cells / cols);
+        if (!rows) break;
+        var z = Math.min(1008 / (96 * cols), 660 / (rows * 67) * 0.98);
+        if (z < 0.85) continue;
+        var fill = rows * 67 * z;
+        if (fill > best.fill) best = {{ cols: cols, z: z, fill: fill }};
+    }}
+    g.style.setProperty('--dc-print-cols', best.cols);
+    g.style.setProperty('--dc-print-zoom', best.z.toFixed(3));
 }}
+function dcPrint() {{ dcPrepPrint(); window.print(); }}
+// Covers Cmd+P / menu prints that skip the Print button.
+window.addEventListener('beforeprint', function() {{
+    var v = document.getElementById('draftCardView');
+    if (v && v.style.display !== 'none') dcPrepPrint();
+}});
 // Called by showView('draftcard'). Engine-seeded view; one player at a time.
 function dcShow() {{
     if (!dcStarted) {{ dcStarted = true; dcRenderKey(); }}
