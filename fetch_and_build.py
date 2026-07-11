@@ -2280,8 +2280,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-keyrow {{ display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin-top: 18px; font-size: 12px; color: #666; }}
 #draftCardView .dc-keyrow .dc-k {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }}
 #draftCardView .dc-keyrow .dc-k i {{ width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); display: inline-block; }}
-#draftCardView .dc-footer {{ margin-top: 18px; color: #888; font-size: 12px; }}
 #draftCardView .dc-print-head {{ display: none; }}  /* shown only when printing */
+#draftCardView .dc-print-legend {{ display: none; }}  /* print-only copy of the key row */
 #draftCardView .dc-head-player {{ font-size: 15px; font-weight: 800; color: #222; margin-top: 2px; }}
 #draftCardView .dc-window {{ display: flex; align-items: center; gap: 4px; }}
 #draftCardView .dc-window-label {{ font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #888; margin-right: 2px; }}
@@ -2298,7 +2298,8 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-pp-list {{ max-height: 340px; overflow-y: auto; }}
 #draftCardView .dc-pp-row {{ display: flex; align-items: center; gap: 8px; padding: 4px 5px; font-size: 12.5px; color: #222; cursor: pointer; border-radius: 5px; }}
 #draftCardView .dc-pp-row:hover {{ background: #f5f5f5; }}
-#draftCardView .dc-pp-row input {{ width: 15px; height: 15px; flex: none; cursor: pointer; }}
+#draftCardView .dc-pp-row.sel {{ background: #111; color: #fff; font-weight: 700; }}
+#draftCardView .dc-pp-row.sel:hover {{ background: #111; }}
 /* Compare mode: neutral cell + one initial-chip per selected player */
 #draftCardView .dc-cell.dc-multi {{ background: #fff !important; justify-content: flex-start; gap: 3px; min-height: 78px; }}
 #draftCardView .dc-chips {{ display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin: 1px 0; }}
@@ -2310,6 +2311,11 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-pickbox:hover {{ border-color: #111; }}
 #draftCardView .dc-pickbox.on {{ background: #111; border-color: #111; color: #fff; }}
 #draftCardView .dc-cell.dark .dc-pickbox {{ border-color: rgba(255,255,255,.7); }}
+/* Per-square manual color edit: pencil appears on hover, bottom-left corner. */
+#draftCardView .dc-paint {{ position: absolute; bottom: 4px; left: 5px; width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid rgba(0,0,0,.35); background: rgba(255,255,255,.85); display: none; align-items: center; justify-content: center; font-size: 9px; line-height: 1; color: #111; cursor: pointer; }}
+#draftCardView .dc-cell:hover .dc-paint {{ display: flex; }}
+#draftCardView .dc-paint:hover {{ border-color: #111; }}
+#draftCardView .dc-cell.dark .dc-paint {{ border-color: rgba(255,255,255,.7); }}
 /* Cell editor popup (fixed, shared with the dashboard overlay stack) */
 #dcBackdrop {{ position: fixed; inset: 0; background: transparent; display: none; z-index: 8500; }}
 #dcEditor {{ position: fixed; z-index: 9100; display: none; width: 252px; background: #fff; border: 1px solid #e3e3e3; border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.22); padding: 13px 14px; }}
@@ -2335,7 +2341,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #dcTip .dc-tip-meta {{ font-size: 10px; font-weight: 600; letter-spacing: .02em; color: #888; text-transform: uppercase; margin-bottom: 6px; }}
 #dcTip .dc-tip-body {{ font-size: 11.5px; line-height: 1.42; color: #333; white-space: pre-wrap; max-height: 190px; overflow: hidden; }}
 #dcTip .dc-tip-empty {{ font-size: 11.5px; color: #999; font-style: italic; }}
-@media (max-width: 900px) {{
+@media screen and (max-width: 900px) {{
     #draftCardView .dc-grid {{ grid-template-columns: repeat(5, 1fr); }}
 }}
 @media print {{
@@ -2351,13 +2357,24 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     #draftCardView .dc-head, #draftCardView .dc-controls, #draftCardView .dc-toolbar, #draftCardView .dc-status {{ display: none !important; }}
     #dcEditor, #dcBackdrop {{ display: none !important; }}
     #draftCardView {{ display: block !important; padding: 0 !important; }}
-    #draftCardView .dc-print-head {{ display: flex; justify-content: space-between; align-items: baseline;
-        border-bottom: 3px solid #ff2a22; padding-bottom: 6px; margin-bottom: 10px; }}
-    #draftCardView .dc-ph-title {{ font-size: 15px; font-weight: 800; letter-spacing: .02em; color: #000; }}
-    #draftCardView .dc-ph-player {{ font-size: 17px; font-weight: 800; color: #000; }}
-    #draftCardView .dc-grid {{ gap: 1px; }}
+    #draftCardView .dc-print-head {{ display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 3px solid #ff2a22; padding-bottom: 8px; margin-bottom: 12px; }}
+    #draftCardView .dc-ph-brand {{ display: flex; align-items: center; gap: 11px; }}
+    #draftCardView .dc-ph-logo {{ height: 32px; width: auto; display: block; }}
+    #draftCardView .dc-ph-titles {{ display: flex; flex-direction: column; gap: 1px; }}
+    #draftCardView .dc-ph-kicker {{ font-size: 9px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #ff2a22; line-height: 1; }}
+    #draftCardView .dc-ph-title {{ font-size: 16px; font-weight: 800; letter-spacing: -.01em; color: #000; line-height: 1.15; }}
+    #draftCardView .dc-ph-right {{ display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }}
+    #draftCardView .dc-ph-player {{ font-size: 17px; font-weight: 800; color: #000; line-height: 1.15; }}
+    #draftCardView .dc-ph-date {{ font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #777; line-height: 1; }}
+    /* Legend prints under the header (the bottom key row would orphan onto its own page). */
+    #draftCardView .dc-print-legend {{ display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 0 0 10px; font-size: 10px; }}
+    #draftCardView .dc-keyrow:not(.dc-print-legend) {{ display: none !important; }}
+    /* Slightly shrink the grid so the 32-row board fills 3 landscape pages
+       without orphaning the last row onto a 4th. */
+    #draftCardView .dc-grid {{ gap: 1px; zoom: 0.85; }}
     #draftCardView .dc-cell {{ box-shadow: none !important; transform: none !important; break-inside: avoid; }}
-    #draftCardView .dc-pickbox {{ display: none !important; }}
+    #draftCardView .dc-pickbox, #draftCardView .dc-paint {{ display: none !important; }}
     #draftCardView .dc-section {{ break-inside: avoid; break-after: avoid; }}
 }}
 </style>
@@ -2544,9 +2561,19 @@ function checkPw() {{
 
 <div id="draftCardView" style="display:none;">
     <div class="dc-print-head">
-        <span class="dc-ph-title">Stadium Ventures &middot; 2026 MLB Draft Card</span>
-        <span class="dc-ph-player" id="dcPrintPlayer"></span>
+        <div class="dc-ph-brand">
+            <img src="/sv-logo.svg" alt="Stadium Ventures" class="dc-ph-logo">
+            <div class="dc-ph-titles">
+                <span class="dc-ph-kicker">Stadium Ventures</span>
+                <span class="dc-ph-title">2026 MLB Draft Card</span>
+            </div>
+        </div>
+        <div class="dc-ph-right">
+            <span class="dc-ph-player" id="dcPrintPlayer"></span>
+            <span class="dc-ph-date" id="dcPrintDate"></span>
+        </div>
     </div>
+    <div class="dc-keyrow dc-print-legend" id="dcPrintLegend"></div>
     <div class="dc-head">
         <div class="dc-head-titles">
             <div class="dc-kicker">Stadium Ventures &middot; 2026 MLB Draft</div>
@@ -2554,17 +2581,17 @@ function checkPw() {{
             <div class="dc-head-player" id="dcHeadPlayer"></div>
         </div>
         <div class="dc-controls">
-            <label>Players</label>
+            <label>Player</label>
             <button id="dcPlayerBtn" class="dc-player-btn" onclick="dcTogglePlayerPanel(event)"><span id="dcPlayerBtnLabel">&mdash;</span><span class="dc-caret">&#9662;</span></button>
             <div id="dcPlayerPanel" class="dc-player-panel">
-                <div class="dc-pp-head"><span>Compare up to 5</span><button onclick="dcClearCompare()">Clear extra</button></div>
+                <div class="dc-pp-head"><span>Select a player</span></div>
                 <div class="dc-pp-list" id="dcPlayerList"></div>
             </div>
         </div>
         <div class="dc-status"><span class="dc-dot live" id="dcDot"></span><span id="dcStatusText">Seeded from TeamIntel</span></div>
     </div>
     <div class="dc-toolbar">
-        <div class="dc-hint"><b>Click any square</b> to see the latest TeamIntel message behind it. Colors, workout &amp; combine dots come straight from the engine.</div>
+        <div class="dc-hint"><b>Click any square</b> to see the latest TeamIntel message behind it. Hover a square and click the <b>&#9998;</b> to set its color manually. Colors, workout &amp; combine dots come straight from the engine.</div>
         <div class="dc-spacer"></div>
         <div class="dc-range">
             <span class="dc-window-label">Picks</span>
@@ -2583,7 +2610,6 @@ function checkPw() {{
     </div>
     <div class="dc-grid" id="dcGrid"></div>
     <div class="dc-keyrow" id="dcKeyrow"></div>
-    <div class="dc-footer">Live shared board &middot; 2026 MLB Draft order &amp; assigned slot values &middot; seeded from TeamIntel; per-square overrides sync within a few seconds.</div>
 </div>
 
 
@@ -2992,6 +3018,7 @@ async function saveColor(color) {{
     openScorePopupRefresh();
     renderMatrix();
     renderDetail();
+    if (typeof dcStarted !== 'undefined' && dcStarted) dcRenderGrid();
 }}
 
 function openScorePopupRefresh() {{
@@ -5797,7 +5824,9 @@ let dcCurrent = null;        // primary player NAME (= dcSelected[0])
 let dcSelected = [];         // 1-5 selected players; >1 = compare mode
 let dcStarted = false;
 const DC_MODAL_KEY = '__draftcard__';
-const DC_MAX_COMPARE = 5;
+// Compare mode is tabled (was 5): one player on the board at a time. The
+// multi-player rendering path in dcRenderGrid stays dormant behind this cap.
+const DC_MAX_COMPARE = 1;
 
 const dcMoney = (n) => '$' + Number(n).toLocaleString('en-US');
 function dcIsDark(hex) {{
@@ -5869,6 +5898,7 @@ function dcRenderKey() {{
     DC_PALETTE.forEach(c => {{ const s = document.createElement('span'); s.className = 'dc-k'; s.innerHTML = '<i style="background:' + (COLOR_BG[c.word]||'#fff') + '"></i>' + c.name; k.appendChild(s); }});
     const s1 = document.createElement('span'); s1.className = 'dc-k'; s1.innerHTML = '<span class="dc-work" style="position:static;box-shadow:none;margin-right:2px"></span>Pre-draft workout'; k.appendChild(s1);
     const s2 = document.createElement('span'); s2.className = 'dc-k'; s2.innerHTML = '<span class="dc-comb" style="position:static;box-shadow:none;margin-right:2px"></span>Met at combine'; k.appendChild(s2);
+    const pl = document.getElementById('dcPrintLegend'); if (pl) pl.innerHTML = k.innerHTML;
 }}
 
 function dcRenderGrid() {{
@@ -5929,6 +5959,14 @@ function dcRenderGrid() {{
             pb.title = inPlay ? (dcCurrent + ' in play for #' + slot + ' — click to turn off') : (dcCurrent + ' OFF for #' + slot + ' — click to turn back on');
             pb.onclick = (ev) => {{ ev.stopPropagation(); togglePickInPlay(dcCurrent, team, slot); }};
             el.appendChild(pb);
+            // Manual color edit: pencil (hover) opens the same color-only popup
+            // the matrix uses, saving a 'c|player|team' override.
+            const pt = document.createElement('div');
+            pt.className = 'dc-paint';
+            pt.textContent = '\\u270E';
+            pt.title = 'Set color for ' + dcCurrent + ' \\u00b7 ' + team + ' (applies to all ' + team + ' squares)';
+            pt.onclick = (ev) => {{ ev.stopPropagation(); openScorePopup(dcCurrent, team, null, ev, true); }};
+            el.appendChild(pt);
         }}
         g.appendChild(el);
     }});
@@ -5951,20 +5989,17 @@ function dcSetSelected(arr) {{
 function dcBuildPlayerList() {{
     const host = document.getElementById('dcPlayerList'); if (!host) return;
     const players = buildMatrix().sortedPlayers;  // matrix order
-    const atCap = dcSelected.length >= DC_MAX_COMPARE;
     host.innerHTML = '';
     players.forEach(p => {{
-        const on = dcSelected.includes(p);
-        const row = document.createElement('label'); row.className = 'dc-pp-row';
-        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = on; cb.disabled = (!on && atCap);
-        cb.onchange = () => {{
-            let next = dcSelected.slice();
-            if (cb.checked) next.push(p); else next = next.filter(x => x !== p);
-            if (!next.length) next = [p];  // never empty
-            dcSetSelected(next);
+        const row = document.createElement('div');
+        row.className = 'dc-pp-row' + (p === dcCurrent ? ' sel' : '');
+        row.textContent = p;
+        row.onclick = () => {{
+            dcSetSelected([p]);
+            const panel = document.getElementById('dcPlayerPanel');
+            if (panel) panel.style.display = 'none';
         }};
-        const span = document.createElement('span'); span.textContent = p;
-        row.appendChild(cb); row.appendChild(span); host.appendChild(row);
+        host.appendChild(row);
     }});
 }}
 function dcTogglePlayerPanel(ev) {{
@@ -5972,7 +6007,6 @@ function dcTogglePlayerPanel(ev) {{
     const p = document.getElementById('dcPlayerPanel'); if (!p) return;
     p.style.display = (p.style.display === 'block') ? 'none' : 'block';
 }}
-function dcClearCompare() {{ dcSetSelected([dcSelected[0]]); }}
 document.addEventListener('click', function(e) {{
     const p = document.getElementById('dcPlayerPanel');
     if (!p || p.style.display !== 'block') return;
@@ -5980,8 +6014,12 @@ document.addEventListener('click', function(e) {{
     if (p.contains(e.target) || (btn && btn.contains(e.target))) return;
     p.style.display = 'none';
 }});
-function dcPrint() {{ window.print(); }}
-// Called by showView('draftcard'). Engine-seeded view; supports compare mode.
+function dcPrint() {{
+    var d = document.getElementById('dcPrintDate');
+    if (d) d.textContent = 'Prepared ' + new Date().toLocaleDateString('en-US', {{ month: 'long', day: 'numeric', year: 'numeric' }});
+    window.print();
+}}
+// Called by showView('draftcard'). Engine-seeded view; one player at a time.
 function dcShow() {{
     if (!dcStarted) {{ dcStarted = true; dcRenderKey(); }}
     ['0', '30', '14', '7'].forEach(function(k) {{
