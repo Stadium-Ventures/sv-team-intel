@@ -85,7 +85,7 @@ DRAFT_PICKS_2026 = [
     [16,'TEX',5051900], [17,'HOU',4868600], [18,'CIN',4695500], [19,'CLE',4530500], [20,'BOS',4373900],
     [21,'SD',4224700], [22,'DET',4082700], [23,'CHC',3947600], [24,'SEA',3818700], [25,'MIL',3696000],
     [26,'ATL',3578800], [27,'NYM',3466500], [28,'HOU',3363600], [29,'SF',3270200], [30,'KC',3190500],
-    [31,'ARI',3118300], [32,'STL',3044600], [33,'TB',2970200], [34,'PIT',2897400], [35,'NYY',2826700],
+    [31,'ARI',3118300], [32,'STL',3044600], [33,'TB',2970200], [34,'CHW',2897400], [35,'NYY',2826700],
     [36,'PHI',2758800], [37,'COL',2696700], [38,'COL',2633100], [39,'TOR',2571700], [40,'LAD',2504200],
     [41,'CHW',2446100], [42,'WSH',2388800], [43,'MIN',2333200], [44,'PIT',2278700], [45,'LAA',2225800],
     [46,'BAL',2181600], [47,'ATH',2131300], [48,'ATL',2081900], [49,'TB',2033400], [50,'STL',1982700],
@@ -3454,8 +3454,9 @@ function fmtPool(s) {{
 }}
 
 // Bonus-pool color scale: deep green = more $ to spend, deep red = less.
-// 2026 MLB pool range is ~$3.95m (LAD) to ~$19.13m (PIT). Anchored to that
-// span so the gradient hugs the actual data; values outside clamp.
+// 2026 MLB pool range is ~$3.95m (LAD) to ~$20.49m (CHW, after acquiring
+// pick 34 from PIT). Anchored to that span so the gradient hugs the actual
+// data; values outside clamp.
 // Anchored colors (mid → high → low) chosen for readability on both white and
 // dark backgrounds, so the same value reads cleanly on the matrix header
 // (black bg) and the detail card (white bg).
@@ -3464,7 +3465,7 @@ function poolTextColor(poolStr) {{
     const m = String(poolStr).match(/([\\d.]+)/);
     if (!m) return '#888';
     const v = parseFloat(m[1]);
-    const lo = 4, hi = 19;
+    const lo = 4, hi = 20.5;
     const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
     // Anchors: low = deep red (170,40,35), mid = neutral gray (130,130,130),
     // high = deep green (35,140,60). Linear interp through the gray pivot.
