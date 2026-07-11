@@ -2311,9 +2311,11 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #draftCardView .dc-pickbox:hover {{ border-color: #111; }}
 #draftCardView .dc-pickbox.on {{ background: #111; border-color: #111; color: #fff; }}
 #draftCardView .dc-cell.dark .dc-pickbox {{ border-color: rgba(255,255,255,.7); }}
-/* Per-square manual color edit: pencil appears on hover, bottom-left corner. */
+/* Per-square manual color edit: pencil appears on hover, bottom-left corner.
+   Filled black when this square carries a pc| override (differs from team color). */
 #draftCardView .dc-paint {{ position: absolute; bottom: 4px; left: 5px; width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid rgba(0,0,0,.35); background: rgba(255,255,255,.85); display: none; align-items: center; justify-content: center; font-size: 9px; line-height: 1; color: #111; cursor: pointer; }}
 #draftCardView .dc-cell:hover .dc-paint {{ display: flex; }}
+#draftCardView .dc-paint.on {{ display: flex; background: #111; border-color: #111; color: #fff; }}
 #draftCardView .dc-paint:hover {{ border-color: #111; }}
 #draftCardView .dc-cell.dark .dc-paint {{ border-color: rgba(255,255,255,.7); }}
 /* Cell editor popup (fixed, shared with the dashboard overlay stack) */
@@ -2336,6 +2338,16 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
 #dcEditor #dcEdReset {{ border: none; background: none; color: #888; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }}
 #dcEditor #dcEdDone {{ border: none; background: #111; color: #fff; border-radius: 8px; padding: 7px 18px; font-size: 13px; font-weight: 800; cursor: pointer; }}
 /* Hover tooltip: the most-recent intel message behind a square */
+/* Per-square color picker (pencil on a Draft Card square) */
+#dcSqPick {{ position: fixed; z-index: 9300; display: none; width: 224px; background: #fff; border: 1px solid #e3e3e3; border-radius: 12px; box-shadow: 0 12px 34px rgba(0,0,0,.22); padding: 12px 13px; }}
+#dcSqPick .sq-title {{ font-size: 12px; font-weight: 800; color: #111; margin-bottom: 3px; }}
+#dcSqPick .sq-sub {{ font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #888; margin-bottom: 9px; }}
+#dcSqPick .sq-swatches {{ display: flex; gap: 7px; margin-bottom: 11px; }}
+#dcSqPick .sq-sw {{ width: 31px; height: 31px; border-radius: 8px; border: 2px solid rgba(0,0,0,.15); cursor: pointer; transition: .1s; }}
+#dcSqPick .sq-sw:hover {{ transform: translateY(-1px); }}
+#dcSqPick .sq-sw.sel {{ border-color: #111; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111; }}
+#dcSqPick .sq-actions {{ display: flex; justify-content: space-between; align-items: center; gap: 8px; }}
+#dcSqPick .sq-actions button {{ border: none; background: none; font-size: 11px; font-weight: 700; color: #555; cursor: pointer; text-decoration: underline; padding: 0; }}
 #dcTip {{ position: fixed; z-index: 9200; display: none; max-width: 340px; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.2); padding: 10px 12px; pointer-events: none; }}
 #dcTip .dc-tip-head {{ font-size: 12px; font-weight: 800; color: #111; margin-bottom: 3px; }}
 #dcTip .dc-tip-meta {{ font-size: 10px; font-weight: 600; letter-spacing: .02em; color: #888; text-transform: uppercase; margin-bottom: 6px; }}
@@ -2357,7 +2369,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     #matrixView, #detailView, #calendarView, #editsView,
     #clientFilterPanel, #scorePopup, #scoreOverlay, #toast,
     #draftCardView .dc-head, #draftCardView .dc-controls, #draftCardView .dc-toolbar, #draftCardView .dc-status {{ display: none !important; }}
-    #dcEditor, #dcBackdrop {{ display: none !important; }}
+    #dcEditor, #dcBackdrop, #dcSqPick {{ display: none !important; }}
     #draftCardView {{ display: block !important; padding: 0 !important; }}
     #draftCardView .dc-print-head {{ display: flex; justify-content: space-between; align-items: center;
         border-bottom: 3px solid #ff2a22; padding-bottom: 8px; margin-bottom: 12px; }}
@@ -2596,7 +2608,7 @@ function checkPw() {{
         <div class="dc-status"><span class="dc-dot live" id="dcDot"></span><span id="dcStatusText">Seeded from TeamIntel</span></div>
     </div>
     <div class="dc-toolbar">
-        <div class="dc-hint"><b>Click any square</b> to see the latest TeamIntel message behind it. Hover a square and click the <b>&#9998;</b> to set its color manually. Colors, workout &amp; combine dots come straight from the engine.</div>
+        <div class="dc-hint"><b>Click any square</b> to see the latest TeamIntel message behind it. Hover a square and click the <b>&#9998;</b> to color <b>that square only</b> (a team can like a player differently at different picks). Colors, workout &amp; combine dots come straight from the engine.</div>
         <div class="dc-spacer"></div>
         <div class="dc-range">
             <span class="dc-window-label">Picks</span>
@@ -2615,6 +2627,16 @@ function checkPw() {{
     </div>
     <div class="dc-grid" id="dcGrid"></div>
     <div class="dc-keyrow" id="dcKeyrow"></div>
+</div>
+
+<div id="dcSqPick">
+    <div class="sq-title" id="dcSqTitle"></div>
+    <div class="sq-sub">This square only</div>
+    <div class="sq-swatches" id="dcSqSwatches"></div>
+    <div class="sq-actions">
+        <button id="dcSqAuto" onclick="dcSaveSquareColor(null)">Auto (team color)</button>
+        <button onclick="dcSqOpenTeamColor(event)">All team squares&hellip;</button>
+    </div>
 </div>
 
 
@@ -4082,6 +4104,10 @@ async function renderEdits() {{
             if (p.length !== 2) return;
             const picks = Array.isArray(v) ? v : [];
             rows.push({{ edited_at: ts, ref_date: '', type: 'Picks In Play', player: p[0], team: p[1], details: picks.length ? ('#' + picks.join(', #')) : '(none)' }});
+        }} else if (k.startsWith('pc|')) {{
+            const p = k.substring(3).split('|');
+            if (p.length !== 3) return;
+            rows.push({{ edited_at: ts, ref_date: '', type: 'Card Square Color', player: p[0], team: p[1] + ' \\u00b7 #' + p[2], details: v || '(cleared)', _color: v || null }});
         }} else {{
             const p = k.split('|');
             if (p.length !== 3) return;
@@ -5959,7 +5985,10 @@ function dcRenderGrid() {{
             el.onclick = () => dcOpenMessageFor(dcCurrent, i);
         }} else {{
             // Single-player mode: full-color cell with corner workout/combine dots.
-            const word = getLatestColor(dcCurrent, team);
+            // A per-square 'pc|player|team|pick' override beats the team color —
+            // teams can value the same player differently at different picks.
+            const sqOv = scoreOverrides['pc|' + dcCurrent + '|' + team + '|' + slot] || null;
+            const word = sqOv || getLatestColor(dcCurrent, team);
             const inPlay = dcInPlay(dcCurrent, team, slot);
             // Unchecked (turned off) => RED; otherwise the engine color (or white).
             const hex = !inPlay ? (COLOR_BG['red'] || '#e16e69') : (word ? (COLOR_BG[word] || '#FFFFFF') : '#FFFFFF');
@@ -5977,13 +6006,15 @@ function dcRenderGrid() {{
             pb.title = inPlay ? (dcCurrent + ' in play for #' + slot + ' — click to turn off') : (dcCurrent + ' OFF for #' + slot + ' — click to turn back on');
             pb.onclick = (ev) => {{ ev.stopPropagation(); togglePickInPlay(dcCurrent, team, slot); }};
             el.appendChild(pb);
-            // Manual color edit: pencil (hover) opens the same color-only popup
-            // the matrix uses, saving a 'c|player|team' override.
+            // Color edit: pencil (hover) opens the per-square picker. Filled
+            // black when this square already carries its own color.
             const pt = document.createElement('div');
-            pt.className = 'dc-paint';
+            pt.className = 'dc-paint' + (sqOv ? ' on' : '');
             pt.textContent = '\\u270E';
-            pt.title = 'Set color for ' + dcCurrent + ' \\u00b7 ' + team + ' (applies to all ' + team + ' squares)';
-            pt.onclick = (ev) => {{ ev.stopPropagation(); openScorePopup(dcCurrent, team, null, ev, true); }};
+            pt.title = sqOv
+                ? ('Square color set to ' + sqOv + ' (team color: ' + (getLatestColor(dcCurrent, team) || 'none') + ') — click to change')
+                : ('Set color for pick #' + slot + ' only');
+            pt.onclick = (ev) => {{ ev.stopPropagation(); dcOpenSquarePicker(ev, i); }};
             el.appendChild(pt);
         }}
         g.appendChild(el);
@@ -6032,6 +6063,64 @@ document.addEventListener('click', function(e) {{
     if (p.contains(e.target) || (btn && btn.contains(e.target))) return;
     p.style.display = 'none';
 }});
+// --- Per-square color picker (pencil on a square) ---
+// Saves 'pc|player|team|pick' = color word. Dashboard-only, no auto-expire;
+// beats the (player, team) color for that one square. Auto clears it.
+let _dcSq = null;
+function dcOpenSquarePicker(ev, i) {{
+    ev.stopPropagation();
+    const team = dcTeamOf(i), slot = DRAFT_SEED[i][0];
+    _dcSq = {{ player: dcCurrent, team: team, slot: slot }};
+    const ov = scoreOverrides['pc|' + dcCurrent + '|' + team + '|' + slot] || null;
+    document.getElementById('dcSqTitle').textContent = dcCurrent + ' \\u2014 ' + team + ' \\u00b7 Pick #' + slot;
+    const host = document.getElementById('dcSqSwatches');
+    host.innerHTML = '';
+    DC_PALETTE.forEach(c => {{
+        const b = document.createElement('div');
+        b.className = 'sq-sw' + (ov === c.word ? ' sel' : '');
+        b.style.background = COLOR_BG[c.word] || '#fff';
+        b.title = c.name;
+        b.onclick = () => dcSaveSquareColor(c.word);
+        host.appendChild(b);
+    }});
+    document.getElementById('dcSqAuto').style.display = ov ? 'inline' : 'none';
+    const el = document.getElementById('dcSqPick');
+    el.style.display = 'block';
+    const r = ev.target.getBoundingClientRect();
+    let x = r.left, y = r.bottom + 6;
+    if (x + el.offsetWidth > window.innerWidth - 8) x = window.innerWidth - el.offsetWidth - 8;
+    if (y + el.offsetHeight > window.innerHeight - 8) y = Math.max(8, r.top - 6 - el.offsetHeight);
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+}}
+function dcCloseSquarePicker() {{
+    document.getElementById('dcSqPick').style.display = 'none';
+    _dcSq = null;
+}}
+async function dcSaveSquareColor(color) {{
+    if (!_dcSq) return;
+    const key = 'pc|' + _dcSq.player + '|' + _dcSq.team + '|' + _dcSq.slot;
+    try {{
+        const res = await fetch('/api/overrides', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify({{ key: key, score: color }}) }});
+        if (!res.ok) {{ const b = await res.text(); showToast('Save failed (' + res.status + '). ' + b.slice(0, 120)); return; }}
+        if (color === null) {{ delete scoreOverrides[key]; delete scoreOverridesMeta[key]; }}
+        else {{ scoreOverrides[key] = color; scoreOverridesMeta[key] = new Date().toISOString(); }}
+        showToast('Saved', true);
+    }} catch(e) {{ showToast('Save failed: ' + (e.message || 'network error')); return; }}
+    dcCloseSquarePicker();
+    dcRenderGrid();
+}}
+// Escape hatch to the old team-wide color popup (matrix 'c|' override).
+function dcSqOpenTeamColor(ev) {{
+    const sq = _dcSq;
+    dcCloseSquarePicker();
+    if (sq) openScorePopup(sq.player, sq.team, null, ev, true);
+}}
+document.addEventListener('click', function(e) {{
+    const el = document.getElementById('dcSqPick');
+    if (!el || el.style.display !== 'block') return;
+    if (!el.contains(e.target)) dcCloseSquarePicker();
+}});
+
 // Stamp the prepared date and size the grid for print. Small pick ranges
 // zoom up so the board fills the landscape page (capped so a 3-row card
 // doesn't turn into a billboard); anything too big for one page keeps the
@@ -6480,6 +6569,9 @@ def apply_overrides(records, overrides, meta=None):
             # 'pk|player|team' -> in-play pick list; dashboard-only (drives the
             # Draft Card). Not merged into teamintel.json — skip here so it isn't
             # misread as a score edit.
+            continue
+        elif key.startswith('pc|'):
+            # 'pc|player|team|pick' -> per-square Draft Card color; dashboard-only.
             continue
         elif key.startswith('mt|'):
             parts = key.split('|')
