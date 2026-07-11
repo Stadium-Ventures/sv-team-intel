@@ -3583,13 +3583,25 @@ function buildMatrix() {{
     Object.keys(playerTeamColors).forEach(p => {{
         coloredTeamCount[p] = Object.keys(playerTeamColors[p] || {{}}).length;
     }});
-    const sortedPlayers = Object.keys(playerTotals).sort((a,b) => {{
-        const ca = coloredTeamCount[a] || 0, cb = coloredTeamCount[b] || 0;
-        if (cb !== ca) return cb - ca;
-        const ta = playerTotals[a] || 0, tb = playerTotals[b] || 0;
-        if (tb !== ta) return tb - ta;
-        return a.localeCompare(b);
-    }});
+    // Row order is ranked on the ALL-TIME standings so switching the 7/14/30
+    // window never reshuffles rows (cells still reflect the window). With a
+    // window active, re-run once with the cutoff lifted and take that order —
+    // the all-time player set is a superset, so every windowed player is in it.
+    let sortedPlayers;
+    if (_dateWindowCutoff) {{
+        const saved = _dateWindowCutoff;
+        _dateWindowCutoff = null;
+        try {{ sortedPlayers = buildMatrix().sortedPlayers; }}
+        finally {{ _dateWindowCutoff = saved; }}
+    }} else {{
+        sortedPlayers = Object.keys(playerTotals).sort((a,b) => {{
+            const ca = coloredTeamCount[a] || 0, cb = coloredTeamCount[b] || 0;
+            if (cb !== ca) return cb - ca;
+            const ta = playerTotals[a] || 0, tb = playerTotals[b] || 0;
+            if (tb !== ta) return tb - ta;
+            return a.localeCompare(b);
+        }});
+    }}
     return {{ playerTeams, playerTeamColors, playerTotals, sortedPlayers, workoutMap, combineMap, coloredTeamCount }};
 }}
 
