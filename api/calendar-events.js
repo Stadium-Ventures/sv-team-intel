@@ -3,8 +3,8 @@ const Redis = require('ioredis');
 const KEY = 'calendar_events';
 
 function makeClient() {
-  const url = process.env.REDIS_URL;
-  if (!url) throw new Error('REDIS_URL not set');
+  const url = process.env.DRAFTKV_KV_URL || process.env.DRAFTKV_REDIS_URL || process.env.KV_URL || process.env.REDIS_URL;
+  if (!url) throw new Error('KV_URL/REDIS_URL not set');
   return new Redis(url, {
     connectTimeout: 10000,
     commandTimeout: 8000,

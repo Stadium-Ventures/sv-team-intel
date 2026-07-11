@@ -6431,36 +6431,51 @@ def fetch_game_schedule():
     return games
 
 
+# The dashboard's own serverless API — same store the browser reads/writes.
+# Used as an HTTP fallback so builds don't require the Redis connection string
+# (Vercel marks marketplace store env vars sensitive; they can't be exported).
+DASHBOARD_API_BASE = os.environ.get('DASHBOARD_API_BASE', 'https://sv-teamintel.vercel.app')
+
+
+def _dashboard_api_get(path):
+    import urllib.request
+    req = urllib.request.Request(DASHBOARD_API_BASE + path,
+                                 headers={'User-Agent': 'teamintel-build'})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode('utf-8'))
+
+
 def load_kv_overrides():
-    """Return (overrides, meta) from Redis. `meta` maps each override key to its
-    last-edit ISO timestamp (used to auto-expire color overrides against newer
-    Slack records). Both default to {} when Redis is unavailable."""
+    """Return (overrides, meta) from Redis, falling back to the dashboard API.
+    `meta` maps each override key to its last-edit ISO timestamp (used to
+    auto-expire color overrides against newer Slack records). Both default to
+    {} when neither source is reachable."""
     url = os.environ.get('REDIS_URL')
-    if not url:
-        print("INFO: REDIS_URL not set — skipping manual overrides.")
-        return {}, {}
-    try:
-        import redis as _redis
-    except ImportError:
-        print("WARN: 'redis' package not installed — skipping manual overrides.")
-        return {}, {}
-    try:
-        client = _redis.from_url(url, socket_connect_timeout=10, socket_timeout=8)
-        raw = client.get('score_overrides')
-        raw_meta = client.get('score_overrides_meta')
+    if url:
         try:
-            client.close()
-        except Exception:
-            pass
-        def _load(r):
-            if not r:
-                return {}
-            if isinstance(r, bytes):
-                r = r.decode('utf-8')
-            return json.loads(r)
-        return _load(raw), _load(raw_meta)
+            import redis as _redis
+            client = _redis.from_url(url, socket_connect_timeout=10, socket_timeout=8)
+            raw = client.get('score_overrides')
+            raw_meta = client.get('score_overrides_meta')
+            try:
+                client.close()
+            except Exception:
+                pass
+            def _load(r):
+                if not r:
+                    return {}
+                if isinstance(r, bytes):
+                    r = r.decode('utf-8')
+                return json.loads(r)
+            return _load(raw), _load(raw_meta)
+        except Exception as e:
+            print(f"WARN: Failed to load overrides from Redis: {e} — trying dashboard API")
+    try:
+        data = _dashboard_api_get('/api/overrides?meta=1')
+        print("INFO: loaded overrides via dashboard API.")
+        return (data.get('values') or {}), (data.get('meta') or {})
     except Exception as e:
-        print(f"WARN: Failed to load overrides from Redis: {e}")
+        print(f"WARN: Failed to load overrides from dashboard API: {e}")
         return {}, {}
 
 
@@ -6470,25 +6485,32 @@ def load_manual_records():
     Each blob value becomes one record with {player, team, date, score, full_text,
     workout, combine, workout_dates, channel: None, is_manual: True, id}.
     """
+    blob = None
     url = os.environ.get('REDIS_URL')
-    if not url:
-        return []
-    try:
-        import redis as _redis
-    except ImportError:
-        return []
-    try:
-        client = _redis.from_url(url, socket_connect_timeout=10, socket_timeout=8)
-        raw = client.get('manual_records')
+    if url:
         try:
-            client.close()
-        except Exception:
-            pass
-        if not raw:
+            import redis as _redis
+            client = _redis.from_url(url, socket_connect_timeout=10, socket_timeout=8)
+            raw = client.get('manual_records')
+            try:
+                client.close()
+            except Exception:
+                pass
+            if not raw:
+                return []
+            if isinstance(raw, bytes):
+                raw = raw.decode('utf-8')
+            blob = json.loads(raw)
+        except Exception as e:
+            print(f"WARN: Failed to load manual records from Redis: {e} — trying dashboard API")
+    if blob is None:
+        try:
+            blob = _dashboard_api_get('/api/manual-records')
+            print("INFO: loaded manual records via dashboard API.")
+        except Exception as e:
+            print(f"WARN: Failed to load manual records from dashboard API: {e}")
             return []
-        if isinstance(raw, bytes):
-            raw = raw.decode('utf-8')
-        blob = json.loads(raw)
+    try:
         out = []
         for rid, val in blob.items():
             if not isinstance(val, dict):
@@ -6529,7 +6551,7 @@ def load_manual_records():
             })
         return out
     except Exception as e:
-        print(f"WARN: Failed to load manual records from Redis: {e}")
+        print(f"WARN: Failed to shape manual records: {e}")
         return []
 
 
