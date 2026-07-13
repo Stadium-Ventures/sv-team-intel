@@ -63,13 +63,13 @@ There is no test suite, linter, or build step — `vercel.json` sets `outputDire
 
 **Workout flag has two regex tiers.** `_WORKOUT_BROAD_PATTERNS` (PDW, "private workout", etc.) fire workspace-wide. `_WORKOUT_TARGETED_PATTERNS` ("wants Bo to workout", team-name-near-"workout") only fire when a player alias appears in the same sentence. In single-player Slack channels (`CHANNEL_TO_PLAYER`), targeted patterns auto-match because the channel itself scopes the player. This avoids blanket-flagging every player named in a "BAL ... Workout" group post.
 
-**Workout-date parsing is window-bounded.** `extract_workout_dates` only emits dates in `2026-04-01..2026-07-13` (the pre-draft window). Multi-format aware: `June 11 - Atlanta`, `May 18th Columbia, SC 9am`, `Location: Pirate City complex`, comma-separated lists, etc. Returns `{team_abbrev: [{date, time, location, tentative}]}`. `_wd_first_team` decides which team the parsed events belong to when the message has multiple team headers.
+**Workout-date parsing is window-bounded.** `extract_workout_dates` only emits dates between `WORKOUT_WINDOW_START` and `WORKOUT_WINDOW_END` (the `# --- DRAFT CYCLE CONFIG ---` block near the top of `fetch_and_build.py`; currently `2026-04-01..2026-07-13`). Multi-format aware: `June 11 - Atlanta`, `May 18th Columbia, SC 9am`, `Location: Pirate City complex`, comma-separated lists, etc. Returns `{team_abbrev: [{date, time, location, tentative}]}`. `_wd_first_team` decides which team the parsed events belong to when the message has multiple team headers.
 
 **Team-detection guards.** `find_teams_in_line` skips `ATL` when the line contains "Metro Atl" or "Atl." (location, not team), and skips 2-letter abbrevs preceded by `, ` (state codes — `Tampa, FL` is not MIA). Per memory, downstream consumers should trust the MLB API's `currentTeam` over sheet/affiliate data.
 
 **Players have alias maps.** `PLAYER_ALIASES` lets short forms ("cam", "trev", "bo", "taj", "phinn") resolve back to canonical names. `_build_alias_lookup` is the lower-cased version used to match the game-schedule CSV's "Client" column to roster names.
 
-**`data/front_office_2026.csv`** is loaded once per build to map mentioned names → tiers (e.g. naming a team's GM in a TeamIntel line bumps that record to T1). `_ORG_ROLE_TIER` maps CSV columns to tier numbers. `data/team_draft_2026.csv` is bonus-pool/picks data shown in the calendar's team-info popover.
+**`data/front_office_2026.csv`** (path built from the `FRONT_OFFICE_CSV` config constant) is loaded once per build to map mentioned names → tiers (e.g. naming a team's GM in a TeamIntel line bumps that record to T1). `_ORG_ROLE_TIER` maps CSV columns to tier numbers. `data/team_draft_2026.csv` (`TEAM_DRAFT_CSV`) is bonus-pool/picks data shown in the calendar's team-info popover.
 
 ## Vercel API (`api/*.js`)
 
@@ -86,6 +86,22 @@ Three Node serverless handlers, all CORS-open, all backed by Upstash Redis (`RED
 - `api/calendar-events.js` — `calendar_events` blob: ad-hoc workout/playoff/travel/other events the user adds in the calendar UI.
 
 The dashboard reads/writes these directly from the browser. The next `fetch_and_build.py` run reads them from Redis and merges them into the static outputs.
+
+## Draft-cycle activation (reactivate / shutter)
+
+This repo tracks one draft cycle at a time. Between cycles it should sit **shuttered** — no scheduled builds, no Vercel redeploys — until the next draft's live window opens.
+
+**Shuttered is the resting state.** `.github/workflows/update-dashboard.yml`'s "Cadence gate" step has an `ACTIVE` flag. `ACTIVE=false` skips every scheduled tick — manual `workflow_dispatch` still always builds, for one-off checks. Set it back to `false` as soon as a cycle's draft ends.
+
+**To reactivate for a new draft cycle (e.g. 2027):**
+1. In `.github/workflows/update-dashboard.yml`, flip `ACTIVE=true` and update `PUSH_END` to that cycle's push-window end date (fast 24/7 builds run until then; it then auto-reverts to hourly-daytime).
+2. In `fetch_and_build.py`, update the `# --- DRAFT CYCLE CONFIG ---` block near the top: `DRAFT_YEAR`, `DRAFT_DATES`, `COMBINE_WINDOW_START`/`END`, `WORKOUT_WINDOW_START`/`END`, `CALENDAR_PICKER_MIN`/`MAX`. The `*_CSV`/`*_JSON` filename constants (`FRONT_OFFICE_CSV`, `TEAM_DRAFT_CSV`, `FARM_SYSTEM_CSV`, `RECOMMENDED_SCHEDULE_JSON`) derive from `DRAFT_YEAR` automatically — just make sure matching files exist under `data/` (`front_office_<year>.csv`, `team_draft_<year>.csv`, `farm_system_<year>.csv`, `recommended_schedule_<year>.json`).
+3. Replace the roster: `PLAYERS_2026`, `CHANNEL_TO_PLAYER`, `CHANNELS`, `PLAYER_ALIASES` (see "Roster updates" below). These keep their `_2026`-suffixed names by design — renaming them is a large mechanical ripple through the file for no functional gain; just replace their *contents* each cycle.
+4. Replace the special-pick-tags / draft-board data block (search for "MLB draft): overall pick # -> label" — the full slotted-pick table) with the new year's draft order. This is wholesale year-specific data the config block doesn't (and shouldn't try to) parameterize.
+5. Rotate the `DASHBOARD_PASSWORD` GitHub secret if it should change for the new cycle.
+6. Run `gh workflow run update-dashboard.yml` once to confirm a manual build still produces sane output before relying on the schedule.
+
+**To pull it back down (shutter) once that cycle's draft ends:** flip `ACTIVE` back to `false` in the workflow. That's the only required change — the yearly config values can stay in place untouched until the next reactivation.
 
 ## Roster updates
 

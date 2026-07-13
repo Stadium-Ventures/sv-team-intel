@@ -35,20 +35,34 @@ jobs:
       - name: Cadence gate
         id: gate
         run: |
-          # Pre-draft fast window end (UTC). Fast mode = build every 15 min, 24/7
-          # until this instant; after it, revert to hourly-daytime. Bump to extend.
-          PUSH_END=$(date -u -d '2026-07-14 00:00:00' +%s)
-          NOW=$(date -u +%s)
-          HOUR=$((10#$(date -u +%H)))
-          MIN=$((10#$(date -u +%M)))
+          # ==== MASTER SWITCH ====
+          # false = fully shuttered: every scheduled tick is skipped, so no
+          # automatic builds and no Vercel redeploys. `workflow_dispatch`
+          # (manual trigger) always still builds regardless of this flag.
+          # Flip to true to reactivate for the next draft cycle's live push
+          # (update PUSH_END below to that cycle's dates first), then flip
+          # back to false once that cycle's draft ends. See CLAUDE.md
+          # "Draft-cycle activation" for the full reactivate/shutter steps.
+          ACTIVE=false
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "Manual dispatch — always build."; echo "proceed=true" >> "$GITHUB_OUTPUT"
-          elif [ "$NOW" -lt "$PUSH_END" ]; then
-            echo "Pre-draft push: build (every ~15 min, 24/7)."; echo "proceed=true" >> "$GITHUB_OUTPUT"
-          elif [ "$MIN" -lt 15 ] && { [ "$HOUR" -le 3 ] || [ "$HOUR" -ge 10 ]; }; then
-            echo "Post-draft: hourly daytime build."; echo "proceed=true" >> "$GITHUB_OUTPUT"
+          elif [ "$ACTIVE" != "true" ]; then
+            echo "Scheduled builds are shuttered (ACTIVE=false) — skipping."; echo "proceed=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Post-draft: skip (off-hour or overnight quiet window)."; echo "proceed=false" >> "$GITHUB_OUTPUT"
+            # Pre-draft fast window end (UTC). Fast mode = build every ~15 min, 24/7
+            # until this instant; after it, revert to hourly-daytime. Bump to extend.
+            PUSH_END=$(date -u -d '2026-07-14 00:00:00' +%s)
+            NOW=$(date -u +%s)
+            HOUR=$((10#$(date -u +%H)))
+            MIN=$((10#$(date -u +%M)))
+            if [ "$NOW" -lt "$PUSH_END" ]; then
+              echo "Pre-draft push: build (every ~15 min, 24/7)."; echo "proceed=true" >> "$GITHUB_OUTPUT"
+            elif [ "$MIN" -lt 15 ] && { [ "$HOUR" -le 3 ] || [ "$HOUR" -ge 10 ]; }; then
+              echo "Post-draft: hourly daytime build."; echo "proceed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "Post-draft: skip (off-hour or overnight quiet window)."; echo "proceed=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
       - uses: actions/checkout@v4

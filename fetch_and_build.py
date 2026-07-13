@@ -12,6 +12,37 @@ from slack_sdk import WebClient
 # --- CONFIG ---
 OLDEST = str(int(datetime(2025, 8, 1).timestamp()))
 
+# --- DRAFT CYCLE CONFIG ---
+# Everything below is specific to one draft cycle and gets reset each year.
+# See CLAUDE.md "Draft-cycle activation" for the full yearly reset checklist
+# (this block, the roster dicts further down, the data/*_<year>.csv|json
+# files, and the GitHub Actions cadence gate all need a pass).
+DRAFT_YEAR = 2026
+
+# Draft days — highlighted on the calendar.
+DRAFT_DATES = ['2026-07-11', '2026-07-12', '2026-07-13']
+
+# MLB Draft Combine window — highlighted on the calendar.
+COMBINE_WINDOW_START = '2026-06-21'
+COMBINE_WINDOW_END = '2026-06-26'
+
+# Pre-draft workout-date parsing window — extract_workout_dates() only emits
+# dates that fall inside this range.
+WORKOUT_WINDOW_START = datetime(2026, 4, 1)
+WORKOUT_WINDOW_END = datetime(2026, 7, 13)
+
+# "+ Add Event" calendar date-picker bounds.
+CALENDAR_PICKER_MIN = '2026-04-01'
+CALENDAR_PICKER_MAX = '2026-08-31'
+
+# Yearly data files under data/ (front office roles, bonus pool + picks, farm
+# rank, recommended workout schedule). Rename/create these to match DRAFT_YEAR
+# when resetting for a new cycle.
+FRONT_OFFICE_CSV = f'front_office_{DRAFT_YEAR}.csv'
+TEAM_DRAFT_CSV = f'team_draft_{DRAFT_YEAR}.csv'
+FARM_SYSTEM_CSV = f'farm_system_{DRAFT_YEAR}.csv'
+RECOMMENDED_SCHEDULE_JSON = f'recommended_schedule_{DRAFT_YEAR}.json'
+
 PLAYERS_2026 = {
     'robbins': 'Aiden Robbins', 'flukey': 'Cameron Flukey', 'jones': 'Kyle Jones',
     'bailey': 'Myles Bailey', 'condon': 'Trevor Condon', 'lowrance': 'Bo Lowrance',
@@ -519,8 +550,8 @@ _WD_MONTH_NUM = {
     'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12,
 }
 _WD_MONTH_RE = r'(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
-_WD_MIN = datetime(2026, 4, 1)
-_WD_MAX = datetime(2026, 7, 13)
+_WD_MIN = WORKOUT_WINDOW_START
+_WD_MAX = WORKOUT_WINDOW_END
 _WD_TENTATIVE_RE = re.compile(r'\b(tentative|likely|maybe|possibly|tbd|possible|hopefully|might)\b', re.I)
 _WD_TIME_RE = re.compile(r'\b(\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM))\b')
 _WD_LOC_RE = re.compile(
@@ -957,7 +988,7 @@ def load_front_office():
     Multi-person cells ("Name One / Name Two") split on ' / '. Silent fallback
     to {} if the CSV isn't present (e.g. during local dry runs).
     """
-    path = os.path.join(os.path.dirname(__file__), 'data', 'front_office_2026.csv')
+    path = os.path.join(os.path.dirname(__file__), 'data', FRONT_OFFICE_CSV)
     if not os.path.exists(path):
         print(f"INFO: {path} not found — tier detection will rely on keywords only.")
         return {}
@@ -1364,7 +1395,7 @@ def load_team_draft_info():
     Both files are hand-refreshed when org-review updates — keep them in sync
     when the org review is re-run.
     """
-    path = os.path.join(os.path.dirname(__file__), 'data', 'team_draft_2026.csv')
+    path = os.path.join(os.path.dirname(__file__), 'data', TEAM_DRAFT_CSV)
     if not os.path.exists(path):
         print(f"INFO: {path} not found — team draft info won't render.")
         return {}
@@ -1381,7 +1412,7 @@ def load_team_draft_info():
                 'farm_rank': None,
             }
     # Merge farm system rankings (optional — silently skip if file is missing).
-    farm_path = os.path.join(os.path.dirname(__file__), 'data', 'farm_system_2026.csv')
+    farm_path = os.path.join(os.path.dirname(__file__), 'data', FARM_SYSTEM_CSV)
     if os.path.exists(farm_path):
         with open(farm_path) as f:
             for row in csv.DictReader(f):
@@ -1400,7 +1431,7 @@ def load_recommended_schedule():
     auto-generated PDW Invites table on the left (which comes from Slack).
     Hand-edited at data/recommended_schedule_2026.json until we build a UI.
     """
-    path = os.path.join(os.path.dirname(__file__), 'data', 'recommended_schedule_2026.json')
+    path = os.path.join(os.path.dirname(__file__), 'data', RECOMMENDED_SCHEDULE_JSON)
     if not os.path.exists(path):
         return {}
     try:
@@ -2404,7 +2435,7 @@ td.overridden::after {{ content: '*'; position: absolute; top: 1px; right: 3px; 
     <div class="login-box">
         <img src="/sv-logo.svg" alt="Stadium Ventures" class="logo-img">
         <div class="brand-name">Team<span class="accent">Intel</span></div>
-        <div class="tagline">2026 MLB Draft Intelligence</div>
+        <div class="tagline">{DRAFT_YEAR} MLB Draft Intelligence</div>
         <input type="password" id="pwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPw()">
         <button onclick="checkPw()">Access Dashboard</button>
         <div class="login-error" id="loginError">Incorrect password. Try again.</div>
@@ -2448,7 +2479,7 @@ function checkPw() {{
         <div class="logo-icon"><img src="/sv-logo-white.svg" alt="Stadium Ventures"></div>
         <div>
             <h1>TeamIntel Dashboard</h1>
-            <div class="subtitle">Player Intelligence Score By Team &mdash; 2026 MLB Draft</div>
+            <div class="subtitle">Player Intelligence Score By Team &mdash; {DRAFT_YEAR} MLB Draft</div>
             <div class="last-updated">Last updated: {now_str}</div>
         </div>
     </div>
@@ -2582,7 +2613,7 @@ function checkPw() {{
             <img src="/sv-logo.svg" alt="Stadium Ventures" class="dc-ph-logo">
             <div class="dc-ph-titles">
                 <span class="dc-ph-kicker">Stadium Ventures</span>
-                <span class="dc-ph-title">2026 MLB Draft Card</span>
+                <span class="dc-ph-title">{DRAFT_YEAR} MLB Draft Card</span>
             </div>
         </div>
         <div class="dc-ph-right">
@@ -2593,7 +2624,7 @@ function checkPw() {{
     <div class="dc-keyrow dc-print-legend" id="dcPrintLegend"></div>
     <div class="dc-head">
         <div class="dc-head-titles">
-            <div class="dc-kicker">Stadium Ventures &middot; 2026 MLB Draft</div>
+            <div class="dc-kicker">Stadium Ventures &middot; {DRAFT_YEAR} MLB Draft</div>
             <h2 class="dc-title">Draft Card</h2>
             <div class="dc-head-player" id="dcHeadPlayer"></div>
         </div>
@@ -2647,7 +2678,7 @@ function checkPw() {{
         <div class="ev-title" id="evTitle">Add Event</div>
         <div class="ev-row">
             <label>Date</label>
-            <input type="date" id="evDate" min="2026-04-01" max="2026-08-31">
+            <input type="date" id="evDate" min="{CALENDAR_PICKER_MIN}" max="{CALENDAR_PICKER_MAX}">
         </div>
         <div class="ev-row" id="evExtraDatesRow">
             <label>Also on</label>
@@ -2716,6 +2747,9 @@ const GAMES_SCHEDULE = {games_js};
 const ALL_TEAMS = {json.dumps(ALL_TEAMS)};
 const ALL_2026_PLAYERS = {all_2026_js};
 const PLAYER_ALIASES = {player_aliases_js};
+const DRAFT_DATES = {json.dumps(DRAFT_DATES)};
+const COMBINE_WINDOW_START = {json.dumps(COMBINE_WINDOW_START)};
+const COMBINE_WINDOW_END = {json.dumps(COMBINE_WINDOW_END)};
 const TEAM_DRAFT = {team_draft_js};
 // Per-player SV recommendation that shows on the right side of each PDF
 // player block. Distinct from the auto-generated PDW Invites table on the
@@ -4555,8 +4589,8 @@ function _buildPdfGridHtml(year, month, eventsByDate, includeCombine) {{
             continue;
         }}
         const iso = year + '-' + String(month+1).padStart(2,'0') + '-' + String(dayNum).padStart(2,'0');
-        const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
-        const isCombine = !!includeCombine && (iso >= '2026-06-21' && iso <= '2026-06-26');
+        const isDraft = DRAFT_DATES.includes(iso);
+        const isCombine = !!includeCombine && (iso >= COMBINE_WINDOW_START && iso <= COMBINE_WINDOW_END);
         const bg = isDraft ? '#fff5e0' : (isCombine ? '#e8f0fb' : 'white');
         html += '<div style="background:' + bg + ';min-height:90px;padding:4px 5px;vertical-align:top;">';
         html += '<div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px;">' + dayNum
@@ -4591,7 +4625,7 @@ function _buildPdfGridHtml(year, month, eventsByDate, includeCombine) {{
 
 // MLB Combine canonical info — used to append a static PDW row when the
 // active range overlaps the combine window. Edit here to change everywhere.
-const COMBINE_INFO = {{ startIso: '2026-06-21', endIso: '2026-06-26', dateLabel: '6/21\\u20136/26', location: 'Phoenix, AZ' }};
+const COMBINE_INFO = {{ startIso: COMBINE_WINDOW_START, endIso: COMBINE_WINDOW_END, dateLabel: '6/21\\u20136/26', location: 'Phoenix, AZ' }};
 
 // Compact date-range label for a list of ISO dates:
 //   1 date     -> "5/18"
@@ -5146,8 +5180,8 @@ function renderCalendar() {{
             }}
             const d = new Date(year, month, dayNum);
             const iso = _fmtIso(d);
-            const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
-            const isCombine = (iso >= '2026-06-21' && iso <= '2026-06-26');
+            const isDraft = DRAFT_DATES.includes(iso);
+            const isCombine = (iso >= COMBINE_WINDOW_START && iso <= COMBINE_WINDOW_END);
             const isToday = (iso === todayIso);
             let cls = 'cal-cell';
             if (isDraft) cls += ' cal-draft';
@@ -5201,7 +5235,7 @@ function renderCalendar() {{
     // Spans every month in the active range.
     const agendaDates = Object.keys(byDate).filter(d => monthKeys.has(d.slice(0,7))).sort();
     // Always surface draft days even if empty (only within the active range).
-    ['2026-07-11','2026-07-12','2026-07-13'].forEach(d => {{
+    DRAFT_DATES.forEach(d => {{
         if (monthKeys.has(d.slice(0,7)) && agendaDates.indexOf(d) === -1) agendaDates.push(d);
     }});
     agendaDates.sort();
@@ -5213,7 +5247,7 @@ function renderCalendar() {{
         agendaDates.forEach(iso => {{
             const parts = iso.split('-');
             const d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-            const isDraft = (iso === '2026-07-11' || iso === '2026-07-12' || iso === '2026-07-13');
+            const isDraft = DRAFT_DATES.includes(iso);
             let dayCls = 'agenda-day';
             if (isDraft) dayCls += ' agenda-draft';
             agendaHtml += '<div class="' + dayCls + '">';
@@ -5510,8 +5544,8 @@ function addExtraDate() {{
     row.style.cssText = 'display:flex;gap:6px;margin-bottom:4px;';
     const input = document.createElement('input');
     input.type = 'date';
-    input.min = '2026-04-01';
-    input.max = '2026-08-31';
+    input.min = '{CALENDAR_PICKER_MIN}';
+    input.max = '{CALENDAR_PICKER_MAX}';
     input.className = 'ev-extra-date';
     input.style.flex = '1';
     const rm = document.createElement('button');
