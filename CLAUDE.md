@@ -111,3 +111,27 @@ A new client requires updates in three places in `fetch_and_build.py`:
 3. `PLAYER_ALIASES` if the player goes by a non-obvious nickname
 
 Forgetting any of these will cause silent data loss (records dropped, single-player-channel scoping broken, or workout-targeted patterns failing to match).
+
+## Health check + #sv-automation ops alerts
+
+**Where it lives:** `.github/workflows/health-check.yml` runs `scripts/health_check.py` daily at 11:23 UTC (~7:23am ET). Manual run: `gh workflow run health-check.yml` (add `-f test=true` to send a clearly-labeled test post instead of running checks).
+
+**What it monitors:** dashboard page up (`sv-teamintel.vercel.app`), overrides API end-to-end (Vercel function → Upstash), Redis reachable from CI (`REDIS_URL` secret), Slack bot token valid (`auth.test`), and — only when the build cadence is live (`ACTIVE=true` in `update-dashboard.yml`) — that a successful build ran in the last 26h, plus an ACTIVE-flag/disabled-workflow mismatch check. **Cycle-aware:** while shuttered between drafts, "no recent builds" is expected and never alerts.
+
+**#sv-automation scope + message contract** (channel `C0BE0ELP92Q`, webhook secret `SV_AUTOMATION_WEBHOOK_URL` — value from Tom Trudeau, never hardcode/commit it):
+- #sv-automation is for bugs, failures, and health findings ONLY. Feature output (the dashboard itself, intel digests) stays on product surfaces — never move it there, and never leave ops noise on product channels.
+- Every post must lead with the product label `SV TeamIntel (sv-team-intel) — …`, tag each finding `🛠️ Code change` vs `👤 Manual`, and read as three plain-English lines: **What broke / How we know / What to do**. No internal thresholds or dev jargon.
+- Health checks are **silent when healthy** — no "all good" posts.
+- ALL posts go through `scripts/sv_automation_notify.py` (`post_findings`) so the label + contract live in one place. Never add a second webhook path.
+
+## SV Internal Hub registry
+
+This app is registered at https://sv-internal-hub.vercel.app/apps/sv-teamintel.
+Whenever a change in this session adds, removes, or alters any of the following, update `sv-app.json` at the repo root **in the same session** — don't leave it for later:
+- scheduled jobs / crons (including flipping the `ACTIVE` cadence flag for a new draft cycle)
+- data sources in or destinations out (Slack channels, sheets, Redis keys, downstream consumers)
+- hosting, deployment, or access/auth
+- monitoring or known issues
+- ownership or who uses it
+
+Also update the `runbook` steps if the local-dev or deploy process changed. The hub reads `sv-app.json` hourly and merges it over `registry/sv-teamintel.json` in `Stadium-Ventures/sv-internal-hub`.

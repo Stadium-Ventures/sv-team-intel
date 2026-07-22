@@ -1,0 +1,76 @@
+{
+  "slug": "sv-teamintel",
+  "name": "SV TeamIntel",
+  "category": "Scouting",
+  "status": "active",
+  "description": "Draft-cycle intel dashboard: parses TeamIntel messages from Slack (#2026-draft-general + per-client channels) into a player × MLB-team interest matrix with tier-weighted scoring, literal-color cells, PDW flags, and a pre-draft workout calendar. Scheduled GitHub Actions builds a static page; in-dashboard edits persist to Upstash Redis via Vercel serverless functions and merge back on the next build.",
+  "url": "https://sv-teamintel.vercel.app/",
+  "repo": "Stadium-Ventures/sv-team-intel",
+  "repoNote": "Canonical repo. Originally mdecicco-SV/sv-teamintel — transferred into the org and renamed (hyphenated); the old URL redirects, and older local clones may still point at it.",
+  "owner": "Mike DeCicco",
+  "builder": "Mike DeCicco",
+  "maintainer": "Mike DeCicco",
+  "users": "SV staff with the dashboard password during a draft cycle; sv-draft-fit's workout-priority view consumes teamintel.json",
+  "docs": "CLAUDE.md in the repo — architecture, score model, roster updates, and the 'Draft-cycle activation' reactivate/shutter checklist",
+  "stack": [
+    "Python (fetch_and_build.py — parser + full HTML generator)",
+    "GitHub Actions",
+    "Vercel (static output + Node serverless functions)",
+    "Upstash Redis (ioredis / redis-py)",
+    "Slack Web API"
+  ],
+  "hosting": "Vercel project sv-teamintel (outputDirectory: public, no build step); the page itself is generated and committed by GitHub Actions",
+  "access": "Dashboard is password-gated (DASHBOARD_PASSWORD, baked in at build time). api/* endpoints are CORS-open.",
+  "pipes": {
+    "inputs": [
+      "Slack: #2026-draft-general (unfiltered) + per-client channels filtered on the 'teamintel' keyword, via SLACK_BOT_TOKEN",
+      "Upstash Redis keys score_overrides / manual_records / calendar_events — edits made in the dashboard UI",
+      "Google Sheet game schedule (link-viewable CSV export, gid 446091585) — if sharing is revoked, games silently vanish",
+      "Yearly data files in data/: front_office_2026.csv, team_draft_2026.csv, farm_system_2026.csv, recommended_schedule_2026.json"
+    ],
+    "outputs": [
+      "https://sv-teamintel.vercel.app/ — the dashboard (public/index.html, committed to main each build)",
+      "https://sv-teamintel.vercel.app/teamintel.json — machine-readable records; consumed by sv-draft-fit's workout-priority view (manual copy, not automated)",
+      "Ops alerts → #sv-automation via the daily health check (silent when healthy)"
+    ]
+  },
+  "crons": [
+    {
+      "what": "Update TeamIntel Dashboard — fetch Slack, rebuild, commit public/index.html + teamintel.json. CURRENTLY SHUTTERED between draft cycles: ACTIVE=false in the cadence gate AND the workflow is disabled in GitHub. workflow_dispatch always builds.",
+      "schedule": "6,16,26,36,46,56 * * * * (UTC, off-peak minutes; cadence gate decides which firings build)",
+      "runner": "GitHub Actions"
+    },
+    {
+      "what": "Health Check — dashboard up, overrides API, Redis, Slack token, build freshness (freshness only while cadence is live). Posts findings to #sv-automation; silent when healthy.",
+      "schedule": "23 11 * * * (UTC, ~7:23am ET daily)",
+      "runner": "GitHub Actions"
+    }
+  ],
+  "monitoring": "Daily health-check workflow posts findings to #sv-automation via SV_AUTOMATION_WEBHOOK_URL, following the label + 🛠️/👤 + What broke/How we know/What to do contract; silent when healthy. Until the webhook secret is set, a finding fails the Actions run instead of posting.",
+  "knownIssues": [
+    "👤 Mike DeCicco: SV_AUTOMATION_WEBHOOK_URL secret is not set on the repo — get the value from Tom Trudeau and run: gh secret set SV_AUTOMATION_WEBHOOK_URL -R Stadium-Ventures/sv-team-intel",
+    "teamintel.json → sv-draft-fit handoff is a manual copy (not automated); rebuild here first if draft-fit's PDW counts look stale",
+    "Game-schedule Google Sheet must stay 'anyone with link can view' — revoking sharing empties the calendar's games with no error"
+  ],
+  "notes": "The 2026 draft (July 12–14) is over, so the pipeline is deliberately dormant, not broken: on 2026-07-13 the build cadence was shuttered (ACTIVE=false master switch) and the Update TeamIntel Dashboard workflow was disabled in GitHub. The dashboard stays live as a reference. Shuttered is the resting state between cycles — CLAUDE.md 'Draft-cycle activation' documents the full 2027 reactivation checklist (flip ACTIVE, new DRAFT CYCLE CONFIG, roster dicts, yearly data/ files, pick table). Gotcha: the entire dashboard UI lives inside build_html()'s f-string in fetch_and_build.py — direct edits to public/index.html are wiped by the next build.",
+  "links": [
+    {
+      "label": "Dashboard",
+      "url": "https://sv-teamintel.vercel.app/",
+      "note": "Password-gated. Matrix / Detail / Calendar / Edits views."
+    },
+    {
+      "label": "Build + health-check runs — GitHub Actions",
+      "url": "https://github.com/Stadium-Ventures/sv-team-intel/actions",
+      "note": "Update TeamIntel Dashboard (shuttered between cycles) and the daily Health Check log here."
+    }
+  ],
+  "runbook": [
+    "Clone: git clone https://github.com/Stadium-Ventures/sv-team-intel.git",
+    "Secrets live as GitHub Actions secrets on the repo: SLACK_BOT_TOKEN, REDIS_URL, DASHBOARD_PASSWORD (+ SV_AUTOMATION_WEBHOOK_URL for ops alerts). Vercel project sv-teamintel holds REDIS_URL for the api/* functions.",
+    "Run locally: SLACK_BOT_TOKEN=xoxb-… REDIS_URL=redis://… python fetch_and_build.py (writes public/index.html + public/teamintel.json; .env is read for SLACK_BOT_TOKEN; without REDIS_URL, overrides/manual records are skipped).",
+    "Deploy: never push a locally-built public/index.html (it embeds whatever data snapshot you built from). Commit generator changes only, then gh workflow run update-dashboard.yml — Actions rebuilds from live Slack and commits/deploys.",
+    "Between draft cycles the build schedule is intentionally off (ACTIVE=false + workflow disabled). Reactivation for the next cycle: CLAUDE.md 'Draft-cycle activation'.",
+    "First troubleshooting step: check https://sv-teamintel.vercel.app/api/overrides — an {\"error\": …} payload means the Vercel REDIS_URL env var or Upstash is broken. Then check the latest run at github.com/Stadium-Ventures/sv-team-intel/actions."
+  ]
+}

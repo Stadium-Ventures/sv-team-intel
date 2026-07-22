@@ -1,0 +1,46 @@
+name: Health Check
+
+# Daily self-health-check. Posts to #sv-automation (via the
+# SV_AUTOMATION_WEBHOOK_URL secret) ONLY when something needs fixing —
+# silent when healthy. See scripts/health_check.py for what it checks and
+# CLAUDE.md for the #sv-automation scope + message contract.
+
+on:
+  schedule:
+    - cron: '23 11 * * *' # daily 11:23 UTC (~7:23am ET); off-peak minute — GitHub throttles :00/:15/:30/:45
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Send a clearly-labeled TEST post to #sv-automation instead of running checks'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: health-check
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install redis
+
+      - name: Run health check
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          SV_AUTOMATION_WEBHOOK_URL: ${{ secrets.SV_AUTOMATION_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ github.token }}
+          HEALTH_CHECK_TEST: ${{ inputs.test }}
+        run: python scripts/health_check.py
