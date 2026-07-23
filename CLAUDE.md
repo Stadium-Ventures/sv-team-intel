@@ -138,17 +138,19 @@ Also update the `runbook` steps if the local-dev or deploy process changed. The 
 
 ## 🧭 The SV Way — Northstar doctrine (read this first, every session)
 
-**`THE-SV-WAY.md` in `Stadium-Ventures/sv-registry`** (served live at
-https://sv-internal-hub.vercel.app/sv-way.md) is the Northstar every
-Stadium Ventures tool and every chat working on one routes through — read it
-at session start, before anything else. Non-negotiables even before you read
-it: every player fact resolves to the player's file in sv-registry and every
+THE-SV-WAY.md in Stadium-Ventures/sv-registry (served live at
+https://sv-internal-hub.vercel.app/sv-way.md) is the Northstar every Stadium
+Ventures tool and every chat working on one routes through — read it at
+session start, before anything else. Non-negotiables even before you read it:
+every player fact resolves to the player's file in sv-registry and every
 surface is a projection of it; nothing unvalidated projects (flag it, file a
 candidate, never overwrite a stable field); one write door (write-registry
-chokepoint / governed writers); one write-home per dataset; automation is
-silent when healthy and posts actionable-only to #sv-automation; collaborative
-tools live in Stadium-Ventures org repos; locked client-facing artifacts
-(Report Packets) are never moved or regenerated. This tool is registered in
-`Stadium-Ventures/sv-internal-hub` — keep its entry current when scope,
-schedule, or ownership changes; that registration + a working #sv-automation
-hookup are canonical requirements of being "promoted" per the Northstar above.
+chokepoint / governed writers); one write-home per dataset; firm work is
+first-class but becomes a player fact only when it actualizes through that one
+door; systems doing work about a player resolve them against canon first (read
+duty); automation is silent when healthy and posts actionable-only to
+#sv-automation; collaborative tools live in Stadium-Ventures org repos; locked
+client-facing artifacts (Report Packets) are never moved or regenerated. This
+tool's hub registration + #sv-automation hookup are canonical requirements of
+being "promoted." When your work decides something reusable, capture it
+(status slice → SOP → canon) before you finish.
