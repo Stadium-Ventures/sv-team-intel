@@ -1,0 +1,27 @@
+{
+  "_note": "Per-repo inputs for the SV Way compliance checker (canonical copy: Stadium-Ventures/sv-registry scripts/compliance/sv-way-check.cjs). Authored 2026-07-29 (WP1 role-declaration pass); values established by reading this repo's files, not inference.",
+  "repo": "Stadium-Ventures/sv-team-intel",
+  "roles": {
+    "public/": "surface",
+    "data/": "write-home",
+    "Upstash Redis (score_overrides, manual_records, calendar_events)": "write-home"
+  },
+  "_roles_why": "Per CLAUDE.md and sv-app.json: fetch_and_build.py parses TeamIntel Slack messages into a static dashboard. public/index.html and public/teamintel.json are generated projections committed each build (direct edits are wiped) — surface. The repo homes two kinds of source data: (1) the hand-curated yearly inputs in data/ (front_office_2026.csv, team_draft_2026.csv, farm_system_2026.csv, recommended_schedule_2026.json) which exist nowhere else, and (2) user edits held in Upstash Redis (score_overrides / manual_records / calendar_events) written only through the three Vercel serverless functions in api/ and merged into outputs on the next build.",
+  "canon_trees": [
+    "data/",
+    "Upstash Redis keys: score_overrides, manual_records, calendar_events"
+  ],
+  "write_door": "api/overrides.js + api/manual-records.js + api/calendar-events.js (sole write path for the Redis-held edit data); data/*.csv|json are hand-edited per draft cycle with no governed writer",
+  "upstream": {
+    "repo": null,
+    "mechanism": "Player roster is hardcoded per draft cycle in fetch_and_build.py (PLAYERS_2026 / CHANNEL_TO_PLAYER / PLAYER_ALIASES), sourced from Slack channel setup — NOT resolved against Stadium-Ventures/sv-registry."
+  },
+  "canon_doc": "THE-SV-WAY.md",
+  "canon_doc_home": false,
+  "hub_registration": "sv-app.json",
+  "_open_questions": [
+    "Read-duty gap: this repo names SV draft-client player facts (interest matrix, workouts) keyed by a hand-maintained roster in fetch_and_build.py; no resolution against sv-registry canon exists.",
+    "Downstream: public/teamintel.json is consumed by sv-draft-fit via manual copy (per sv-app.json knownIssues) — the projection handoff is not automated.",
+    "Whether the Redis-held manual TeamIntel records should eventually actualize into sv-registry (they are firm work about players) is undecided."
+  ]
+}
