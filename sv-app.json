@@ -36,8 +36,8 @@
   },
   "crons": [
     {
-      "what": "Update TeamIntel Dashboard — fetch Slack, rebuild, commit public/index.html + teamintel.json. CURRENTLY SHUTTERED between draft cycles: ACTIVE=false in the cadence gate AND the workflow is disabled in GitHub. workflow_dispatch always builds.",
-      "schedule": "6,16,26,36,46,56 * * * * (UTC, off-peak minutes; cadence gate decides which firings build)",
+      "what": "Update TeamIntel Dashboard — fetch Slack, rebuild, commit public/index.html + teamintel.json. CURRENTLY SHUTTERED between draft cycles: ACTIVE=false in the cadence gate AND the workflow is disabled in GitHub. workflow_dispatch always builds. 2026-09-01 (flywheel-automation-architecture audit, decision D6): the schedule: block itself is now commented out in .github/workflows/update-dashboard.yml — while shuttered it was still firing 144 runner spins/day just to evaluate the ACTIVE flag and exit, pure scheduler pressure with zero builds. Re-enable it alongside CLAUDE.md's 'Draft-cycle activation' step 1 for the next cycle.",
+      "schedule": "commented out 2026-09-01 while shuttered (was 6,16,26,36,46,56 * * * * UTC, off-peak minutes; cadence gate decided which firings built) — re-enable at next draft-cycle reactivation",
       "runner": "GitHub Actions"
     },
     {
