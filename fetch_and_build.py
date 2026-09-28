@@ -196,6 +196,48 @@ CHANNELS = [
     ("2026-private-draft-notes", "C0BEAC9UAKB"),
 ]
 
+# --- ROSTER SOURCE (sv-registry roster cutover; see roster_source.py) ---
+# Default (ROSTER_SOURCE unset, `hardcoded`, or `sheet`): the dicts above ARE the
+# roster, exactly as before, and nothing here touches the network.
+# ROSTER_SOURCE=registry: the DRAFT_YEAR draft class from sv-registry's roster
+# projection replaces the per-player entries (names + Slack channels);
+# the non-player channels in CHANNELS (general / meetings / combine / notes) are
+# kept. The registry path fails closed — never a silent fallback to the dicts.
+# Only names and Slack channels are taken: PLAYER_ALIASES is embedded in the
+# committed public/index.html of this PUBLIC repo, so registry nicknames stay out.
+import roster_source as _roster_source
+ROSTER_SOURCE = _roster_source.roster_source()
+if ROSTER_SOURCE == 'registry':
+    _roster_meta, _roster_rows = _roster_source.fetch_projection()
+    _registry_roster = _roster_source.build_roster(_roster_rows, DRAFT_YEAR)
+    CHANNELS = ([(n, c) for (n, c) in CHANNELS if n not in CHANNEL_TO_PLAYER]
+                + _registry_roster['channels'])
+    PLAYERS_2026 = _registry_roster['players']
+    ALL_2026_PLAYERS = sorted(set(PLAYERS_2026.values()))
+    CHANNEL_TO_PLAYER = _registry_roster['channel_to_player']
+    print(f"[roster] draft_class={DRAFT_YEAR} players={len(PLAYERS_2026)} "
+          f"player_channels={len(CHANNEL_TO_PLAYER)}")
+_ROSTER_NAMES = frozenset(PLAYERS_2026.values())
+
+
+def log_roster_dual_run():
+    """Dual run: on the hardcoded roster, when SV_REGISTRY_ROSTER_TOKEN is set,
+    print one `[dual-run]` line comparing it with the registry's DRAFT_YEAR
+    draft class. Log-only: it never changes the build and never fails it."""
+    if ROSTER_SOURCE != 'hardcoded' or not os.environ.get('SV_REGISTRY_ROSTER_TOKEN', '').strip():
+        return None
+    try:
+        meta, rows = _roster_source.fetch_projection(log=False)
+        line = (_roster_source.dual_run_line(
+                    PLAYERS_2026, CHANNEL_TO_PLAYER,
+                    _roster_source.build_roster(rows, DRAFT_YEAR))
+                + f" generated_at={meta.get('generated_at')}")
+    except Exception as e:  # noqa: BLE001 — the dual run must never break the build
+        line = (f"[dual-run] WARN registry roster not compared ({e}); "
+                "this build uses the hardcoded roster as before.")
+    print(line)
+    return line
+
 # Channels whose every record is, by definition, a combine meeting (the channel
 # itself scopes the context). Treated as unfiltered in fetch (posts here won't
 # contain the "teamintel" keyword) and every (player, team) record drawn from
@@ -383,7 +425,12 @@ def find_players_in_text(text):
         # distinctive first name below instead.
         if last == 'lay':
             continue
-        if last in tl:
+        if ROSTER_SOURCE == 'registry':
+            # A registry roster is not hand-checked for substring collisions
+            # (e.g. 'loy' in "employ"), so match the last name as a whole word.
+            if re.search(r'\b' + re.escape(last) + r'\b', tl):
+                found.add(full)
+        elif last in tl:
             found.add(full)
     if re.search(r'\bcam\b', tl) and 'Cameron Flukey' not in found:
         found.add('Cameron Flukey')
@@ -411,6 +458,13 @@ def find_players_in_text(text):
         found.add('Lee Ellis')
     if re.search(r'\bethan\b', tl) and 'Ethan Lay' not in found:
         found.add('Ethan Lay')
+    # The first-name shortcuts above name 2026 clients directly; keep only
+    # players on the active roster (a no-op on the hardcoded roster, where all
+    # of them are members; on ROSTER_SOURCE=registry it stops a non-member
+    # being invented from a first name). Discard in place so the set (and so
+    # record order) is untouched when nothing is dropped.
+    for _name in [n for n in found if n not in _ROSTER_NAMES]:
+        found.discard(_name)
     return found
 
 # Single-player Slack channels — every message in these is already scoped to one player,
@@ -422,8 +476,9 @@ PLAYER_ALIASES = {}
 for _last_lc, _full in PLAYERS_2026.items():
     _first = _full.split()[0].lower()
     PLAYER_ALIASES[_full] = {_last_lc, _first}
-PLAYER_ALIASES['Cameron Flukey'].update({'cam'})
-PLAYER_ALIASES['Trevor Condon'].update({'trev'})
+for _full, _extra in (('Cameron Flukey', {'cam'}), ('Trevor Condon', {'trev'})):
+    if _full in PLAYER_ALIASES:
+        PLAYER_ALIASES[_full].update(_extra)
 # 'bo', 'taj', 'phinn' already first names
 
 # Broad patterns — team-level workout facts that apply to every player named in the message.
@@ -6761,6 +6816,8 @@ if __name__ == '__main__':
         exit(1)
 
     password = os.environ.get('DASHBOARD_PASSWORD', 'SVintel2026')
+
+    log_roster_dual_run()
 
     messages, slack_workspace_url, channel_errors = fetch_messages(token)
     records = parse_messages(messages)

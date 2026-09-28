@@ -1,5 +1,5 @@
 {
-  "_note": "Per-repo inputs for the SV Way compliance checker (canonical copy: Stadium-Ventures/sv-registry scripts/compliance/sv-way-check.cjs). Authored 2026-07-29 (WP1 role-declaration pass); values established by reading this repo's files, not inference.",
+  "_note": "Per-repo inputs for the SV Way compliance checker (canonical copy: Stadium-Ventures/sv-registry scripts/compliance/sv-way-check.cjs). Authored 2026-07-29 (WP1 role-declaration pass); values established by reading this repo's files, not inference. Corrected 2026-09-28 (roster cutover: upstream now switchable via ROSTER_SOURCE).",
   "repo": "Stadium-Ventures/sv-team-intel",
   "roles": {
     "public/": "surface",
@@ -13,14 +13,14 @@
   ],
   "write_door": "api/overrides.js + api/manual-records.js + api/calendar-events.js (sole write path for the Redis-held edit data); data/*.csv|json are hand-edited per draft cycle with no governed writer",
   "upstream": {
-    "repo": null,
-    "mechanism": "Player roster is hardcoded per draft cycle in fetch_and_build.py (PLAYERS_2026 / CHANNEL_TO_PLAYER / PLAYER_ALIASES), sourced from Slack channel setup — NOT resolved against Stadium-Ventures/sv-registry."
+    "repo": "Stadium-Ventures/sv-registry",
+    "mechanism": "Switchable (roster_source.py, repo variable ROSTER_SOURCE). Default `hardcoded`: the per-cycle dicts in fetch_and_build.py (PLAYERS_2026 / CHANNEL_TO_PLAYER / CHANNELS), NOT resolved against sv-registry; with SV_REGISTRY_ROSTER_TOKEN set the build logs a [dual-run] comparison only. `registry`: the DRAFT_YEAR draft class from GET https://sv-registry.vercel.app/api/roster-projection (read:roster-projection platform-secret token, fails closed). Declared in sv-registry data/reference/roster-projection-consumers.json."
   },
   "canon_doc": "THE-SV-WAY.md",
   "canon_doc_home": false,
   "hub_registration": "sv-app.json",
   "_open_questions": [
-    "Read-duty gap: this repo names SV draft-client player facts (interest matrix, workouts) keyed by a hand-maintained roster in fetch_and_build.py; no resolution against sv-registry canon exists.",
+    "Read-duty gap (closing): the roster is hand-maintained in fetch_and_build.py until ROSTER_SOURCE=registry is set; the switch and the dual-run log exist. Open: whether the tracked set is the whole draft class (draft_class == DRAFT_YEAR) or narrower — a human ruling before the flip.",
     "Downstream: public/teamintel.json is consumed by sv-draft-fit via manual copy (per sv-app.json knownIssues) — the projection handoff is not automated.",
     "Whether the Redis-held manual TeamIntel records should eventually actualize into sv-registry (they are firm work about players) is undecided."
   ]
