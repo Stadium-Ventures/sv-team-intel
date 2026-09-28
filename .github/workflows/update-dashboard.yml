@@ -96,6 +96,18 @@ jobs:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
           OUTPUT_DIR: ./public
+          # sv-registry roster cutover (roster_source.py). Repo VARIABLE, not a
+          # secret: unset / `hardcoded` / `sheet` = the in-file roster (today's
+          # behaviour); `registry` = the draft class from sv-registry's roster
+          # projection. This is the rollback switch.
+          ROSTER_SOURCE: ${{ vars.ROSTER_SOURCE }}
+          # Optional override of the door URL (default: production).
+          ROSTER_PROJECTION_URL: ${{ vars.ROSTER_PROJECTION_URL }}
+          # This repo is PUBLIC: the token lives ONLY as this Actions secret
+          # (never committed, never in public/). GitHub never passes it to
+          # fork-triggered runs. When set on the hardcoded roster it only feeds
+          # the log-only [dual-run] line.
+          SV_REGISTRY_ROSTER_TOKEN: ${{ secrets.SV_REGISTRY_ROSTER_TOKEN }}
         run: |
           mkdir -p public
           python fetch_and_build.py

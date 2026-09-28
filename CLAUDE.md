@@ -45,7 +45,7 @@ python backfill_workout_dates.py
 gh workflow run update-dashboard.yml
 ```
 
-There is no test suite, linter, or build step — `vercel.json` sets `outputDirectory: public` with an empty `buildCommand`. `package.json` only declares `ioredis` for the serverless functions.
+The only tests are `tests/` (pytest, the roster switch): `python -m pytest -q tests`. There is no linter or build step — `vercel.json` sets `outputDirectory: public` with an empty `buildCommand`. `package.json` only declares `ioredis` for the serverless functions.
 
 ## Architecture notes that aren't obvious from the code
 
@@ -96,16 +96,25 @@ This repo tracks one draft cycle at a time. Between cycles it should sit **shutt
 **To reactivate for a new draft cycle (e.g. 2027):**
 1. In `.github/workflows/update-dashboard.yml`, flip `ACTIVE=true` and update `PUSH_END` to that cycle's push-window end date (fast 24/7 builds run until then; it then auto-reverts to hourly-daytime).
 2. In `fetch_and_build.py`, update the `# --- DRAFT CYCLE CONFIG ---` block near the top: `DRAFT_YEAR`, `DRAFT_DATES`, `COMBINE_WINDOW_START`/`END`, `WORKOUT_WINDOW_START`/`END`, `CALENDAR_PICKER_MIN`/`MAX`. The `*_CSV`/`*_JSON` filename constants (`FRONT_OFFICE_CSV`, `TEAM_DRAFT_CSV`, `FARM_SYSTEM_CSV`, `RECOMMENDED_SCHEDULE_JSON`) derive from `DRAFT_YEAR` automatically — just make sure matching files exist under `data/` (`front_office_<year>.csv`, `team_draft_<year>.csv`, `farm_system_<year>.csv`, `recommended_schedule_<year>.json`).
-3. Replace the roster: `PLAYERS_2026`, `CHANNEL_TO_PLAYER`, `CHANNELS`, `PLAYER_ALIASES` (see "Roster updates" below). These keep their `_2026`-suffixed names by design — renaming them is a large mechanical ripple through the file for no functional gain; just replace their *contents* each cycle.
+3. Replace the roster: `PLAYERS_2026`, `CHANNEL_TO_PLAYER`, `CHANNELS`, `PLAYER_ALIASES` (see "Roster updates" below). These keep their `_2026`-suffixed names by design — renaming them is a large mechanical ripple through the file for no functional gain; just replace their *contents* each cycle. **Once the repo variable `ROSTER_SOURCE=registry` is set** (see "Roster source" below), the per-player entries come from sv-registry's `DRAFT_YEAR` draft class instead and only the non-player channels in `CHANNELS` (general / meetings / combine / notes) need the yearly pass.
 4. Replace the special-pick-tags / draft-board data block (search for "MLB draft): overall pick # -> label" — the full slotted-pick table) with the new year's draft order. This is wholesale year-specific data the config block doesn't (and shouldn't try to) parameterize.
 5. Rotate the `DASHBOARD_PASSWORD` GitHub secret if it should change for the new cycle.
 6. Run `gh workflow run update-dashboard.yml` once to confirm a manual build still produces sane output before relying on the schedule.
 
 **To pull it back down (shutter) once that cycle's draft ends:** flip `ACTIVE` back to `false` in the workflow. That's the only required change — the yearly config values can stay in place untouched until the next reactivation.
 
+## Roster source (`ROSTER_SOURCE`, sv-registry roster cutover)
+
+`roster_source.py` + the `# --- ROSTER SOURCE` block after `CHANNELS` in `fetch_and_build.py` decide where the roster comes from. The switch is the repo **variable** `ROSTER_SOURCE` (passed by `update-dashboard.yml`):
+
+- unset / `hardcoded` / `sheet` (**default**) — the dicts in `fetch_and_build.py`, exactly as before. Nothing touches the network for the roster. If the Actions secret `SV_REGISTRY_ROSTER_TOKEN` is set, the build also prints one log-only `[dual-run] roster hardcoded=… registry=… only_hardcoded=[…] only_registry=[…] channel_mismatch=[…]` line; it never changes or fails the build.
+- `registry` — every client in sv-registry's roster projection (`GET https://sv-registry.vercel.app/api/roster-projection`, Bearer `SV_REGISTRY_ROSTER_TOKEN`) whose `draft_class == DRAFT_YEAR` (minus coaches and `is_client:false`). Names and Slack channel name + id come from canon; the non-player channels in `CHANNELS` are kept; last names are matched as whole words; the hand-written first-name shortcuts in `find_players_in_text` only fire for roster members. Registry nicknames are deliberately **not** used (`PLAYER_ALIASES` is embedded in the committed `public/index.html` of this public repo). **Fails closed**: missing token, 401/403, bad body, fewer than `ROSTER_MIN_ROWS` rows, an empty draft class or two clients sharing a last name all abort the build (last good output stays). Rollback = set the variable back to `hardcoded` (or delete it).
+- This repo is **public**: the token lives only as the Actions secret (platform secret), never committed and never in `public/`.
+- Tests: `pip install slack-sdk redis pytest && python -m pytest -q tests` (synthetic data, no network).
+
 ## Roster updates
 
-A new client requires updates in three places in `fetch_and_build.py`:
+With `ROSTER_SOURCE=registry`, a new client needs a registry dossier with `draft_class` and `slack_channel` set — no edit here. On the default (hardcoded) roster, a new client requires updates in three places in `fetch_and_build.py`:
 1. `PLAYERS_2026` (last-name → full name)
 2. `CHANNEL_TO_PLAYER` and `CHANNELS` (Slack channel name → player + channel ID)
 3. `PLAYER_ALIASES` if the player goes by a non-obvious nickname
